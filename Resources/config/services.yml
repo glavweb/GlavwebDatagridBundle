@@ -1,0 +1,8 @@
+services:
+    glavweb_datagrid.doctrine_datagrid_builder:
+        class: Glavweb\DatagridBundle\Builder\Doctrine\DatagridBuilder
+        arguments: ["@doctrine", "@glavweb_datagrid.doctrine_filter_factory"]
+
+    glavweb_datagrid.doctrine_filter_factory:
+        class: Glavweb\DatagridBundle\Filter\Doctrine\FilterFactory
+        arguments: ["@doctrine"]

@@ -1,0 +1,24 @@
+{
+    "name": "glavweb/datagrid-bundle",
+    "description": "GLAVWEB DatagridBundle",
+    "authors": [
+        {
+            "name": "nilov",
+            "email": "nilov@glavweb.ru",
+            "homepage": "http://glavweb.ru"
+        },
+        {
+            "name": "GLAVWEB Community",
+            "homepage": "https://github.com/glavweb/GlavwebDatagridBundle/contributors"
+        }
+    ],
+    "require": {
+        "symfony/http-foundation": "~2.3",
+        "symfony/form": "~2.3",
+        "symfony/security": "~2.3",
+        "symfony/console": "~2.3"
+    },
+    "autoload": {
+        "psr-4": { "Glavweb\\DatagridBundle\\": "" }
+    }
+}
