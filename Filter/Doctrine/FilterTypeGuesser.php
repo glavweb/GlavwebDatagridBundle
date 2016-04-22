@@ -46,7 +46,7 @@ class FilterTypeGuesser
         }
 
         if (!isset($metadata->fieldMappings[$propertyName]['fieldName'])) {
-            throw new \RuntimeException(sprintf('Field name "%s" not found.', $propertyName));
+            throw new \RuntimeException(sprintf('Field name "%s" not found in class "%s".', $propertyName, $metadata->getName()));
         }
 
         $options['field_name'] = $metadata->fieldMappings[$propertyName]['fieldName'];

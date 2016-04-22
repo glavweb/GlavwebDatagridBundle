@@ -22,6 +22,21 @@ interface DatagridInterface
     /**
      * @return array
      */
+    public function getOrderings();
+
+    /**
+     * @return int
+     */
+    public function getFirstResult();
+
+    /**
+     * @return int
+     */
+    public function getMaxResults();
+
+    /**
+     * @return array
+     */
     public function getList();
 
     /**

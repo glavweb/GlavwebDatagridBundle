@@ -13,6 +13,7 @@ namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * Class Datagrid
@@ -35,9 +36,12 @@ class Datagrid extends AbstractDatagrid
     /**
      * @var array
      */
-    private $queryHints = [
-        Query::HINT_FORCE_PARTIAL_LOAD => true
-    ];
+    private $queryHints = [];
+
+    /**
+     * @var Paginator
+     */
+    private $paginator;
 
     /**
      * @param QueryBuilder $queryBuilder
@@ -102,40 +106,23 @@ class Datagrid extends AbstractDatagrid
      */
     public function getList()
     {
-        $queryBuilder = clone $this->getQueryBuilder();
-        $alias        = $this->getAlias();
-        $firstResult  = $this->getFirstResult();
-        $maxResults   = $this->getMaxResults();
-        $orderings    = $this->getOrderings();
+        $paginator = $this->getPaginator();
 
-        $queryBuilder->setFirstResult($firstResult);
-        $queryBuilder->setMaxResults($maxResults);
-
-        foreach ($orderings as $fieldName => $order) {
-            $queryBuilder->addOrderBy($alias . '.' . $fieldName, $order);
-        }
-
-        $query = $queryBuilder->getQuery();
+        $query = $paginator->getQuery();
+        $query->setHydrationMode($this->getHydrationMode());
         $this->setHintsToQuery($query);
 
-        return $query->getResult($this->getHydrationMode());
+        return $paginator->getIterator()->getArrayCopy();
     }
 
     /**
-     * @return mixed
+     * @return int
      */
     public function getTotal()
     {
-        $totalQueryBuilder = clone $this->getQueryBuilder();
-        $alias             = $this->getAlias();
+        $paginator = $this->getPaginator();
 
-        $total = $totalQueryBuilder
-            ->select('COUNT(' . $alias . ')')
-            ->getQuery()
-            ->getSingleScalarResult()
-        ;
-
-        return $total;
+        return (int)$paginator->count();
     }
 
     /**
@@ -147,5 +134,31 @@ class Datagrid extends AbstractDatagrid
         foreach ($queryHints as $hintName => $hintValue) {
             $query->setHint($hintName, $hintValue);
         }
+    }
+
+    /**
+     * @return Paginator
+     */
+    protected function getPaginator()
+    {
+        if (!$this->paginator) {
+            $queryBuilder = $this->getQueryBuilder();
+            $alias        = $this->getAlias();
+            $firstResult  = $this->getFirstResult();
+            $maxResults   = $this->getMaxResults();
+
+            $queryBuilder->setFirstResult($firstResult);
+            $queryBuilder->setMaxResults($maxResults);
+
+            $orderings = $this->getOrderings();
+            foreach ($orderings as $fieldName => $order) {
+                $queryBuilder->addOrderBy($alias . '.' . $fieldName, $order);
+            }
+
+            $query = $queryBuilder->getQuery();
+            $this->paginator = new Paginator($query);
+        }
+
+        return $this->paginator;
     }
 }

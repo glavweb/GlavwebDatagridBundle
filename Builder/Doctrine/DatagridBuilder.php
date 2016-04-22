@@ -15,6 +15,7 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\ResultSetMapping;
@@ -92,6 +93,11 @@ class DatagridBuilder implements DatagridBuilderInterface
      * @var array
      */
     private $filterNamesByParams = [];
+
+    /**
+     * @var array
+     */
+    private $scopeConfig;
 
     /**
      * DoctrineDatagridBuilder constructor.
@@ -236,11 +242,30 @@ class DatagridBuilder implements DatagridBuilderInterface
     }
 
     /**
-     * @return JoinMap
+     * @return JoinMap|null
      */
     public function getJoinMap()
     {
         return $this->joinMap;
+    }
+
+    /**
+     * @param array $scopeConfig
+     * @return $this
+     */
+    public function setScopeConfig(array $scopeConfig)
+    {
+        $this->scopeConfig = $scopeConfig;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getScopeConfig()
+    {
+        return $this->scopeConfig;
     }
 
     /**
@@ -294,7 +319,7 @@ class DatagridBuilder implements DatagridBuilderInterface
 
         return $this;
     }
-
+    
     /**
      * @param array $parameters
      * @return Datagrid
@@ -369,8 +394,10 @@ class DatagridBuilder implements DatagridBuilderInterface
         $queryBuilder  = $repository->createQueryBuilder($alias);
 
         // Apply joins
-        $joinMap = $this->getJoinMap();
-        $joinMap->apply($queryBuilder);
+        $joinMap = $this->createJoinMapByScopeConfig($this->getScopeConfig(), $alias, $this->getJoinMap());
+        if ($joinMap) {
+            $joinMap->apply($queryBuilder);
+        }
 
         $parameters = $this->clearParameters($parameters);
         foreach ($parameters as $key => $parameter) {
@@ -568,5 +595,100 @@ class DatagridBuilder implements DatagridBuilderInterface
 
             $filter->setOptions($options);
         }
+    }
+
+    /**
+     * @param array $scopeConfig
+     * @param string $alias
+     * @param JoinMap $joinMap
+     * @return JoinMap
+     */
+    protected function createJoinMapByScopeConfig(array $scopeConfig, $alias, JoinMap $joinMap = null)
+    {
+        if (!$joinMap) {
+            $joinMap = new JoinMap($alias);
+        }
+
+        /** @todo Move "joinCollections" option to scope config */
+        $joinCollections = false;
+        if (!$joinCollections) {
+            $scopeConfig = $this->cleanCollectionsFromScope($scopeConfig);
+        }
+        
+        $joins = $this->getJoinsByScopeConfig($scopeConfig, $alias);
+        foreach ($joins as $fullPath => $joinData) {
+            $pathElements = explode('.', $fullPath);
+            $field = array_pop($pathElements);
+            $path  = implode('.', $pathElements);
+
+            if (($key = array_search($path, $joins)) !== false) {
+                $path = $key;
+            }
+
+            $joinFields = $joinData['fields'];
+            $joinMap->join($path, $field, true, $joinFields);
+        }
+
+        return $joinMap;
+    }
+
+    /**
+     * @param array $scopeConfig
+     * @param string $firstAlias
+     * @param string $alias
+     * @param array $result
+     * @return array
+     */
+    protected function getJoinsByScopeConfig(array $scopeConfig, $firstAlias, $alias = null, &$result = [])
+    {
+        if (!$alias) {
+            $alias = $firstAlias;
+        }
+
+        foreach ($scopeConfig as $key => $value) {
+            if (is_array($value)) {
+                $join       = $alias . '.' . $key;
+                $joinAlias  = str_replace('.', '_', $join);
+                $joinFields = array_filter($value, function ($value) {
+                    return !is_array($value);
+                });
+                $joinFields = array_keys($joinFields);
+
+                $result[$join] = [
+                    'alias'  => $joinAlias,
+                    'fields' => $joinFields
+                ];
+
+                $alias = $joinAlias;
+                $this->getJoinsByScopeConfig($value, $firstAlias, $alias, $result);
+                $alias = $firstAlias;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array $scopeConfig
+     * @return array
+     * @throws \Doctrine\ORM\Mapping\MappingException
+     */
+    private function cleanCollectionsFromScope(array $scopeConfig)
+    {
+        $classMetadata = $this->getClassMetadata();
+
+        foreach ($scopeConfig as $fieldName => $value) {
+            if (is_array($value) && $classMetadata->hasAssociation($fieldName)) {
+                $associationMapping = $classMetadata->getAssociationMapping($fieldName);
+                $type               = isset($associationMapping['type']) ? $associationMapping['type'] : null;
+                $isCollection       = in_array($type, [ClassMetadataInfo::ONE_TO_MANY, ClassMetadataInfo::MANY_TO_MANY]);
+
+                if ($isCollection) {
+                    unset($scopeConfig[$fieldName]);
+                }
+            }
+        }
+
+        return $scopeConfig;
     }
 }
