@@ -322,9 +322,10 @@ class DatagridBuilder implements DatagridBuilderInterface
     
     /**
      * @param array $parameters
+     * @param \Closure $callback
      * @return Datagrid
      */
-    public function build(array $parameters = [])
+    public function build(array $parameters = [], $callback = null)
     {
         $orderings   = $this->getOrderings();
         $firstResult = $this->getFirstResult();
@@ -333,6 +334,11 @@ class DatagridBuilder implements DatagridBuilderInterface
 
         try {
             $queryBuilder = $this->createQueryBuilder($parameters);
+
+            if (is_callable($callback)) {
+                $callback($queryBuilder, $alias);
+            }
+
             $datagrid = new Datagrid($queryBuilder, $orderings, $firstResult, $maxResults, $alias);
 
         } catch (Exception $e) {
@@ -359,6 +365,10 @@ class DatagridBuilder implements DatagridBuilderInterface
             $queryBuilder = $this->createQueryBuilder($parameters);
             $subQuery     = $this->buildSql($queryBuilder);
             $rsm          = $this->createResultSetMapping($this->getEntityClassName(), $alias);
+
+            if (!is_callable($callback)) {
+                throw new \RuntimeException('Callback must be callable.');
+            }
 
             $query = $callback($subQuery, $rsm, $em);
             if (!$query instanceof NativeQuery) {
