@@ -65,8 +65,8 @@ class ModelFilter extends Filter
      */
     private function handleToMany(QueryBuilder $queryBuilder, $alias, $operator, $fieldName, $value)
     {
-        $joinField = JoinMap::makeAlias($alias, $fieldName);
-        $this->executeCondition($queryBuilder, $operator, $joinField, $value);
+        $field = $alias;
+        $this->executeCondition($queryBuilder, $operator, $field, $value);
     }
 
     /**

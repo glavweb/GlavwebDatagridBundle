@@ -64,26 +64,7 @@ class FilterFactory
     {
         /** @var ClassMetadata $classMetadata */
         $classMetadata = $this->doctrine->getManager()->getClassMetadata($entityClass);
-        $options = $this->defineJoins($classMetadata, $alias, $name, $options);
-
-        if (!isset($options['class_metadata'])) {
-            $options['class_metadata'] = $classMetadata;
-        }
-
-        if (!isset($options['field_name'])) {
-            $options['field_name'] = $name;
-        }
-
-        // Add join for to-many associations
-        $associationType = $this->getAssociationType($options['class_metadata'], $options['field_name']);
-        if (in_array($associationType, [ClassMetadataInfo::MANY_TO_MANY, ClassMetadataInfo::ONE_TO_MANY])) {
-            $joinMap = isset($options['join_map']) ? $options['join_map'] : null;
-            if (!$joinMap) {
-                $joinMap = new JoinMap($alias);
-            }
-
-            $joinMap->join($alias, $options['field_name']);
-        }
+        $options = $this->defineOptions($classMetadata, $alias, $name, $options);
 
         if (!$type) {
             $guessType = $this->filterTypeGuesser->guessType($options['field_name'], $options['class_metadata'], $options);
@@ -136,15 +117,18 @@ class FilterFactory
      * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    private function defineJoins(ClassMetadata $classMetadata, $alias, $filterName, array $options = [])
+    private function defineOptions(ClassMetadata $classMetadata, $alias, $filterName, array $options = [])
     {
         $em = $this->doctrine->getManager();
 
-        $joinMap = null;
+        $options['class_metadata'] = $classMetadata;
+        $options['field_name']     = $filterName;
+
+        $joinMap  = null;
+        $joinPath = $alias;
         if (strpos($filterName, '.') > 0) {
             $filterElements    = explode('.', $filterName);
             $lastFilterElement = $filterElements[count($filterElements) - 1];
-            $joinPath          = $alias;
 
             $joinMap           = new JoinMap($alias);
             $joinFieldName     = null;
@@ -169,8 +153,19 @@ class FilterFactory
 
             $options['class_metadata'] = $joinClassMetadata;
             $options['field_name']     = $joinFieldName;
-            $options['join_map']       = $joinMap;
         }
+
+        // Add join for to-many associations
+        $associationType = $this->getAssociationType($options['class_metadata'], $options['field_name']);
+        if (in_array($associationType, [ClassMetadataInfo::MANY_TO_MANY, ClassMetadataInfo::ONE_TO_MANY])) {
+            if (!$joinMap) {
+                $joinMap = new JoinMap($alias);
+            }
+
+            $joinMap->join($joinPath, $options['field_name']);
+        }
+
+        $options['join_map'] = $joinMap;
 
         return $options;
     }
