@@ -1,0 +1,12 @@
+scope:
+
+{%- for field, type in fields %}
+
+    {{ field }}: # {{ type }}
+{%- endfor %}
+
+{%- for field, class in associations %}
+
+    {{ field }}: # {{ class }}
+        id:
+{%- endfor %}

@@ -13,9 +13,21 @@
         }
     ],
     "require": {
-        "symfony/http-foundation": "~2.3|~3.0"
+        "php": ">=5.5.9",
+        "symfony/symfony": "^2.7|~3.0"
+    },
+    "require-dev": {
+        "symfony/phpunit-bridge": "~2.7|~3.0",
+        "doctrine/orm": "~2.3",
+        "doctrine/doctrine-bundle": "~1.5",
+        "doctrine/doctrine-fixtures-bundle": "~2.3",
+        "sensio/framework-extra-bundle": "~3.0",
+        "phpunit/phpunit": "~4.8"
     },
     "autoload": {
         "psr-4": { "Glavweb\\DatagridBundle\\": "" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Glavweb\\DatagridBundle\\Tests\\": "" }
     }
 }

@@ -1,8 +1,19 @@
 services:
     glavweb_datagrid.doctrine_datagrid_builder:
         class: Glavweb\DatagridBundle\Builder\Doctrine\DatagridBuilder
-        arguments: ["@doctrine", "@glavweb_datagrid.doctrine_filter_factory"]
+        arguments: ["@doctrine", "@glavweb_datagrid.doctrine_filter_factory", "@glavweb_datagrid.data_schema_factory"]
 
     glavweb_datagrid.doctrine_filter_factory:
         class: Glavweb\DatagridBundle\Filter\Doctrine\FilterFactory
         arguments: ["@doctrine"]
+
+    glavweb_datagrid.data_schema_factory:
+        class:  Glavweb\DatagridBundle\DataSchema\DataSchemaFactory
+        arguments: ["@doctrine", "@glavweb_datagrid.filter_registry", "@glavweb_datagrid.entity_persister", "%glavweb_datagrid.data_schema_dir%", "%glavweb_datagrid.scope_dir%"]
+
+    glavweb_datagrid.entity_persister:
+        class:  Glavweb\DatagridBundle\Persister\EntityPersister
+        arguments: ["@doctrine"]
+
+    glavweb_datagrid.filter_registry:
+        class:  Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry

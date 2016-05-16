@@ -21,6 +21,12 @@ use Doctrine\ORM\QueryBuilder;
 class JoinMap
 {
     /**
+     * Constants of join types
+     */
+    const JOIN_TYPE_LEFT = 'left';
+    const JOIN_TYPE_INNER = 'inner';
+
+    /**
      * @var array
      */
     private $joinMap = [];
@@ -50,14 +56,16 @@ class JoinMap
      * @param string $field
      * @param bool $hasSelect
      * @param array $selectFields
+     * @param string $joinType
      * @return $this
      */
-    public function join($path, $field, $hasSelect = true, array $selectFields = [])
+    public function join($path, $field, $hasSelect = true, array $selectFields = [], $joinType = 'left')
     {
         $this->joinMap[$path][] = [
             'field'        => $field,
             'hasSelect'    => $hasSelect,
-            'selectFields' => $selectFields
+            'selectFields' => $selectFields,
+            'joinType'     => $joinType
         ];
 
         return $this;
@@ -79,6 +87,7 @@ class JoinMap
                 $field        = $fieldData['field'];
                 $hasSelect    = $fieldData['hasSelect'];
                 $selectFields = $fieldData['selectFields'];
+                $joinType     = $fieldData['joinType'];
 
                 $pathAlias = str_replace('.', '_', $path);
                 $alias     = $pathAlias . '_' . $field;
@@ -97,10 +106,26 @@ class JoinMap
                     }
                 }
 
-                $queryBuilder->leftJoin($join, $alias);
+                if ($joinType == self::JOIN_TYPE_LEFT) {
+                    $queryBuilder->leftJoin($join, $alias);
+
+                } elseif ($joinType == self::JOIN_TYPE_INNER) {
+                    $queryBuilder->innerJoin($join, $alias);
+
+                } else {
+                    throw new \RuntimeException('Join type not defined or has wrong type.');
+                }
             }
         }
 
         return $alias;
+    }
+
+    /**
+     * @param JoinMap $joinMap
+     */
+    public function merge(JoinMap $joinMap)
+    {
+        $this->joinMap = array_merge_recursive($this->joinMap, $joinMap);
     }
 }

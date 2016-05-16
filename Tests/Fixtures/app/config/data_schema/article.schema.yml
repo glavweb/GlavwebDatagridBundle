@@ -1,0 +1,5 @@
+schema:
+    class: Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article
+    properties:
+        id:  # integer
+        name: # string

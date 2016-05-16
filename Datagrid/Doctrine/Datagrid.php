@@ -14,6 +14,7 @@ namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Glavweb\DatagridBundle\DataSchema\DataSchema;
 
 /**
  * Class Datagrid
@@ -27,6 +28,11 @@ class Datagrid extends AbstractDatagrid
      * @var QueryBuilder
      */
     private $queryBuilder;
+
+    /**
+     * @var DataSchema
+     */
+    private $dataSchema;
 
     /**
      * @var string
@@ -45,19 +51,21 @@ class Datagrid extends AbstractDatagrid
 
     /**
      * @param QueryBuilder $queryBuilder
-     * @param array            $orderings
-     * @param int              $firstResult
-     * @param int              $maxResults
-     * @param string           $alias
+     * @param DataSchema   $dataSchema
+     * @param array        $orderings
+     * @param int          $firstResult
+     * @param int          $maxResults
+     * @param string       $alias
      * @param string $alias
      */
-    public function __construct(QueryBuilder $queryBuilder, array $orderings = null, $firstResult = 0, $maxResults = null, $alias = 't')
+    public function __construct(QueryBuilder $queryBuilder, DataSchema $dataSchema = null, array $orderings = null, $firstResult = 0, $maxResults = null, $alias = 't')
     {
         $this->queryBuilder = $queryBuilder;
-        $this->orderings   = (array)$orderings;
-        $this->firstResult = (int)$firstResult;
-        $this->maxResults  = $maxResults;
-        $this->alias       = $alias;
+        $this->dataSchema   = $dataSchema;
+        $this->orderings    = (array)$orderings;
+        $this->firstResult  = (int)$firstResult;
+        $this->maxResults   = $maxResults;
+        $this->alias        = $alias;
     }
 
     /**
@@ -112,7 +120,12 @@ class Datagrid extends AbstractDatagrid
         $query->setHydrationMode($this->getHydrationMode());
         $this->setHintsToQuery($query);
 
-        return $paginator->getIterator()->getArrayCopy();
+        $result = $paginator->getIterator()->getArrayCopy();
+        if ($this->dataSchema) {
+            return $this->dataSchema->getList($result);
+        }
+
+        return $result;
     }
 
     /**

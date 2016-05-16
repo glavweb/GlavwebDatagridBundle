@@ -11,6 +11,8 @@
 
 namespace Glavweb\DatagridBundle;
 
+use Glavweb\DatagridBundle\DependencyInjection\Compiler\DataTransformerPass;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
@@ -20,4 +22,14 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class GlavwebDatagridBundle extends Bundle
-{}
+{
+    /**
+     * @param ContainerBuilder $container
+     */
+    public function build(ContainerBuilder $container)
+    {
+        parent::build($container);
+
+        $container->addCompilerPass(new DataTransformerPass());
+    }
+}

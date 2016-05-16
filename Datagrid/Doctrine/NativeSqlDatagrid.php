@@ -13,6 +13,7 @@ namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 
 use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
+use Glavweb\DatagridBundle\DataSchema\DataSchema;
 
 /**
  * Class NativeSqlDatagrid
@@ -28,22 +29,29 @@ class NativeSqlDatagrid extends AbstractDatagrid
     protected $query;
 
     /**
+     * @var DataSchema
+     */
+    private $dataSchema;
+
+    /**
      * @var NativeQuery
      */
     protected $queryCount;
 
     /**
      * @param NativeQuery $query
+     * @param DataSchema $dataSchema
      * @param array $orderings
      * @param int $firstResult
      * @param int $maxResults
      */
-    public function __construct(NativeQuery $query, array $orderings = null, $firstResult = 0, $maxResults = null)
+    public function __construct(NativeQuery $query, DataSchema $dataSchema, array $orderings = null, $firstResult = 0, $maxResults = null)
     {
         $this->query       = $query;
         $this->queryCount  = clone $query;
         $this->queryCount->setParameters($query->getParameters());
 
+        $this->dataSchema  = $dataSchema;
         $this->orderings   = (array)$orderings;
         $this->firstResult = (int)$firstResult;
         $this->maxResults  = $maxResults;
@@ -79,7 +87,12 @@ class NativeSqlDatagrid extends AbstractDatagrid
 
         $query->setSQL($sql);
 
-        return $query->getResult($this->getHydrationMode());
+        $result = $query->getResult($this->getHydrationMode());
+        if ($this->dataSchema) {
+            return $this->dataSchema->getList($result);
+        }
+
+        return $result;
     }
 
     /**

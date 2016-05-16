@@ -41,7 +41,7 @@ abstract class AbstractDatagrid implements DatagridInterface
     /**
      * @var int|string
      */
-    protected $hydrationMode = AbstractQuery::HYDRATE_OBJECT;
+    protected $hydrationMode = AbstractQuery::HYDRATE_ARRAY;
 
     /**
      * @return array

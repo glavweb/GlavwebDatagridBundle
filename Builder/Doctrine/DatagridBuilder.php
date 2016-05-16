@@ -15,7 +15,6 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\ResultSetMapping;
@@ -26,6 +25,8 @@ use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
 use Glavweb\DatagridBundle\Datagrid\Doctrine\Datagrid;
 use Glavweb\DatagridBundle\Datagrid\Doctrine\NativeSqlDatagrid;
 use Glavweb\DatagridBundle\Datagrid\EmptyDatagrid;
+use Glavweb\DatagridBundle\DataSchema\DataSchema;
+use Glavweb\DatagridBundle\DataSchema\DataSchemaFactory;
 use Glavweb\DatagridBundle\Exception\Exception;
 use Glavweb\DatagridBundle\Filter\Doctrine\FilterFactory;
 use Glavweb\DatagridBundle\Filter\Doctrine\Filter;
@@ -48,6 +49,11 @@ class DatagridBuilder implements DatagridBuilderInterface
      * @var FilterFactory
      */
     protected $filterFactory;
+
+    /**
+     * @var DataSchemaFactory
+     */
+    private $dataSchemaFactory;
 
     /**
      * @var array
@@ -85,6 +91,11 @@ class DatagridBuilder implements DatagridBuilderInterface
     private $joinMap;
 
     /**
+     * @var DataSchema
+     */
+    private $dataSchema;
+
+    /**
      * @var Filter[]
      */
     private $filters = [];
@@ -95,20 +106,17 @@ class DatagridBuilder implements DatagridBuilderInterface
     private $filterNamesByParams = [];
 
     /**
-     * @var array
-     */
-    private $scopeConfig;
-
-    /**
      * DoctrineDatagridBuilder constructor.
      *
      * @param Registry $doctrine
      * @param FilterFactory $filterFactory
+     * @param DataSchemaFactory $dataSchemaFactory
      */
-    public function __construct(Registry $doctrine, FilterFactory $filterFactory)
+    public function __construct(Registry $doctrine, FilterFactory $filterFactory, DataSchemaFactory $dataSchemaFactory)
     {
-        $this->doctrine      = $doctrine;
-        $this->filterFactory = $filterFactory;
+        $this->doctrine          = $doctrine;
+        $this->filterFactory     = $filterFactory;
+        $this->dataSchemaFactory = $dataSchemaFactory;
     }
 
     /**
@@ -236,7 +244,12 @@ class DatagridBuilder implements DatagridBuilderInterface
      */
     public function setJoinMap(JoinMap $joinMap)
     {
-        $this->joinMap = $joinMap;
+        if ($this->joinMap) {
+            $this->joinMap->merge($joinMap);
+
+        } else {
+            $this->joinMap = $joinMap;
+        }
 
         return $this;
     }
@@ -247,25 +260,6 @@ class DatagridBuilder implements DatagridBuilderInterface
     public function getJoinMap()
     {
         return $this->joinMap;
-    }
-
-    /**
-     * @param array $scopeConfig
-     * @return $this
-     */
-    public function setScopeConfig(array $scopeConfig)
-    {
-        $this->scopeConfig = $scopeConfig;
-
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getScopeConfig()
-    {
-        return $this->scopeConfig;
     }
 
     /**
@@ -319,7 +313,17 @@ class DatagridBuilder implements DatagridBuilderInterface
 
         return $this;
     }
-    
+
+    /**
+     * @param string $dataSchemaFile
+     * @param string $scopeFile
+     */
+    public function setDataSchema($dataSchemaFile, $scopeFile = null)
+    {
+        $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile);
+        $this->dataSchema = $dataSchema;
+    }
+
     /**
      * @param array $parameters
      * @param \Closure $callback
@@ -339,7 +343,7 @@ class DatagridBuilder implements DatagridBuilderInterface
                 $callback($queryBuilder, $alias);
             }
 
-            $datagrid = new Datagrid($queryBuilder, $orderings, $firstResult, $maxResults, $alias);
+            $datagrid = new Datagrid($queryBuilder, $this->dataSchema, $orderings, $firstResult, $maxResults, $alias);
 
         } catch (Exception $e) {
             $datagrid = new EmptyDatagrid();
@@ -381,7 +385,7 @@ class DatagridBuilder implements DatagridBuilderInterface
             $orderings = $this->transformOrderingForNativeSql((array)$orderings, $rsm);
             $this->setOrderings($orderings);
 
-            $datagrid = new NativeSqlDatagrid($query, $orderings, $firstResult, $maxResults, $alias);
+            $datagrid = new NativeSqlDatagrid($query, $this->dataSchema, $orderings, $firstResult, $maxResults, $alias);
 
         } catch (Exception $e) {
             $datagrid = new EmptyDatagrid();
@@ -404,11 +408,24 @@ class DatagridBuilder implements DatagridBuilderInterface
         $queryBuilder  = $repository->createQueryBuilder($alias);
 
         // Apply joins
-        $joinMap = $this->createJoinMapByScopeConfig($this->getScopeConfig(), $alias, $this->getJoinMap());
+        $joinMap = $this->getJoinMap();
+
+        if ($this->dataSchema) {
+            $joinMapFromDataSchema = $this->createJoinMapByDataSchema($this->dataSchema);
+            if ($joinMapFromDataSchema) {
+                if ($joinMap) {
+                    $joinMap->merge($joinMapFromDataSchema);
+                } else {
+                    $joinMap = $joinMapFromDataSchema;
+                }
+            }
+        }
+
         if ($joinMap) {
             $joinMap->apply($queryBuilder);
         }
 
+        // Apply filter
         $parameters = $this->clearParameters($parameters);
         foreach ($parameters as $key => $parameter) {
             if (!$parameter || !is_scalar($parameter)) {
@@ -608,24 +625,24 @@ class DatagridBuilder implements DatagridBuilderInterface
     }
 
     /**
-     * @param array $scopeConfig
-     * @param string $alias
+     * @param DataSchema $dataSchema
      * @param JoinMap $joinMap
      * @return JoinMap
      */
-    protected function createJoinMapByScopeConfig(array $scopeConfig, $alias, JoinMap $joinMap = null)
+    protected function createJoinMapByDataSchema(DataSchema $dataSchema, JoinMap $joinMap = null)
     {
+        $alias = $this->alias;
+
+        if (!$alias) {
+            throw new \RuntimeException('Alias not defined.');
+        }
+
         if (!$joinMap) {
             $joinMap = new JoinMap($alias);
         }
 
-        /** @todo Move "joinCollections" option to scope config */
-        $joinCollections = false;
-        if (!$joinCollections) {
-            $scopeConfig = $this->cleanCollectionsFromScope($scopeConfig);
-        }
-        
-        $joins = $this->getJoinsByScopeConfig($scopeConfig, $alias);
+        $dataSchemaConfig = $dataSchema->getConfiguration();
+        $joins = $this->getJoinsByDataSchemaConfig($dataSchemaConfig, $alias);
         foreach ($joins as $fullPath => $joinData) {
             $pathElements = explode('.', $fullPath);
             $field = array_pop($pathElements);
@@ -636,69 +653,66 @@ class DatagridBuilder implements DatagridBuilderInterface
             }
 
             $joinFields = $joinData['fields'];
-            $joinMap->join($path, $field, true, $joinFields);
+            $joinType   = $joinData['joinType'];
+            $joinMap->join($path, $field, true, $joinFields, $joinType);
         }
 
         return $joinMap;
     }
 
     /**
-     * @param array $scopeConfig
+     * @param array $config
      * @param string $firstAlias
      * @param string $alias
      * @param array $result
      * @return array
      */
-    protected function getJoinsByScopeConfig(array $scopeConfig, $firstAlias, $alias = null, &$result = [])
+    protected function getJoinsByDataSchemaConfig(array $config, $firstAlias, $alias = null, &$result = [])
     {
         if (!$alias) {
             $alias = $firstAlias;
         }
 
-        foreach ($scopeConfig as $key => $value) {
-            if (is_array($value)) {
-                $join       = $alias . '.' . $key;
-                $joinAlias  = str_replace('.', '_', $join);
-                $joinFields = array_filter($value, function ($value) {
-                    return !is_array($value);
-                });
-                $joinFields = array_keys($joinFields);
+        if (isset($config['properties'])) {
+            $properties = $config['properties'];
+            foreach ($properties as $key => $value) {
+                if (isset($value['properties'])) {
+                    $joinType = isset($value['join']) && $value['join'] != 'none' ? $value['join'] : false;
 
-                $result[$join] = [
-                    'alias'  => $joinAlias,
-                    'fields' => $joinFields
-                ];
+                    if (!$joinType) {
+                        continue;
+                    }
 
-                $alias = $joinAlias;
-                $this->getJoinsByScopeConfig($value, $firstAlias, $alias, $result);
-                $alias = $firstAlias;
-            }
-        }
+                    $join       = $alias . '.' . $key;
+                    $joinAlias  = str_replace('.', '_', $join);
 
-        return $result;
-    }
+                    // Join fields
+                    $joinFields = [];
+                    foreach ($value['properties'] as $propertyName => $propertyData) {
+                        $isValid = (isset($propertyData['from_db']) && $propertyData['from_db']);
 
-    /**
-     * @param array $scopeConfig
-     * @return array
-     * @throws \Doctrine\ORM\Mapping\MappingException
-     */
-    private function cleanCollectionsFromScope(array $scopeConfig)
-    {
-        $classMetadata = $this->getClassMetadata();
+                        if ($isValid) {
+                            $joinFields[] = $propertyName;
+                        }
 
-        foreach ($scopeConfig as $fieldName => $value) {
-            if (is_array($value) && $classMetadata->hasAssociation($fieldName)) {
-                $associationMapping = $classMetadata->getAssociationMapping($fieldName);
-                $type               = isset($associationMapping['type']) ? $associationMapping['type'] : null;
-                $isCollection       = in_array($type, [ClassMetadataInfo::ONE_TO_MANY, ClassMetadataInfo::MANY_TO_MANY]);
+                        if (isset($propertyData['source'])) {
+                            $joinFields[] = $propertyData['source'];
+                        }
+                    }
 
-                if ($isCollection) {
-                    unset($scopeConfig[$fieldName]);
+                    $result[$join] = [
+                        'alias'    => $joinAlias,
+                        'fields'   => $joinFields,
+                        'joinType' => $joinType
+                    ];
+
+                    $alias = $joinAlias;
+                    $this->getJoinsByDataSchemaConfig($value, $firstAlias, $alias, $result);
+                    $alias = $firstAlias;
                 }
             }
         }
 
-        return $scopeConfig;
+        return $result;
     }
 }

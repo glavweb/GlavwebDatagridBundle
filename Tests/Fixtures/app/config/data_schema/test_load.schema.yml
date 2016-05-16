@@ -1,0 +1,5 @@
+schema:
+    class: AppBundle\Entity\Article
+    properties:
+        id:  # integer
+        name: # string
