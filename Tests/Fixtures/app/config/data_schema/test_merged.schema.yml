@@ -1,0 +1,8 @@
+imports:
+    - {resource: test_load.schema.yml}
+
+schema:
+    properties:
+        slug: # string
+        body: # string
+

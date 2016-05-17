@@ -24,21 +24,50 @@ use Symfony\Component\Config\FileLocator;
 class ScopeYamlLoaderTest extends WebTestCase
 {
     /**
+     * @var ScopeYamlLoader
+     */
+    private $scopeLoader;
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $scope = $this->getContainer()->getParameter('glavweb_datagrid.scope_dir');
+        $this->scopeLoader = new ScopeYamlLoader(new FileLocator($scope));
+    }
+
+    /**
      * testGetConfiguration
      */
     public function testGetConfiguration()
     {
-        $scope = $this->getContainer()->getParameter('glavweb_datagrid.scope_dir');
-        $scopeLoader = new ScopeYamlLoader(new FileLocator($scope));
-        $scopeLoader->load('article/view.yml');
+        $this->scopeLoader->load('article/list.yml');
 
-        $configuration = $scopeLoader->getConfiguration();
+        $configuration = $this->scopeLoader->getConfiguration();
 
         $this->assertEquals($configuration, [
             'id'   => null,
             'name' => null,
-            'slug' => null,
-            'body' => null,
         ]);
+    }
+
+    /**
+     * testGetConfiguration
+     */
+    public function testMergedConfiguration()
+    {
+        $this->scopeLoader->load('article/view.yml');
+
+        $configuration = $this->scopeLoader->getConfiguration();
+
+        $this->assertEquals([
+            'id' => null,
+            'name' => null,
+            'slug' => null,
+            'body' => null
+        ], $configuration);
     }
 }

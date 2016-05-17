@@ -1,5 +1,6 @@
+imports:
+    - {resource: list.yml}
+
 scope:
-    id: # integer
-    name: # string
     slug: # string
     body: # text

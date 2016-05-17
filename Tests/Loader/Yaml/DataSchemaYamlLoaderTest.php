@@ -24,15 +24,29 @@ use Symfony\Component\Config\FileLocator;
 class DataSchemaYamlLoaderTest extends WebTestCase
 {
     /**
+     * @var DataSchemaYamlLoader
+     */
+    private $dataSchemaLoader;
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $dataSchemaDir = $this->getContainer()->getParameter('glavweb_datagrid.data_schema_dir');
+        $this->dataSchemaLoader = new DataSchemaYamlLoader(new FileLocator($dataSchemaDir));
+    }
+
+    /**
      * testGetConfiguration
      */
     public function testGetConfiguration()
     {
-        $dataSchemaDir = $this->getContainer()->getParameter('glavweb_datagrid.data_schema_dir');
-        $dataSchemaLoader = new DataSchemaYamlLoader(new FileLocator($dataSchemaDir));
-        $dataSchemaLoader->load('test_load.schema.yml');
+        $this->dataSchemaLoader->load('test_load.schema.yml');
 
-        $configuration = $dataSchemaLoader->getConfiguration();
+        $configuration = $this->dataSchemaLoader->getConfiguration();
 
         $this->assertEquals($configuration, [
             'class' => 'AppBundle\Entity\Article',
@@ -41,5 +55,25 @@ class DataSchemaYamlLoaderTest extends WebTestCase
                 'name' => null
             ]
         ]);
+    }
+
+    /**
+     * testGetConfiguration
+     */
+    public function testMergedConfiguration()
+    {
+        $this->dataSchemaLoader->load('test_merged.schema.yml');
+
+        $configuration = $this->dataSchemaLoader->getConfiguration();
+
+        $this->assertEquals([
+            'class' => 'AppBundle\Entity\Article',
+            'properties' => [
+                'id' => null,
+                'name' => null,
+                'slug' => null,
+                'body' => null
+            ]
+        ], $configuration);
     }
 }
