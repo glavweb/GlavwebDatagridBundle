@@ -39,4 +39,6 @@ class DataSchemaTest extends WebTestCase
         $this->assertArrayHasKey('class', $dataSchema->getConfiguration());
     }
 
+
+
 }

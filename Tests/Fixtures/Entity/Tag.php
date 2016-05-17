@@ -15,20 +15,20 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Article
+ * Tag
  *
  * @author Nilov Andrey <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  *
- * @ORM\Table(name="articles")
+ * @ORM\Table(name="tags")
  * @ORM\Entity
  */
-class Article
+class Tag
 {
     /**
      * @var integer
      *
-     * @ORM\Column(name="id", type="integer")
+     * @ORM\Column(name="id", type="integer", options={"comment": "ID"})
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
@@ -37,28 +37,14 @@ class Article
     /**
      * @var string
      *
-     * @ORM\Column(name="name", type="string")
+     * @ORM\Column(name="name", type="string", length=255, options={"comment": "Название"})
      */
     private $name;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="slug", type="string")
-     */
-    private $slug;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="body", type="text")
-     */
-    private $body;
-
-    /**
      * @var ArrayCollection
      *
-     * @ORM\ManyToMany(targetEntity="Event", inversedBy="articles")
+     * @ORM\ManyToMany(targetEntity="Event", mappedBy="tags")
      */
     private $events;
 
@@ -85,7 +71,7 @@ class Article
      *
      * @param string $name
      *
-     * @return Article
+     * @return Tag
      */
     public function setName($name)
     {
@@ -105,59 +91,11 @@ class Article
     }
 
     /**
-     * Set slug
-     *
-     * @param string $slug
-     *
-     * @return Article
-     */
-    public function setSlug($slug)
-    {
-        $this->slug = $slug;
-
-        return $this;
-    }
-
-    /**
-     * Get slug
-     *
-     * @return string
-     */
-    public function getSlug()
-    {
-        return $this->slug;
-    }
-
-    /**
-     * Set body
-     *
-     * @param string $body
-     *
-     * @return Article
-     */
-    public function setBody($body)
-    {
-        $this->body = $body;
-
-        return $this;
-    }
-
-    /**
-     * Get body
-     *
-     * @return string
-     */
-    public function getBody()
-    {
-        return $this->body;
-    }
-
-    /**
      * Add event
      *
      * @param Event $event
      *
-     * @return Article
+     * @return Tag
      */
     public function addEvent(Event $event)
     {

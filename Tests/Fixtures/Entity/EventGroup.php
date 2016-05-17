@@ -15,15 +15,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Article
+ * EventGroup
  *
  * @author Nilov Andrey <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  *
- * @ORM\Table(name="articles")
+ * @ORM\Table(name="event_groups")
  * @ORM\Entity
  */
-class Article
+class EventGroup
 {
     /**
      * @var integer
@@ -42,23 +42,9 @@ class Article
     private $name;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="slug", type="string")
-     */
-    private $slug;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="body", type="text")
-     */
-    private $body;
-
-    /**
      * @var ArrayCollection
      *
-     * @ORM\ManyToMany(targetEntity="Event", inversedBy="articles")
+     * @ORM\OneToMany(targetEntity="Event", mappedBy="eventGroup")
      */
     private $events;
 
@@ -85,7 +71,7 @@ class Article
      *
      * @param string $name
      *
-     * @return Article
+     * @return EventGroup
      */
     public function setName($name)
     {
@@ -105,59 +91,11 @@ class Article
     }
 
     /**
-     * Set slug
-     *
-     * @param string $slug
-     *
-     * @return Article
-     */
-    public function setSlug($slug)
-    {
-        $this->slug = $slug;
-
-        return $this;
-    }
-
-    /**
-     * Get slug
-     *
-     * @return string
-     */
-    public function getSlug()
-    {
-        return $this->slug;
-    }
-
-    /**
-     * Set body
-     *
-     * @param string $body
-     *
-     * @return Article
-     */
-    public function setBody($body)
-    {
-        $this->body = $body;
-
-        return $this;
-    }
-
-    /**
-     * Get body
-     *
-     * @return string
-     */
-    public function getBody()
-    {
-        return $this->body;
-    }
-
-    /**
      * Add event
      *
      * @param Event $event
      *
-     * @return Article
+     * @return EventGroup
      */
     public function addEvent(Event $event)
     {
