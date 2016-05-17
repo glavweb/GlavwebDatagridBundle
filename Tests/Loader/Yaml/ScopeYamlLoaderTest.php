@@ -48,10 +48,10 @@ class ScopeYamlLoaderTest extends WebTestCase
 
         $configuration = $this->scopeLoader->getConfiguration();
 
-        $this->assertEquals($configuration, [
+        $this->assertEquals([
             'id'   => null,
             'name' => null,
-        ]);
+        ], $configuration);
     }
 
     /**

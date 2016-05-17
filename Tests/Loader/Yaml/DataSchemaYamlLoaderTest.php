@@ -48,13 +48,13 @@ class DataSchemaYamlLoaderTest extends WebTestCase
 
         $configuration = $this->dataSchemaLoader->getConfiguration();
 
-        $this->assertEquals($configuration, [
+        $this->assertEquals([
             'class' => 'AppBundle\Entity\Article',
             'properties' => [
                 'id' => null,
                 'name' => null
             ]
-        ]);
+        ], $configuration);
     }
 
     /**
