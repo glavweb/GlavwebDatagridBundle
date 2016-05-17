@@ -1,5 +1,5 @@
 .idea/
 composer.lock
 vendor/*
-Tests/app/cache
-Tests/app/logs
+Tests/Fixtures/app/cache
+Tests/Fixtures/app/logs
