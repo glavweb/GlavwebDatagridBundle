@@ -58,12 +58,20 @@ class ScopeYamlLoader extends FileLoader
     }
 
     /**
+     * @return array
+     */
+    public function getConfiguration()
+    {
+        return $this->configuration;
+    }
+
+    /**
      * @param string $file
      * @return mixed
      */
     private function loadFile($file)
     {
-        return Yaml::parse($file);
+        return Yaml::parse(file_get_contents($file));
     }
 
     /**
@@ -92,14 +100,6 @@ class ScopeYamlLoader extends FileLoader
             $this->setCurrentDir($defaultDirectory);
             $this->import($import['resource'], null, isset($import['ignore_errors']) ? (bool) $import['ignore_errors'] : false, $file);
         }
-    }
-
-    /**
-     * @return array
-     */
-    public function getConfiguration()
-    {
-        return $this->configuration;
     }
 
     /**

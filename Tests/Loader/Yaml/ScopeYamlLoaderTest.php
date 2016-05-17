@@ -11,7 +11,9 @@
 
 namespace Glavweb\DatagridBundle\Tests\Loader\Yaml;
 
+use Glavweb\DatagridBundle\Loader\Yaml\ScopeYamlLoader;
 use Glavweb\DatagridBundle\Tests\WebTestCase;
+use Symfony\Component\Config\FileLocator;
 
 /**
  * Class ScopeYamlLoaderTest
@@ -21,4 +23,22 @@ use Glavweb\DatagridBundle\Tests\WebTestCase;
  */
 class ScopeYamlLoaderTest extends WebTestCase
 {
+    /**
+     * testGetConfiguration
+     */
+    public function testGetConfiguration()
+    {
+        $scope = $this->getContainer()->getParameter('glavweb_datagrid.scope_dir');
+        $scopeLoader = new ScopeYamlLoader(new FileLocator($scope));
+        $scopeLoader->load('article/view.yml');
+
+        $configuration = $scopeLoader->getConfiguration();
+
+        $this->assertEquals($configuration, [
+            'id'   => null,
+            'name' => null,
+            'slug' => null,
+            'body' => null,
+        ]);
+    }
 }

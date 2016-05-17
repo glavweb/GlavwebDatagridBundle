@@ -30,7 +30,7 @@ class DataSchemaTest extends WebTestCase
     /**
      * testGetConfigurationTest
      */
-    public function testGetConfigurationTest()
+    public function testGetConfiguration()
     {
         /** @var DataSchemaFactory $dataSchemaFactory */
         $dataSchemaFactory = $this->getContainer()->get('glavweb_datagrid.data_schema_factory');
