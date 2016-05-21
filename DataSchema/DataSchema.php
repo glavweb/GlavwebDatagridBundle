@@ -120,8 +120,20 @@ class DataSchema
 
                         break;
 
+                    case ClassMetadata::ONE_TO_MANY:
+                        $modelData = $this->entityPersister->getOneToManyData($associationMapping, $data['id'], $info['properties']);
+                        $preparedData[$key] = $this->getList($modelData, $info);
+
+                        break;
+
                     case ClassMetadata::MANY_TO_ONE:
                         $modelData = $this->entityPersister->getManyToOneData($associationMapping, $data['id'], $info['properties']);
+                        $preparedData[$key] = $this->getData($modelData, $info);
+
+                        break;
+
+                    case ClassMetadata::ONE_TO_ONE:
+                        $modelData = $this->entityPersister->getOneToOneData($associationMapping, $data['id'], $info['properties']);
                         $preparedData[$key] = $this->getData($modelData, $info);
 
                         break;

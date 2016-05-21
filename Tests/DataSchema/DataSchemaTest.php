@@ -13,7 +13,9 @@ namespace Glavweb\DatagridBundle\Tests\DataSchema;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Query;
 use Glavweb\DatagridBundle\DataSchema\DataSchemaFactory;
 use Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry;
 use Glavweb\DatagridBundle\Persister\EntityPersister;
@@ -28,17 +30,117 @@ use Glavweb\DatagridBundle\Tests\WebTestCase;
 class DataSchemaTest extends WebTestCase
 {
     /**
-     * testGetConfigurationTest
+     * @var DataSchemaFactory
+     */
+    private $dataSchemaFactory;
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $this->dataSchemaFactory = $this->getContainer()->get('glavweb_datagrid.data_schema_factory');
+    }
+
+    /**
+     * testGetConfiguration
      */
     public function testGetConfiguration()
     {
-        /** @var DataSchemaFactory $dataSchemaFactory */
-        $dataSchemaFactory = $this->getContainer()->get('glavweb_datagrid.data_schema_factory');
-        $dataSchema = $dataSchemaFactory->createDataSchema('article.schema.yml');
+        $dataSchema = $this->dataSchemaFactory->createDataSchema('test_load.schema.yml');
 
         $this->assertArrayHasKey('class', $dataSchema->getConfiguration());
     }
 
+    /**
+     * testSimpleData
+     */
+    public function testSimpleData()
+    {
+        $dataSchema = $this->dataSchemaFactory->createDataSchema('simple_data.schema.yml');
+        $articleData = $this->getArticleDataByName('Article 1');
 
+        $this->assertEquals($articleData, $dataSchema->getData($articleData));
+    }
+
+    /**
+     * testJoinsFirstLevel
+     */
+    public function testEmbedsFirstLevel()
+    {
+        $dataSchema = $this->dataSchemaFactory->createDataSchema('test_embeds_first_level.schema.yml');
+        $eventData = $this->getEventDataByName('Event 1');
+
+        $this->assertEquals([
+            'name' => 'Event 1',
+
+            'eventDetail' => [
+                'body' => 'Body for event detail 1'
+            ],
+
+            'eventGroup' => [
+                'name' => 'Event group 1'
+            ],
+
+            'sessions' => [
+                ['name' => 'Session 1'],
+                ['name' => 'Session 2']
+            ],
+
+            'tags' => [
+                ['name' => 'Tag 1'],
+                ['name' => 'Tag 2']
+            ]
+
+        ], $dataSchema->getData($eventData));
+    }
+
+    /**
+     * @param string $name
+     * @return array
+     * @throws \Exception
+     */
+    protected function getArticleDataByName($name)
+    {
+        /** @var Registry $doctrine */
+        $doctrine = $this->getContainer()->get('doctrine');
+
+        /** @var EntityRepository $articleRepository */
+        $articleRepository = $doctrine->getRepository('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article');
+
+        $qb = $articleRepository->createQueryBuilder('t')
+            ->where('t.name = :name')
+            ->setParameter('name', $name)
+        ;
+
+        $data = (array)$qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY)->getOneOrNullResult();
+
+        return $data;
+    }
+
+    /**
+     * @param string $name
+     * @return array
+     * @throws \Exception
+     */
+    protected function getEventDataByName($name)
+    {
+        /** @var Registry $doctrine */
+        $doctrine = $this->getContainer()->get('doctrine');
+
+        /** @var EntityRepository $eventRepository */
+        $eventRepository = $doctrine->getRepository('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Event');
+
+        $qb = $eventRepository->createQueryBuilder('t')
+            ->where('t.name = :name')
+            ->setParameter('name', $name)
+        ;
+
+        $data = (array)$qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY)->getOneOrNullResult();
+
+        return $data;
+    }
 
 }

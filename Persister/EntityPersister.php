@@ -13,6 +13,7 @@ namespace Glavweb\DatagridBundle\Persister;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Query;
 
 /**
  * Class EntityPersister
@@ -55,7 +56,33 @@ class EntityPersister
      * @param array $properties
      * @return array
      */
+    public function getOneToManyData(array $associationMapping, $id, array $properties)
+    {
+        $query = $this->getQuery($associationMapping, $id, $properties);
+
+        return $query->getArrayResult();
+    }
+
+    /**
+     * @param array $associationMapping
+     * @param mixed $id
+     * @param array $properties
+     * @return array
+     */
     public function getManyToOneData(array $associationMapping, $id, array $properties)
+    {
+        $query = $this->getQuery($associationMapping, $id, $properties);
+
+        return (array)$query->getOneOrNullResult();
+    }
+
+    /**
+     * @param array $associationMapping
+     * @param mixed $id
+     * @param array $properties
+     * @return array
+     */
+    public function getOneToOneData(array $associationMapping, $id, array $properties)
     {
         $query = $this->getQuery($associationMapping, $id, $properties);
 
@@ -68,7 +95,7 @@ class EntityPersister
      */
     protected function getSelectedFields(array $properties)
     {
-        $selectFields = [];
+        $selectFields = ['id'];
         foreach ($properties as $propertyName => $propertyData) {
             $isValid = (isset($propertyData['from_db']) && $propertyData['from_db']);
 
@@ -110,6 +137,6 @@ class EntityPersister
             ->setParameter('sourceId', $id)
         ;
 
-        return $qb->getQuery();
+        return $qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY);
     }
 }
