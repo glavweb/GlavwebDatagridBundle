@@ -98,6 +98,64 @@ class DataSchemaTest extends WebTestCase
     }
 
     /**
+     * testJoinsFirstLevel
+     */
+    public function testEmbedsSecondLevel()
+    {
+        $dataSchema = $this->dataSchemaFactory->createDataSchema('test_embeds_second_level.schema.yml');
+        $articleData = $this->getArticleDataByName('Article 1');
+
+        $this->assertEquals([
+            'name' => 'Article 1',
+            'events' => [
+                [
+                    'name' => 'Event 1',
+                    'eventDetail' => [
+                        'body' => 'Body for event detail 1'
+                    ],
+
+                    'eventGroup' => [
+                        'name' => 'Event group 1'
+                    ],
+
+                    'sessions' => [
+                        ['name' => 'Session 1'],
+                        ['name' => 'Session 2']
+                    ],
+
+                    'tags' => [
+                        ['name' => 'Tag 1'],
+                        ['name' => 'Tag 2']
+                    ]
+                ],
+                [
+                    'name' => 'Event 2',
+                    'eventDetail' => [
+                        'body' => 'Body for event detail 2'
+                    ],
+
+                    'eventGroup' => [
+                        'name' => 'Event group 1'
+                    ],
+
+                    'sessions' => [
+                        ['name' => 'Session 3'],
+                        ['name' => 'Session 4'],
+                        ['name' => 'Session 5'],
+                        ['name' => 'Session 6'],
+                        ['name' => 'Session 7']
+                    ],
+
+                    'tags' => [
+                        ['name' => 'Tag 3']
+                    ]
+                ]
+            ]
+
+        ], $dataSchema->getData($articleData));
+    }
+
+    /**
      * @param string $name
      * @return array
      * @throws \Exception

@@ -1,0 +1,33 @@
+schema:
+    class: Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article
+    properties:
+        name:
+
+        events:
+            join: none
+            properties:
+                name:
+
+                # Test oneToOne
+                eventDetail:
+                    join: none
+                    properties:
+                        body:
+
+                # Test manyToOne
+                eventGroup:
+                    join: none
+                    properties:
+                        name:
+
+                # Test oneToMany
+                sessions:
+                    join: none
+                    properties:
+                        name:
+
+                # Test manyToMany
+                tags:
+                    join: left
+                    properties:
+                        name:
