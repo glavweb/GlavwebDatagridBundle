@@ -1,0 +1,6 @@
+schema:
+    class: Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article
+    properties:
+        name:
+        slug:
+        body:

@@ -56,6 +56,27 @@ class Article
     private $body;
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="count_events", type="integer")
+     */
+    private $countEvents;
+
+    /**
+     * @var boolean
+     *
+     * @ORM\Column(name="is_publish", type="boolean")
+     */
+    private $publish;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="publish_at", type="datetime")
+     */
+    private $publishAt;
+
+    /**
      * @var ArrayCollection
      *
      * @ORM\ManyToMany(targetEntity="Event", inversedBy="articles")
@@ -150,6 +171,62 @@ class Article
     public function getBody()
     {
         return $this->body;
+    }
+
+    /**
+     * @param int $countEvents
+     */
+    public function setCountEvents($countEvents)
+    {
+        $this->countEvents = $countEvents;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCountEvents()
+    {
+        return $this->countEvents;
+    }
+
+    /**
+     * @param boolean $publish
+     *
+     * @return Article
+     */
+    public function setPublish($publish)
+    {
+        $this->publish = $publish;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isPublish()
+    {
+        return $this->publish;
+    }
+
+    /**
+     * @param \DateTime $publishAt
+     *
+     * @return Article
+     */
+    public function setPublishAt($publishAt)
+    {
+        $this->publishAt = $publishAt;
+
+        return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getPublishAt()
+    {
+        return $this->publishAt;
     }
 
     /**

@@ -62,7 +62,12 @@ class DataSchemaTest extends WebTestCase
         $dataSchema = $this->dataSchemaFactory->createDataSchema('simple_data.schema.yml');
         $articleData = $this->getArticleDataByName('Article 1');
 
-        $this->assertEquals($articleData, $dataSchema->getData($articleData));
+        $this->assertEquals([
+            'id'   => $articleData['id'],
+            'name' => $articleData['name'],
+            'slug' => $articleData['slug'],
+            'body' => $articleData['body'],
+        ], $dataSchema->getData($articleData));
     }
 
     /**

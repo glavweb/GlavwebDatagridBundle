@@ -1,0 +1,9 @@
+schema:
+    class: Glavweb\DatagridBundle\Tests\Fixtures\Entity\Event
+    properties:
+        name:
+
+        articles:
+            join: none
+            properties:
+                name:

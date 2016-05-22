@@ -49,7 +49,7 @@ class DataSchemaYamlLoaderTest extends WebTestCase
         $configuration = $this->dataSchemaLoader->getConfiguration();
 
         $this->assertEquals([
-            'class' => 'AppBundle\Entity\Article',
+            'class' => 'Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article',
             'properties' => [
                 'id' => null,
                 'name' => null
@@ -67,7 +67,7 @@ class DataSchemaYamlLoaderTest extends WebTestCase
         $configuration = $this->dataSchemaLoader->getConfiguration();
 
         $this->assertEquals([
-            'class' => 'AppBundle\Entity\Article',
+            'class' => 'Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article',
             'properties' => [
                 'id' => null,
                 'name' => null,
