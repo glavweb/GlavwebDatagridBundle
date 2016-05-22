@@ -317,11 +317,14 @@ class DatagridBuilder implements DatagridBuilderInterface
     /**
      * @param string $dataSchemaFile
      * @param string $scopeFile
+     * @return $this
      */
     public function setDataSchema($dataSchemaFile, $scopeFile = null)
     {
         $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile);
         $this->dataSchema = $dataSchema;
+
+        return $this;
     }
 
     /**
@@ -687,18 +690,7 @@ class DatagridBuilder implements DatagridBuilderInterface
                     $joinAlias  = str_replace('.', '_', $join);
 
                     // Join fields
-                    $joinFields = [];
-                    foreach ($value['properties'] as $propertyName => $propertyData) {
-                        $isValid = (isset($propertyData['from_db']) && $propertyData['from_db']);
-
-                        if ($isValid) {
-                            $joinFields[] = $propertyName;
-                        }
-
-                        if (isset($propertyData['source'])) {
-                            $joinFields[] = $propertyData['source'];
-                        }
-                    }
+                    $joinFields = DataSchema::getDatabaseFields($value['properties']);
 
                     $result[$join] = [
                         'alias'    => $joinAlias,
@@ -706,9 +698,7 @@ class DatagridBuilder implements DatagridBuilderInterface
                         'joinType' => $joinType
                     ];
 
-                    $alias = $joinAlias;
-                    $this->getJoinsByDataSchemaConfig($value, $firstAlias, $alias, $result);
-                    $alias = $firstAlias;
+                    $this->getJoinsByDataSchemaConfig($value, $firstAlias, $joinAlias, $result);
                 }
             }
         }

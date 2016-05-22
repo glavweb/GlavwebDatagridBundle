@@ -40,12 +40,12 @@ class EntityPersister
     /**
      * @param array $associationMapping
      * @param mixed $id
-     * @param array $properties
+     * @param array $databaseFields
      * @return array
      */
-    public function getManyToManyData(array $associationMapping, $id, array $properties)
+    public function getManyToManyData(array $associationMapping, $id, array $databaseFields)
     {
-        $query = $this->getQuery($associationMapping, $id, $properties);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields);
 
         return $query->getArrayResult();
     }
@@ -53,12 +53,12 @@ class EntityPersister
     /**
      * @param array $associationMapping
      * @param mixed $id
-     * @param array $properties
+     * @param array $databaseFields
      * @return array
      */
-    public function getOneToManyData(array $associationMapping, $id, array $properties)
+    public function getOneToManyData(array $associationMapping, $id, array $databaseFields)
     {
-        $query = $this->getQuery($associationMapping, $id, $properties);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields);
 
         return $query->getArrayResult();
     }
@@ -66,12 +66,12 @@ class EntityPersister
     /**
      * @param array $associationMapping
      * @param mixed $id
-     * @param array $properties
+     * @param array $databaseFields
      * @return array
      */
-    public function getManyToOneData(array $associationMapping, $id, array $properties)
+    public function getManyToOneData(array $associationMapping, $id, array $databaseFields)
     {
-        $query = $this->getQuery($associationMapping, $id, $properties);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields);
 
         return (array)$query->getOneOrNullResult();
     }
@@ -79,45 +79,23 @@ class EntityPersister
     /**
      * @param array $associationMapping
      * @param mixed $id
-     * @param array $properties
+     * @param array $databaseFields
      * @return array
      */
-    public function getOneToOneData(array $associationMapping, $id, array $properties)
+    public function getOneToOneData(array $associationMapping, $id, array $databaseFields)
     {
-        $query = $this->getQuery($associationMapping, $id, $properties);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields);
 
         return (array)$query->getOneOrNullResult();
-    }
-
-    /**
-     * @param array $properties
-     * @return array
-     */
-    protected function getSelectedFields(array $properties)
-    {
-        $selectFields = ['id'];
-        foreach ($properties as $propertyName => $propertyData) {
-            $isValid = (isset($propertyData['from_db']) && $propertyData['from_db']);
-
-            if ($isValid) {
-                $selectFields[] = $propertyName;
-            }
-
-            if (isset($propertyData['source'])) {
-                $selectFields[] = $propertyData['source'];
-            }
-        }
-
-        return $selectFields;
     }
 
     /**
      * @param array $associationMapping
      * @param $id
-     * @param array $properties
+     * @param array $databaseFields
      * @return \Doctrine\ORM\Query
      */
-    protected function getQuery(array $associationMapping, $id, array $properties)
+    protected function getQuery(array $associationMapping, $id, array $databaseFields)
     {
         /** @var EntityManager $em */
         $em = $this->doctrine->getManager();
@@ -127,10 +105,8 @@ class EntityPersister
         $targetAlias = uniqid('t');
         $sourceAlias = uniqid('s');
 
-        $selectFields = $this->getSelectedFields($properties);
-
         $qb = $em->createQueryBuilder()
-            ->select(sprintf('PARTIAL %s.{%s}', $targetAlias, implode(',', $selectFields)))
+            ->select(sprintf('PARTIAL %s.{%s}', $targetAlias, implode(',', $databaseFields)))
             ->from($targetClass, $targetAlias)
             ->join(sprintf('%s.%s', $targetAlias, $joinField), $sourceAlias)
             ->where($sourceAlias . '.id = :sourceId')

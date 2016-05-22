@@ -98,6 +98,10 @@ class DataSchema
 
         $preparedData = [];
         foreach ($config['properties'] as $key => $info) {
+            if (isset($info['hidden']) && $info['hidden'] == true) {
+                continue;
+            }
+
             if (isset($data[$key])) {
                 $value = $data[$key];
 
@@ -112,28 +116,29 @@ class DataSchema
 
                 /** @var EntityManager $em */
                 $associationMapping = $metadata->getAssociationMapping($key);
+                $databaseFields = self::getDatabaseFields($info['properties']);
 
                 switch ($associationMapping['type']) {
                     case ClassMetadata::MANY_TO_MANY:
-                        $modelData = $this->entityPersister->getManyToManyData($associationMapping, $data['id'], $info['properties']);
+                        $modelData = $this->entityPersister->getManyToManyData($associationMapping, $data['id'], $databaseFields);
                         $preparedData[$key] = $this->getList($modelData, $info);
 
                         break;
 
                     case ClassMetadata::ONE_TO_MANY:
-                        $modelData = $this->entityPersister->getOneToManyData($associationMapping, $data['id'], $info['properties']);
+                        $modelData = $this->entityPersister->getOneToManyData($associationMapping, $data['id'], $databaseFields);
                         $preparedData[$key] = $this->getList($modelData, $info);
 
                         break;
 
                     case ClassMetadata::MANY_TO_ONE:
-                        $modelData = $this->entityPersister->getManyToOneData($associationMapping, $data['id'], $info['properties']);
+                        $modelData = $this->entityPersister->getManyToOneData($associationMapping, $data['id'], $databaseFields);
                         $preparedData[$key] = $this->getData($modelData, $info);
 
                         break;
 
                     case ClassMetadata::ONE_TO_ONE:
-                        $modelData = $this->entityPersister->getOneToOneData($associationMapping, $data['id'], $info['properties']);
+                        $modelData = $this->entityPersister->getOneToOneData($associationMapping, $data['id'], $databaseFields);
                         $preparedData[$key] = $this->getData($modelData, $info);
 
                         break;
@@ -146,17 +151,27 @@ class DataSchema
             }
 
             if (is_array($value)) {
-                foreach ($value as $subKey => $subInfo) {
-                    $preparedData[$key][$subKey] = $this->getData($subInfo, $config['properties'][$key]);
-                }
+                $subConfig = $config['properties'][$key];
 
-            } else {
-                if (isset($info['decode'])) {
-                    $value = $this->decode($value, $info['decode'], $data);
-                }
+                if ($subConfig['type'] == 'entity') {
+                    $preparedData[$key] = $this->getData($value, $config['properties'][$key]);
 
-                $preparedData[$key] = $value;
+                    continue;
+
+                } elseif ($subConfig['type'] == 'collection') {
+                    foreach ($value as $subKey => $subInfo) {
+                        $preparedData[$key][$subKey] = $this->getData($subInfo, $config['properties'][$key]);
+                    }
+
+                    continue;
+                }
             }
+
+            if (isset($info['decode'])) {
+                $value = $this->decode($value, $info['decode'], $data);
+            }
+
+            $preparedData[$key] = $value;
         }
 
         return $preparedData;
@@ -192,9 +207,28 @@ class DataSchema
         $classMetadata = $this->getClassMetadata($class);
 
         if (isset($configuration['properties'])) {
-            $properties    = $configuration['properties'];
+            $properties = $configuration['properties'];
+
+            // Set ids
+            $identifierFieldNames = $classMetadata->getIdentifierFieldNames();
             foreach ($properties as $name => $value) {
-                if ($scopeConfig !== null && !array_key_exists($name, $scopeConfig)) {
+                foreach ($identifierFieldNames as $idName) {
+                    if (!array_key_exists($idName, $properties)) {
+                        $properties[$idName] = ['hidden' => true];
+                        $configuration['properties'][$idName] = $properties[$idName];
+                    }
+                }
+            }
+
+            foreach ($properties as $name => $value) {
+                $isRemove =
+                    $scopeConfig !== null &&
+                    !in_array($name, $identifierFieldNames) &&
+                    empty($value['hidden']) &&
+                    !array_key_exists($name, $scopeConfig)
+                ;
+
+                if ($isRemove) {
                     unset($configuration['properties'][$name]);
                     continue;
                 }
@@ -223,7 +257,6 @@ class DataSchema
                 }
             }
         }
-
 
         return $configuration;
     }
@@ -264,5 +297,27 @@ class DataSchema
         }
 
         return $value;
+    }
+
+    /**
+     * @param array $properties
+     * @return array
+     */
+    public static function getDatabaseFields(array $properties)
+    {
+        $databaseFields = [];
+        foreach ($properties as $propertyName => $propertyData) {
+            $isValid = (isset($propertyData['from_db']) && $propertyData['from_db']);
+
+            if ($isValid) {
+                $databaseFields[] = $propertyName;
+            }
+
+            if (isset($propertyData['source'])) {
+                $databaseFields[] = $propertyData['source'];
+            }
+        }
+
+        return $databaseFields;
     }
 }
