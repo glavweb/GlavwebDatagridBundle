@@ -340,13 +340,26 @@ class DatagridBuilder implements DatagridBuilderInterface
         $alias       = $this->getAlias();
 
         try {
+            /** @var EntityManager $em */
+            $em           = $this->doctrine->getManager();
             $queryBuilder = $this->createQueryBuilder($parameters);
 
+            $datagridContext = new DatagridContext(
+                $this->getEntityClassName(),
+                $em,
+                $queryBuilder,
+                $this->dataSchema,
+                $orderings,
+                $firstResult,
+                $maxResults,
+                $alias
+            );
+
             if (is_callable($callback)) {
-                $callback($queryBuilder, $alias);
+                $callback($datagridContext);
             }
 
-            $datagrid = new Datagrid($queryBuilder, $this->dataSchema, $orderings, $firstResult, $maxResults, $alias);
+            $datagrid = new Datagrid($datagridContext);
 
         } catch (Exception $e) {
             $datagrid = new EmptyDatagrid();
@@ -368,27 +381,35 @@ class DatagridBuilder implements DatagridBuilderInterface
         $alias       = $this->getAlias();
 
         try {
+            /** @var EntityManager $em */
             $em           = $this->doctrine->getManager();
             $queryBuilder = $this->createQueryBuilder($parameters);
-            $subQuery     = $this->buildSql($queryBuilder);
-            $rsm          = $this->createResultSetMapping($this->getEntityClassName(), $alias);
 
             if (!is_callable($callback)) {
                 throw new \RuntimeException('Callback must be callable.');
             }
 
-            $query = $callback($subQuery, $rsm, $em);
+            $datagridContext = new DatagridContext(
+                $this->getEntityClassName(),
+                $em,
+                $queryBuilder,
+                $this->dataSchema,
+                $orderings,
+                $firstResult,
+                $maxResults,
+                $alias
+            );
+
+            $query = $callback($datagridContext);
             if (!$query instanceof NativeQuery) {
                 throw new \RuntimeException('Callback must be return instance of Doctrine\ORM\NativeQuery.');
             }
 
             // Add conditions
+            $rsm = $datagridContext->getResultSetMapping();
             $this->addNativeConditions($parameters, $rsm, $query);
 
-            $orderings = $this->transformOrderingForNativeSql((array)$orderings, $rsm);
-            $this->setOrderings($orderings);
-
-            $datagrid = new NativeSqlDatagrid($query, $this->dataSchema, $orderings, $firstResult, $maxResults, $alias);
+            $datagrid = new NativeSqlDatagrid($query, $datagridContext);
 
         } catch (Exception $e) {
             $datagrid = new EmptyDatagrid();
@@ -408,7 +429,7 @@ class DatagridBuilder implements DatagridBuilderInterface
         $alias         = $this->getAlias();
 
         // Create query builder
-        $queryBuilder  = $repository->createQueryBuilder($alias);
+        $queryBuilder = $repository->createQueryBuilder($alias);
 
         // Apply joins
         $joinMap = $this->getJoinMap();
@@ -456,50 +477,6 @@ class DatagridBuilder implements DatagridBuilderInterface
     }
 
     /**
-     * @param QueryBuilder $queryBuilder
-     * @param bool         $replaceSelect
-     * @return string
-     */
-    public function buildSql(QueryBuilder $queryBuilder, $replaceSelect = true)
-    {
-        $sql = $queryBuilder->getQuery()->getSQL();
-
-        if ($replaceSelect) {
-            $result = preg_match('/SELECT .*? FROM [\w]* ([^ ]*)/', $sql, $matches);
-            if (!$result) {
-                throw new \RuntimeException('Alias not found.');
-            }
-
-            $alias = $matches[1];
-            $sql = preg_replace('/SELECT .*? FROM/', 'SELECT ' . $alias . '.* FROM', $sql);
-        }
-
-        return $sql;
-    }
-
-    /**
-     * @param string $class
-     * @param string $alias
-     * @return ResultSetMapping
-     */
-    protected function createResultSetMapping($class, $alias)
-    {
-        /** @var EntityManager $em */
-        $em = $this->doctrine->getManager();
-
-        $rsm = new ResultSetMapping();
-        $rsm->addEntityResult($class, $alias);
-
-        $classMetaData = $em->getClassMetadata($class);
-        $fieldNames = $classMetaData->getFieldNames();
-        foreach ($fieldNames as $fieldName) {
-            $rsm->addFieldResult($alias, $classMetaData->getColumnName($fieldName), $fieldName);
-        }
-
-        return $rsm;
-    }
-
-    /**
      * @param array $fields
      * @param ResultSetMapping $rsm
      * @param NativeQuery $query
@@ -543,24 +520,6 @@ class DatagridBuilder implements DatagridBuilderInterface
         }
 
         $query->setSQL($sql);
-    }
-
-    /**
-     * @param array $orderings
-     * @param ResultSetMapping $rsm
-     * @return array
-     */
-    private function transformOrderingForNativeSql(array $orderings, ResultSetMapping $rsm)
-    {
-        $scalarMappings = $rsm->scalarMappings;
-        foreach ($orderings as $fieldName => $sort) {
-            if (($alias = array_search($fieldName, $scalarMappings)) !== false) {
-                unset($orderings[$fieldName]);
-                $orderings[$alias] = $sort;
-            }
-        }
-
-        return $orderings;
     }
 
     /**

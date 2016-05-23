@@ -15,6 +15,7 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
 use Glavweb\DatagridBundle\Builder\Doctrine\DatagridBuilder;
+use Glavweb\DatagridBundle\Builder\Doctrine\DatagridContext;
 use Glavweb\DatagridBundle\Tests\WebTestCase;
 
 /**
@@ -77,6 +78,35 @@ class DatagridTest extends WebTestCase
         $datagrid = $this->datagridBuilder->build();
         $list = $datagrid->getList();
 
+        $this->assertEquals(3, count($list));
+
+        $this->assertEquals([
+            'name' => 'Article 1',
+        ], $list[0]);
+    }
+
+    /**
+     * Test native SQL
+     */
+    public function testNativeSql()
+    {
+        $this->datagridBuilder
+            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article')
+            ->setAlias('t')
+            ->setDataSchema('article/simple_data.schema.yml', 'article/short.yml')
+        ;
+
+        $datagrid = $this->datagridBuilder->buildNativeSql(function (DatagridContext $context) {
+            $em  = $context->getEntityManger();
+            $rsm = $context->getResultSetMapping();
+
+            $sql = 'SELECT w.*  FROM (' . $context->getSql() . ') as w';
+            $query = $em->createNativeQuery($sql, $rsm);
+
+            return $query;
+        });
+
+        $list = $datagrid->getList();
         $this->assertEquals(3, count($list));
 
         $this->assertEquals([

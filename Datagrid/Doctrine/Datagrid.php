@@ -14,6 +14,7 @@ namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Glavweb\DatagridBundle\Builder\Doctrine\DatagridContext;
 use Glavweb\DatagridBundle\DataSchema\DataSchema;
 
 /**
@@ -50,22 +51,16 @@ class Datagrid extends AbstractDatagrid
     private $paginator;
 
     /**
-     * @param QueryBuilder $queryBuilder
-     * @param DataSchema   $dataSchema
-     * @param array        $orderings
-     * @param int          $firstResult
-     * @param int          $maxResults
-     * @param string       $alias
-     * @param string $alias
+     * @param DatagridContext $context
      */
-    public function __construct(QueryBuilder $queryBuilder, DataSchema $dataSchema = null, array $orderings = null, $firstResult = 0, $maxResults = null, $alias = 't')
+    public function __construct(DatagridContext $context)
     {
-        $this->queryBuilder = $queryBuilder;
-        $this->dataSchema   = $dataSchema;
-        $this->orderings    = (array)$orderings;
-        $this->firstResult  = (int)$firstResult;
-        $this->maxResults   = $maxResults;
-        $this->alias        = $alias;
+        $this->queryBuilder = $context->getQueryBuilder();
+        $this->dataSchema   = $context->getDataSchema();
+        $this->orderings    = $context->getOrderings();
+        $this->firstResult  = $context->getFirstResult();
+        $this->maxResults   = $context->getMaxResults();
+        $this->alias        = $context->getAlias();
     }
 
     /**

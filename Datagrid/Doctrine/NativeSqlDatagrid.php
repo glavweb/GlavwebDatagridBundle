@@ -13,6 +13,7 @@ namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 
 use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
+use Glavweb\DatagridBundle\Builder\Doctrine\DatagridContext;
 use Glavweb\DatagridBundle\DataSchema\DataSchema;
 
 /**
@@ -39,22 +40,19 @@ class NativeSqlDatagrid extends AbstractDatagrid
     protected $queryCount;
 
     /**
-     * @param NativeQuery $query
-     * @param DataSchema $dataSchema
-     * @param array $orderings
-     * @param int $firstResult
-     * @param int $maxResults
+     * @param NativeQuery     $query
+     * @param DatagridContext $context
      */
-    public function __construct(NativeQuery $query, DataSchema $dataSchema, array $orderings = null, $firstResult = 0, $maxResults = null)
+    public function __construct(NativeQuery $query, DatagridContext $context)
     {
         $this->query       = $query;
         $this->queryCount  = clone $query;
         $this->queryCount->setParameters($query->getParameters());
 
-        $this->dataSchema  = $dataSchema;
-        $this->orderings   = (array)$orderings;
-        $this->firstResult = (int)$firstResult;
-        $this->maxResults  = $maxResults;
+        $this->dataSchema  = $context->getDataSchema();
+        $this->orderings   = $context->transformOrderingForNativeSql($context->getOrderings());
+        $this->firstResult = $context->getFirstResult();
+        $this->maxResults  = $context->getMaxResults();
     }
 
     /**
