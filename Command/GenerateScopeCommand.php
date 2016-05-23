@@ -20,7 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Class GenerateScopeCommand
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class GenerateScopeCommand extends ContainerAwareCommand

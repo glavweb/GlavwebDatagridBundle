@@ -19,7 +19,7 @@ use Glavweb\DatagridBundle\Tests\Fixtures\Entity\EventGroup;
 /**
  * Class LoadEventGroupData
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class LoadEventGroupData extends AbstractFixture implements OrderedFixtureInterface

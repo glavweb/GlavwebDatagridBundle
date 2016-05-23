@@ -22,7 +22,7 @@ use Glavweb\DatagridBundle\Tests\Fixtures\Entity\Tag;
 /**
  * Class LoadEventData
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class LoadEventData extends AbstractFixture implements OrderedFixtureInterface

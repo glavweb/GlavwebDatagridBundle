@@ -14,7 +14,7 @@ namespace Glavweb\DatagridBundle\DataTransformer;
 /**
  * Class SimpleDataTransformer
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class SimpleDataTransformer implements DataTransformerInterface

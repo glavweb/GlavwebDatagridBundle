@@ -21,7 +21,7 @@ use Glavweb\DatagridBundle\Persister\EntityPersister;
 /**
  * Class DataSchema
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class DataSchema

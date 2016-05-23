@@ -17,7 +17,7 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * Class ScopeYamlLoader
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class ScopeYamlLoader extends FileLoader

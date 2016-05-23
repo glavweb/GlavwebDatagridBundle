@@ -17,7 +17,7 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * Class DataSchemaYamlLoader
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class DataSchemaYamlLoader extends FileLoader

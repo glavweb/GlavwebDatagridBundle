@@ -14,7 +14,7 @@ namespace Glavweb\DatagridBundle\DataTransformer;
 /**
  * Interface DataTransformerInterface
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 interface DataTransformerInterface

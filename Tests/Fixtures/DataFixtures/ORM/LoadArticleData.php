@@ -20,7 +20,7 @@ use Glavweb\DatagridBundle\Tests\Fixtures\Entity\Event;
 /**
  * Class LoadArticleData
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class LoadArticleData extends AbstractFixture implements OrderedFixtureInterface

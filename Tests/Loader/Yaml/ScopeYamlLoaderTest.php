@@ -18,7 +18,7 @@ use Symfony\Component\Config\FileLocator;
 /**
  * Class ScopeYamlLoaderTest
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class ScopeYamlLoaderTest extends WebTestCase

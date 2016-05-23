@@ -20,7 +20,7 @@ use Glavweb\DatagridBundle\Tests\Fixtures\Entity\Session;
 /**
  * Class LoadSessionData
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class LoadSessionData extends AbstractFixture implements OrderedFixtureInterface

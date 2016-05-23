@@ -18,7 +18,7 @@ use Doctrine\ORM\Query;
 /**
  * Class EntityPersister
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class EntityPersister

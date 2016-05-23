@@ -19,7 +19,7 @@ use Glavweb\DatagridBundle\Tests\Fixtures\Entity\Tag;
 /**
  * Class LoadTagData
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class LoadTagData extends AbstractFixture implements OrderedFixtureInterface

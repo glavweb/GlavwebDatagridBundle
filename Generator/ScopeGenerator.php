@@ -20,7 +20,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 /**
  * Class FixtureGenerator
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class ScopeGenerator extends Generator

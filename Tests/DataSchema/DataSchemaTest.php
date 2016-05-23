@@ -24,7 +24,7 @@ use Glavweb\DatagridBundle\Tests\WebTestCase;
 /**
  * Class DataSchemaTest
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class DataSchemaTest extends WebTestCase

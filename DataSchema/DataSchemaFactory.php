@@ -21,7 +21,7 @@ use Symfony\Component\Config\FileLocator;
 /**
  * Class DataSchemaFactory
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 class DataSchemaFactory

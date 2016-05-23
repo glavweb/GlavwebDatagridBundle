@@ -16,7 +16,7 @@ use Glavweb\DatagridBundle\DataTransformer\DataTransformerInterface;
 /**
  * Class ExtensionInterface
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
 interface ExtensionInterface

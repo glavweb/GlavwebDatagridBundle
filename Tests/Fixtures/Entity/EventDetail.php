@@ -16,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * EventDetail
  *
- * @author Nilov Andrey <nilov@glavweb.ru>
+ * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  *
  * @ORM\Table(name="event_details")
