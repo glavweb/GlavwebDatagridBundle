@@ -30,6 +30,7 @@ use Glavweb\DatagridBundle\DataSchema\DataSchemaFactory;
 use Glavweb\DatagridBundle\Exception\Exception;
 use Glavweb\DatagridBundle\Filter\Doctrine\FilterFactory;
 use Glavweb\DatagridBundle\Filter\Doctrine\Filter;
+use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
 /**
@@ -54,6 +55,11 @@ class DatagridBuilder implements DatagridBuilderInterface
      * @var DataSchemaFactory
      */
     private $dataSchemaFactory;
+
+    /**
+     * @var FilterStack
+     */
+    private $filterStack;
 
     /**
      * @var array
@@ -96,16 +102,6 @@ class DatagridBuilder implements DatagridBuilderInterface
     private $dataSchema;
 
     /**
-     * @var Filter[]
-     */
-    private $filters = [];
-
-    /**
-     * @var array
-     */
-    private $filterNamesByParams = [];
-
-    /**
      * DoctrineDatagridBuilder constructor.
      *
      * @param Registry $doctrine
@@ -117,6 +113,15 @@ class DatagridBuilder implements DatagridBuilderInterface
         $this->doctrine          = $doctrine;
         $this->filterFactory     = $filterFactory;
         $this->dataSchemaFactory = $dataSchemaFactory;
+        $this->filterStack       = new FilterStack();
+    }
+
+    /**
+     * @return FilterStack
+     */
+    public function getFilterStack()
+    {
+        return $this->filterStack;
     }
 
     /**
@@ -277,23 +282,6 @@ class DatagridBuilder implements DatagridBuilderInterface
     }
 
     /**
-     * @return Filter[]
-     */
-    public function getFilters()
-    {
-        return $this->filters;
-    }
-
-    /**
-     * @param string $filterName
-     * @return Filter
-     */
-    public function getFilter($filterName)
-    {
-        return $this->filters[$filterName];
-    }
-
-    /**
      * @param string $filterName
      * @param string $type
      * @param array $options
@@ -307,11 +295,26 @@ class DatagridBuilder implements DatagridBuilderInterface
         $filter = $this->filterFactory->createForEntity($entityClass, $alias, $filterName, $type, $options);
         $this->fixFilter($filter);
 
-        $paramName = $filter->getParamName();
-        $this->filters[$filterName]            = $filter;
-        $this->filterNamesByParams[$paramName] = $filterName;
+        $this->filterStack->add($filter);
 
         return $this;
+    }
+
+    /**
+     * @param string $filterName
+     * @return Filter
+     */
+    public function getFilter($filterName)
+    {
+        return $this->filterStack->get($filterName);
+    }
+
+    /**
+     * @return Filter[]
+     */
+    public function getFilters()
+    {
+        return $this->filterStack->all();
     }
 
     /**
@@ -348,6 +351,7 @@ class DatagridBuilder implements DatagridBuilderInterface
                 $this->getEntityClassName(),
                 $em,
                 $queryBuilder,
+                $this->filterStack,
                 $this->dataSchema,
                 $orderings,
                 $firstResult,
@@ -393,6 +397,7 @@ class DatagridBuilder implements DatagridBuilderInterface
                 $this->getEntityClassName(),
                 $em,
                 $queryBuilder,
+                $this->filterStack,
                 $this->dataSchema,
                 $orderings,
                 $firstResult,
@@ -563,13 +568,7 @@ class DatagridBuilder implements DatagridBuilderInterface
      */
     protected function getFilterByParam($name)
     {
-        if (!isset($this->filterNamesByParams[$name])) {
-            return null;
-        }
-
-        $filterName = $this->filterNamesByParams[$name];
-
-        return $this->getFilter($filterName);
+        return $this->filterStack->getByParam($name);
     }
 
     /**

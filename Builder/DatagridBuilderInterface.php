@@ -12,7 +12,7 @@
 namespace Glavweb\DatagridBundle\Builder;
 
 use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
-use Sonata\AdminBundle\Filter\FilterInterface;
+use Glavweb\DatagridBundle\Filter\FilterInterface;
 
 /**
  * Interface DatagridBuilderInterface

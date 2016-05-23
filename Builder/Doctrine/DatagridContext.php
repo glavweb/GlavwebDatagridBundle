@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder;
 use Glavweb\DatagridBundle\DataSchema\DataSchema;
+use Glavweb\DatagridBundle\Filter\FilterStack;
 
 /**
  * Class DatagridContext
@@ -38,6 +39,11 @@ class DatagridContext
      * @var QueryBuilder
      */
     private $queryBuilder;
+
+    /**
+     * @var FilterStack
+     */
+    private $filterStack;
 
     /**
      * @var DataSchema
@@ -75,22 +81,32 @@ class DatagridContext
      * @param string        $class
      * @param EntityManager $entityManger
      * @param QueryBuilder  $queryBuilder
+     * @param FilterStack   $filterStack
      * @param DataSchema    $dataSchema
      * @param array         $orderings
      * @param int           $firstResult
      * @param int           $maxResults
      * @param string        $alias
      */
-    public function __construct($class, EntityManager $entityManger, QueryBuilder $queryBuilder, DataSchema $dataSchema = null, array $orderings = null, $firstResult = 0, $maxResults = null, $alias = 't')
+    public function __construct($class, EntityManager $entityManger, QueryBuilder $queryBuilder, FilterStack $filterStack, DataSchema $dataSchema = null, array $orderings = null, $firstResult = 0, $maxResults = null, $alias = 't')
     {
         $this->class        = $class;
         $this->entityManger = $entityManger;
         $this->queryBuilder = $queryBuilder;
         $this->dataSchema   = $dataSchema;
+        $this->filterStack  = $filterStack;
         $this->orderings    = (array)$orderings;
         $this->firstResult  = (int)$firstResult;
         $this->maxResults   = $maxResults;
         $this->alias        = $alias;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClass()
+    {
+        return $this->class;
     }
 
     /**
@@ -110,11 +126,11 @@ class DatagridContext
     }
 
     /**
-     * @return string
+     * @return FilterStack
      */
-    public function getClass()
+    public function getFilterStack()
     {
-        return $this->class;
+        return $this->filterStack;
     }
 
     /**
