@@ -440,7 +440,7 @@ class DatagridBuilder implements DatagridBuilderInterface
         $joinMap = $this->getJoinMap();
 
         if ($this->dataSchema) {
-            $joinMapFromDataSchema = $this->createJoinMapByDataSchema($this->dataSchema);
+            $joinMapFromDataSchema = $this->dataSchema->createJoinMap($this->alias);
             if ($joinMapFromDataSchema) {
                 if ($joinMap) {
                     $joinMap->merge($joinMapFromDataSchema);
@@ -583,84 +583,5 @@ class DatagridBuilder implements DatagridBuilderInterface
 
             $filter->setOptions($options);
         }
-    }
-
-    /**
-     * @param DataSchema $dataSchema
-     * @param JoinMap $joinMap
-     * @return JoinMap
-     */
-    protected function createJoinMapByDataSchema(DataSchema $dataSchema, JoinMap $joinMap = null)
-    {
-        $alias = $this->alias;
-
-        if (!$alias) {
-            throw new \RuntimeException('Alias not defined.');
-        }
-
-        if (!$joinMap) {
-            $joinMap = new JoinMap($alias);
-        }
-
-        $dataSchemaConfig = $dataSchema->getConfiguration();
-        $joins = $this->getJoinsByDataSchemaConfig($dataSchemaConfig, $alias);
-        foreach ($joins as $fullPath => $joinData) {
-            $pathElements = explode('.', $fullPath);
-            $field = array_pop($pathElements);
-            $path  = implode('.', $pathElements);
-
-            if (($key = array_search($path, $joins)) !== false) {
-                $path = $key;
-            }
-
-            $joinFields = $joinData['fields'];
-            $joinType   = $joinData['joinType'];
-            $joinMap->join($path, $field, true, $joinFields, $joinType);
-        }
-
-        return $joinMap;
-    }
-
-    /**
-     * @param array $config
-     * @param string $firstAlias
-     * @param string $alias
-     * @param array $result
-     * @return array
-     */
-    protected function getJoinsByDataSchemaConfig(array $config, $firstAlias, $alias = null, &$result = [])
-    {
-        if (!$alias) {
-            $alias = $firstAlias;
-        }
-
-        if (isset($config['properties'])) {
-            $properties = $config['properties'];
-            foreach ($properties as $key => $value) {
-                if (isset($value['properties'])) {
-                    $joinType = isset($value['join']) && $value['join'] != 'none' ? $value['join'] : false;
-
-                    if (!$joinType) {
-                        continue;
-                    }
-
-                    $join       = $alias . '.' . $key;
-                    $joinAlias  = str_replace('.', '_', $join);
-
-                    // Join fields
-                    $joinFields = DataSchema::getDatabaseFields($value['properties']);
-
-                    $result[$join] = [
-                        'alias'    => $joinAlias,
-                        'fields'   => $joinFields,
-                        'joinType' => $joinType
-                    ];
-
-                    $this->getJoinsByDataSchemaConfig($value, $firstAlias, $joinAlias, $result);
-                }
-            }
-        }
-
-        return $result;
     }
 }
