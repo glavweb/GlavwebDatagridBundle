@@ -22,6 +22,30 @@ class EmptyDatagrid implements DatagridInterface
     /**
      * @return array
      */
+    public function getOrderings()
+    {
+        return [];
+    }
+
+    /**
+     * @return int
+     */
+    public function getFirstResult()
+    {
+        return 0;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getMaxResults()
+    {
+        return null;
+    }
+
+    /**
+     * @return array
+     */
     public function getList()
     {
         return [];
