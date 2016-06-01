@@ -31,7 +31,7 @@ class GenerateScopeCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('glavweb:data-schema:scope')
+            ->setName('glavweb:datagrid:scope')
             ->setDescription('Generates a scope based on the given model class')
             ->addArgument('model', InputArgument::REQUIRED, 'The fully qualified model class')
         ;
@@ -47,7 +47,6 @@ class GenerateScopeCommand extends ContainerAwareCommand
         $doctrine          = $this->getContainer()->get('doctrine');
         $skeletonDirectory = __DIR__ . '/../Resources/skeleton';
 
-        // Fixture file
         try {
             $scopeGenerator = new ScopeGenerator(
                 $container->get('kernel'),
@@ -58,10 +57,19 @@ class GenerateScopeCommand extends ContainerAwareCommand
 
             $scopeGenerator->generate($modelClass);
             $output->writeln(sprintf(
-                '%sThe scope files "<info>%s</info>" has been generated.',
+                '%sThe scope file "<info>%s</info>" has been %s.',
                 PHP_EOL,
-                realpath($scopeGenerator->getTemplateFile())
+                realpath($scopeGenerator->getTemplateFile()),
+                ($scopeGenerator->isFileTemplateUpdated() ? 'updated' : 'generated')
             ));
+
+            if ($scopeGenerator->isFileGenerated()) {
+                $output->writeln(sprintf(
+                    '%sThe scope file "<info>%s</info>" has been generated.',
+                    PHP_EOL,
+                    realpath($scopeGenerator->getFile())
+                ));
+            }
 
         } catch (\Exception $e) {
             $this->writeError($output, $e->getMessage());
