@@ -1,0 +1,21 @@
+schema:
+    class: {{ class }}
+    properties:
+
+    {%- for field, type in fields %}
+
+        {{ field }}: # {{ type }}
+    {%- endfor %}
+
+    {%- for field, associationData in associations %}
+
+
+        {{ field }}: # {{ associationData['class'] }}
+            join: left
+            properties:
+
+            {%- for field, type in associationData['fields'] %}
+
+                {{ field }}: # {{ type }}
+            {%- endfor %}
+    {%- endfor %}
