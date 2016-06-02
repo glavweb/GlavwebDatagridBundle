@@ -37,6 +37,11 @@ interface DatagridInterface
     /**
      * @return array
      */
+    public function getItem();
+
+    /**
+     * @return array
+     */
     public function getList();
 
     /**

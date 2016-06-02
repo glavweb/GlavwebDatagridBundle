@@ -84,7 +84,7 @@ class DatagridBuilder implements DatagridBuilderInterface
     /**
      * @var string
      */
-    private $alias;
+    private $alias = 't';
 
     /**
      * @var string

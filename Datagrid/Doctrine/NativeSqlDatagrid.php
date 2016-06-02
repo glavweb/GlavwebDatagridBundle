@@ -58,32 +58,24 @@ class NativeSqlDatagrid extends AbstractDatagrid
     /**
      * @return array
      */
+    public function getItem()
+    {
+        $query = $this->createQuery();
+
+        $result = $query->getSingleResult($this->getHydrationMode());
+        if ($this->dataSchema) {
+            return $this->dataSchema->getData($result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array
+     */
     public function getList()
     {
-        $query = $this->query;
-        $sql = $query->getSQL();
-        
-        $orderings = $this->getOrderings();
-        if ($orderings) {
-            $orderParts = [];
-            foreach ($orderings as $fieldName => $sort) {
-                $orderParts[] = $fieldName . ' ' . $sort;
-            }
-
-            $sql .= ' ORDER BY ' . implode(',', $orderParts);
-        }
-
-        $limit  = $this->getMaxResults();
-        if ($limit) {
-            $sql .= ' LIMIT ' . $limit;
-        }
-
-        $offset = $this->getFirstResult();
-        if ($offset) {
-            $sql .= ' OFFSET ' . $offset;
-        }
-
-        $query->setSQL($sql);
+        $query = $this->createQuery();
 
         $result = $query->getResult($this->getHydrationMode());
         if ($this->dataSchema) {
@@ -109,5 +101,37 @@ class NativeSqlDatagrid extends AbstractDatagrid
         $query->setResultSetMapping($rsm);
 
         return (int)$query->getSingleScalarResult();
+    }
+
+    /**
+     * @return NativeQuery
+     */
+    private function createQuery()
+    {
+        $query = $this->query;
+        $sql = $query->getSQL();
+
+        $orderings = $this->getOrderings();
+        if ($orderings) {
+            $orderParts = [];
+            foreach ($orderings as $fieldName => $sort) {
+                $orderParts[] = $fieldName . ' ' . $sort;
+            }
+
+            $sql .= ' ORDER BY ' . implode(',', $orderParts);
+        }
+
+        $limit = $this->getMaxResults();
+        if ($limit) {
+            $sql .= ' LIMIT ' . $limit;
+        }
+
+        $offset = $this->getFirstResult();
+        if ($offset) {
+            $sql .= ' OFFSET ' . $offset;
+        }
+
+        $query->setSQL($sql);
+        return $query;
     }
 }

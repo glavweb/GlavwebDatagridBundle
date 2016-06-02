@@ -107,6 +107,24 @@ class Datagrid extends AbstractDatagrid
     /**
      * @return array
      */
+    public function getItem()
+    {
+        $query = $this->createQuery();
+
+        $query->setHydrationMode($this->getHydrationMode());
+        $this->setHintsToQuery($query);
+
+        $result = $query->getSingleResult();
+        if ($this->dataSchema) {
+            return $this->dataSchema->getData($result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array
+     */
     public function getList()
     {
         $paginator = $this->getPaginator();
@@ -150,23 +168,34 @@ class Datagrid extends AbstractDatagrid
     protected function getPaginator()
     {
         if (!$this->paginator) {
-            $queryBuilder = $this->getQueryBuilder();
-            $alias        = $this->getAlias();
-            $firstResult  = $this->getFirstResult();
-            $maxResults   = $this->getMaxResults();
+            $query = $this->createQuery();
 
-            $queryBuilder->setFirstResult($firstResult);
-            $queryBuilder->setMaxResults($maxResults);
-
-            $orderings = $this->getOrderings();
-            foreach ($orderings as $fieldName => $order) {
-                $queryBuilder->addOrderBy($alias . '.' . $fieldName, $order);
-            }
-
-            $query = $queryBuilder->getQuery();
             $this->paginator = new Paginator($query);
         }
 
         return $this->paginator;
+    }
+
+    /**
+     * @return Query
+     */
+    private function createQuery()
+    {
+        $queryBuilder = $this->getQueryBuilder();
+        $alias = $this->getAlias();
+        $firstResult = $this->getFirstResult();
+        $maxResults = $this->getMaxResults();
+
+        $queryBuilder->setFirstResult($firstResult);
+        $queryBuilder->setMaxResults($maxResults);
+
+        $orderings = $this->getOrderings();
+        foreach ($orderings as $fieldName => $order) {
+            $queryBuilder->addOrderBy($alias . '.' . $fieldName, $order);
+        }
+
+        $query = $queryBuilder->getQuery();
+
+        return $query;
     }
 }
