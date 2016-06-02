@@ -51,6 +51,21 @@ class ScopeGenerator extends Generator
     private $templateFile;
 
     /**
+     * @var string
+     */
+    private $file;
+
+    /**
+     * @var bool
+     */
+    private $fileGenerated = false;
+
+    /**
+     * @var bool
+     */
+    private $fileTemplateUpdated = false;
+
+    /**
      * @param KernelInterface $kernel
      * @param Registry $doctrine
      * @param string $scopeDir
@@ -73,13 +88,24 @@ class ScopeGenerator extends Generator
     {
         $this->modelClass   = $modelClass;
         $this->templateFile = $this->getTemplatePath($modelClass);
-        
+        $this->file         = $this->getFilePath($modelClass);
+
         list($fields, $associations) = $this->getFieldsAndAssociations($modelClass);
+
+        $this->fileTemplateUpdated = file_exists($this->templateFile);
 
         $this->renderFile('scope.yml.twig', $this->templateFile, array(
             'fields'       => $fields,
             'associations' => $associations
         ));
+
+        if (!file_exists($this->file)) {
+            $this->renderFile('scope.yml.twig', $this->file, array(
+                'fields'       => $fields,
+                'associations' => $associations
+            ));
+            $this->fileGenerated = true;
+        }
     }
 
     /**
@@ -128,18 +154,62 @@ class ScopeGenerator extends Generator
      */
     private function getTemplatePath($modelClass)
     {
+        return $this->getPath($modelClass, '_examples/');
+    }
+
+    /**
+     * @param string $modelClass
+     * @param string $embeddedDir
+     * @return string
+     */
+    private function getFilePath($modelClass, $embeddedDir = '')
+    {
+        return $this->getPath($modelClass, $this->getScopeName($modelClass) . '/');
+    }
+
+    /**
+     * @param string $modelClass
+     * @param string $embeddedDir
+     * @return string
+     */
+    private function getPath($modelClass, $embeddedDir = '')
+    {
         $scopeName = $this->getScopeName($modelClass);
         $subDirs   = $this->getSubDirs($modelClass);
         $subDirs   = array_map(function ($item) {
             return Inflector::tableize($item);
         }, $subDirs);
 
-        $fixturePath = $this->scopeDir . '/_examples/'
+        $fixturePath = $this->scopeDir . '/' . $embeddedDir
             . ($subDirs ? implode('/', $subDirs) . '/' : '')
             .  $scopeName . '.yml'
         ;
 
         return $fixturePath;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFile()
+    {
+        return $this->file;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isFileGenerated()
+    {
+        return $this->fileGenerated;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isFileTemplateUpdated()
+    {
+        return $this->fileTemplateUpdated;
     }
 
     /**
