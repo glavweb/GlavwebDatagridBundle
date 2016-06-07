@@ -12,11 +12,15 @@
 namespace Glavweb\DatagridBundle\DataSchema;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory;
 use Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry;
 use Glavweb\DatagridBundle\Loader\Yaml\DataSchemaYamlLoader;
 use Glavweb\DatagridBundle\Loader\Yaml\ScopeYamlLoader;
 use Glavweb\DatagridBundle\Persister\EntityPersister;
+use Glavweb\SecurityBundle\Security\AccessHandler;
+use Glavweb\SecurityBundle\Security\QueryBuilderFilter;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
  * Class DataSchemaFactory
@@ -37,9 +41,24 @@ class DataSchemaFactory
     private $dataTransformerRegistry;
 
     /**
-     * @var EntityPersister
+     * @var PersisterFactory
      */
-    private $entityPersister;
+    private $persisterFactory;
+
+    /**
+     * @var AuthorizationCheckerInterface
+     */
+    private $authorizationChecker;
+
+    /**
+     * @var AccessHandler
+     */
+    private $accessHandler;
+
+    /**
+     * @var QueryBuilderFilter
+     */
+    private $accessQbFilter;
 
     /**
      * @var string
@@ -56,15 +75,21 @@ class DataSchemaFactory
      *
      * @param Registry $doctrine
      * @param DataTransformerRegistry $dataTransformerRegistry
-     * @param EntityPersister $entityPersister
+     * @param PersisterFactory $persisterFactory
+     * @param AuthorizationCheckerInterface $authorizationChecker
+     * @param AccessHandler $accessHandler
+     * @param QueryBuilderFilter $accessQbFilter
      * @param string $dataSchemaDir
      * @param string $scopeDir
      */
-    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, EntityPersister $entityPersister, $dataSchemaDir, $scopeDir)
+    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, $dataSchemaDir, $scopeDir)
     {
         $this->doctrine                = $doctrine;
         $this->dataTransformerRegistry = $dataTransformerRegistry;
-        $this->entityPersister         = $entityPersister;
+        $this->persisterFactory        = $persisterFactory;
+        $this->authorizationChecker    = $authorizationChecker;
+        $this->accessHandler           = $accessHandler;
+        $this->accessQbFilter          = $accessQbFilter;
         $this->dataSchemaDir           = $dataSchemaDir;
         $this->scopeDir                = $scopeDir;
     }
@@ -86,7 +111,10 @@ class DataSchemaFactory
         return new DataSchema(
             $this->doctrine,
             $this->dataTransformerRegistry,
-            $this->entityPersister,
+            $this->persisterFactory,
+            $this->authorizationChecker,
+            $this->accessHandler,
+            $this->accessQbFilter,
             $dataSchemaConfig,
             $scopeConfig
         );

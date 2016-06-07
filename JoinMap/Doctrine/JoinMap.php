@@ -11,6 +11,7 @@
 
 namespace Glavweb\DatagridBundle\JoinMap\Doctrine;
 
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
 /**
@@ -57,15 +58,19 @@ class JoinMap
      * @param bool $hasSelect
      * @param array $selectFields
      * @param string $joinType
+     * @param string $conditionType
+     * @param string $condition
      * @return $this
      */
-    public function join($path, $field, $hasSelect = true, array $selectFields = [], $joinType = 'left')
+    public function join($path, $field, $hasSelect = true, array $selectFields = [], $joinType = 'left', $conditionType = Join::WITH, $condition = null)
     {
         $this->joinMap[$path][] = [
-            'field'        => $field,
-            'hasSelect'    => $hasSelect,
-            'selectFields' => $selectFields,
-            'joinType'     => $joinType
+            'field'         => $field,
+            'hasSelect'     => $hasSelect,
+            'selectFields'  => $selectFields,
+            'joinType'      => $joinType,
+            'conditionType' => $conditionType,
+            'condition'     => $condition
         ];
 
         return $this;
@@ -84,10 +89,12 @@ class JoinMap
         $executedAliases = $queryBuilder->getAllAliases();
         foreach ($this->joinMap as $path => $fields) {
             foreach ($fields as $fieldData) {
-                $field        = $fieldData['field'];
-                $hasSelect    = $fieldData['hasSelect'];
-                $selectFields = $fieldData['selectFields'];
-                $joinType     = $fieldData['joinType'];
+                $field         = $fieldData['field'];
+                $hasSelect     = $fieldData['hasSelect'];
+                $selectFields  = $fieldData['selectFields'];
+                $joinType      = $fieldData['joinType'];
+                $conditionType = $fieldData['conditionType'];
+                $condition     = $fieldData['condition'];
 
                 $pathAlias = str_replace('.', '_', $path);
                 $alias     = $pathAlias . '_' . $field;
@@ -107,10 +114,10 @@ class JoinMap
                 }
 
                 if ($joinType == self::JOIN_TYPE_LEFT) {
-                    $queryBuilder->leftJoin($join, $alias);
+                    $queryBuilder->leftJoin($join, $alias, $conditionType, $condition);
 
                 } elseif ($joinType == self::JOIN_TYPE_INNER) {
-                    $queryBuilder->innerJoin($join, $alias);
+                    $queryBuilder->innerJoin($join, $alias, $conditionType, $condition);
 
                 } else {
                     throw new \RuntimeException('Join type not defined or has wrong type.');

@@ -14,9 +14,15 @@ namespace Glavweb\DatagridBundle\DataSchema;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Query\Expr\Join;
+use Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory;
+use Glavweb\DatagridBundle\DataSchema\Persister\PersisterInterface;
 use Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
-use Glavweb\DatagridBundle\Persister\EntityPersister;
+use Glavweb\SecurityBundle\Security\AccessHandler;
+use Glavweb\SecurityBundle\Security\QueryBuilderFilter;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Class DataSchema
@@ -37,9 +43,24 @@ class DataSchema
     private $dataTransformerRegistry;
 
     /**
-     * @var EntityPersister
+     * @var PersisterInterface
      */
-    private $entityPersister;
+    private $persister;
+
+    /**
+     * @var AuthorizationCheckerInterface
+     */
+    private $authorizationChecker;
+
+    /**
+     * @var AccessHandler
+     */
+    private $accessHandler;
+
+    /**
+     * @var QueryBuilderFilter
+     */
+    private $accessQbFilter;
 
     /**
      * @var array
@@ -56,20 +77,30 @@ class DataSchema
      *
      * @param Registry $doctrine
      * @param DataTransformerRegistry $dataTransformerRegistry
-     * @param EntityPersister $entityPersister
+     * @param PersisterFactory $persisterFactory
+     * @param AuthorizationCheckerInterface $authorizationChecker
+     * @param AccessHandler $accessHandler
+     * @param QueryBuilderFilter $accessQbFilter
      * @param array $configuration
      * @param array $scopeConfig
      */
-    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, EntityPersister $entityPersister, array $configuration, array $scopeConfig = null)
+    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, array $configuration, array $scopeConfig = null)
     {
-        $this->doctrine                 = $doctrine;
-        $this->dataTransformerRegistry  = $dataTransformerRegistry;
-        $this->entityPersister          = $entityPersister;
+        $this->doctrine                = $doctrine;
+        $this->dataTransformerRegistry = $dataTransformerRegistry;
+        $this->authorizationChecker    = $authorizationChecker;
+        $this->accessHandler           = $accessHandler;
+        $this->accessQbFilter          = $accessQbFilter;
 
         if (!isset($configuration['class'])) {
             throw new \RuntimeException('Option "class" must be defined.');
         }
         $class = $configuration['class'];
+
+        if (!isset($configuration['db_driver'])) {
+            throw new \RuntimeException('Option "db_driver" must be defined.');
+        }
+        $this->persister = $persisterFactory->createPersister($configuration['db_driver'], $this);
 
         $this->configuration = $this->prepareConfiguration($configuration, $class, $scopeConfig);
     }
@@ -115,31 +146,31 @@ class DataSchema
                     continue;
                 }
 
-                /** @var EntityManager $em */
                 $associationMapping = $metadata->getAssociationMapping($key);
                 $databaseFields = self::getDatabaseFields($info['properties']);
+                $conditions     = $info['conditions'];
 
                 switch ($associationMapping['type']) {
                     case ClassMetadata::MANY_TO_MANY:
-                        $modelData = $this->entityPersister->getManyToManyData($associationMapping, $data['id'], $databaseFields);
+                        $modelData = $this->persister->getManyToManyData($associationMapping, $data['id'], $databaseFields, $conditions);
                         $preparedData[$key] = $this->getList($modelData, $info);
 
                         break;
 
                     case ClassMetadata::ONE_TO_MANY:
-                        $modelData = $this->entityPersister->getOneToManyData($associationMapping, $data['id'], $databaseFields);
+                        $modelData = $this->persister->getOneToManyData($associationMapping, $data['id'], $databaseFields, $conditions);
                         $preparedData[$key] = $this->getList($modelData, $info);
 
                         break;
 
                     case ClassMetadata::MANY_TO_ONE:
-                        $modelData = $this->entityPersister->getManyToOneData($associationMapping, $data['id'], $databaseFields);
+                        $modelData = $this->persister->getManyToOneData($associationMapping, $data['id'], $databaseFields, $conditions);
                         $preparedData[$key] = $this->getData($modelData, $info);
 
                         break;
 
                     case ClassMetadata::ONE_TO_ONE:
-                        $modelData = $this->entityPersister->getOneToOneData($associationMapping, $data['id'], $databaseFields);
+                        $modelData = $this->persister->getOneToOneData($associationMapping, $data['id'], $databaseFields, $conditions);
                         $preparedData[$key] = $this->getData($modelData, $info);
 
                         break;
@@ -197,15 +228,49 @@ class DataSchema
     }
 
     /**
-     * @param array $configuration
+     * @param array  $configuration
      * @param string $class
-     * @param array $scopeConfig
+     * @param array  $scopeConfig
+     * @param bool   $glavwebSecurity
      * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    protected function prepareConfiguration(array $configuration, $class, array $scopeConfig = null)
+    protected function prepareConfiguration(array $configuration, $class, array $scopeConfig = null, $glavwebSecurity = false)
     {
-        $classMetadata = $this->getClassMetadata($class);
+        $classMetadata   = $this->getClassMetadata($class);
+        $glavwebSecurity = isset($configuration['glavweb_security']) ? $configuration['glavweb_security'] : $glavwebSecurity;
+
+        // roles
+        if (!isset($configuration['roles'])) {
+            $configuration['roles'] = [];
+        }
+
+        if ($glavwebSecurity) {
+            $configuration['roles'] = array_merge(
+                $configuration['roles'],
+                $this->getSecurityRoles($class)
+            );
+        }
+
+        $isGranted = $this->isGranted($configuration['roles']);
+        if (!$isGranted) {
+            return [];
+        }
+
+        // class
+        $configuration['class'] = $class;
+
+        // condition
+        if (!isset($configuration['conditions'])) {
+            $configuration['conditions'] = [];
+        }
+
+        if ($glavwebSecurity) {
+            $securityCondition = $this->accessQbFilter->getSecurityCondition($class);
+            if ($securityCondition) {
+                $configuration['conditions'][] = $securityCondition;
+            }
+        }
 
         if (isset($configuration['properties'])) {
             $properties = $configuration['properties'];
@@ -235,19 +300,19 @@ class DataSchema
                 }
 
                 if (isset($value['properties'])) {
-                    // class
                     $class = $classMetadata->getAssociationTargetClass($name);
-                    $configuration['properties'][$name]['class'] = $class;
+
+                    $preparedConfiguration = $this->prepareConfiguration($value, $class, $scopeConfig[$name], $glavwebSecurity);
+                    $configuration['properties'][$name] = $preparedConfiguration;
 
                     // type
-                    $associationMapping = $classMetadata->getAssociationMapping($name);
-                    $associationType = $associationMapping['type'];
-                    $type = in_array($associationType, [ClassMetadata::ONE_TO_MANY, ClassMetadata::MANY_TO_MANY]) ? 'collection' : 'entity';
-                    $configuration['properties'][$name]['type'] = $type;
+                    if ($preparedConfiguration) {
+                        $associationMapping = $classMetadata->getAssociationMapping($name);
+                        $associationType = $associationMapping['type'];
 
-                    // properties
-                    $preparedConfiguration = $this->prepareConfiguration($value, $class, $scopeConfig[$name]);
-                    $configuration['properties'][$name]['properties'] = $preparedConfiguration['properties'];
+                        $type = in_array($associationType, [ClassMetadata::ONE_TO_MANY, ClassMetadata::MANY_TO_MANY]) ? 'collection' : 'entity';
+                        $configuration['properties'][$name]['type'] = $type;
+                    }
 
                 } else {
                     if (!isset($value['type'])) {
@@ -341,9 +406,12 @@ class DataSchema
                 $path = $key;
             }
 
-            $joinFields = $joinData['fields'];
-            $joinType   = $joinData['joinType'];
-            $joinMap->join($path, $field, true, $joinFields, $joinType);
+            $joinFields    = $joinData['fields'];
+            $joinType      = $joinData['joinType'];
+            $conditionType = $joinData['conditionType'];
+            $condition     = $joinData['condition'];
+
+            $joinMap->join($path, $field, true, $joinFields, $joinType, $conditionType, $condition);
         }
 
         return $joinMap;
@@ -372,16 +440,30 @@ class DataSchema
                         continue;
                     }
 
-                    $join       = $alias . '.' . $key;
-                    $joinAlias  = str_replace('.', '_', $join);
+                    $join      = $alias . '.' . $key;
+                    $joinAlias = str_replace('.', '_', $join);
 
                     // Join fields
                     $joinFields = DataSchema::getDatabaseFields($value['properties']);
 
+                    $conditionType = isset($value['conditionType']) ? $value['conditionType'] : Join::WITH;
+                    $conditions    = isset($value['conditions']) ? $value['conditions'] : [];
+
+                    $preparedConditions = [];
+                    foreach ($conditions as $condition) {
+                        if ($condition) {
+                            $preparedConditions[] = '(' . $this->conditionPlaceholder($condition, $joinAlias) . ')';
+                        }
+                    }
+                    $condition = implode('AND', $preparedConditions);
+
                     $result[$join] = [
-                        'alias'    => $joinAlias,
-                        'fields'   => $joinFields,
-                        'joinType' => $joinType
+                        'alias'         => $joinAlias,
+                        'fields'        => $joinFields,
+                        'joinType'      => $joinType,
+                        'conditionType' => $conditionType,
+                        'condition'     => $condition,
+
                     ];
 
                     $this->getJoinsByConfig($value, $firstAlias, $joinAlias, $result);
@@ -390,5 +472,51 @@ class DataSchema
         }
 
         return $result;
+    }
+
+    /**
+     * @param array $roles
+     * @return bool
+     */
+    protected function isGranted(array $roles)
+    {
+        if (empty($roles)) {
+            return true;
+        }
+
+        foreach ($roles as $role) {
+            if ($this->authorizationChecker->isGranted($role)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $class
+     * @return array
+     */
+    public function getSecurityRoles($class)
+    {
+        $roles = [];
+
+        $masterListRole = $this->accessHandler->getRole($class, 'LIST');
+        if ($masterListRole) {
+            $roles[] = $masterListRole;
+        }
+
+        return $roles;
+    }
+
+    /**
+     * @param string $condition
+     * @param string $alias
+     * @param UserInterface $user
+     * @return string
+     */
+    public function conditionPlaceholder($condition, $alias, UserInterface $user = null)
+    {
+        return $this->accessHandler->conditionPlaceholder($condition, $alias, $user);
     }
 }

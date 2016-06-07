@@ -440,6 +440,14 @@ class DatagridBuilder implements DatagridBuilderInterface
         $joinMap = $this->getJoinMap();
 
         if ($this->dataSchema) {
+            $dataSchemaConfig = $this->dataSchema->getConfiguration();
+            if (isset($dataSchemaConfig['conditions'])) {
+                foreach ($dataSchemaConfig['conditions'] as $condition) {
+                    $preparedCondition = $this->dataSchema->conditionPlaceholder($condition, $alias);
+                    $queryBuilder->andWhere($preparedCondition);
+                }
+            }
+
             $joinMapFromDataSchema = $this->dataSchema->createJoinMap($this->alias);
             if ($joinMapFromDataSchema) {
                 if ($joinMap) {

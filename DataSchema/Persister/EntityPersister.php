@@ -9,11 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Glavweb\DatagridBundle\Persister;
+namespace Glavweb\DatagridBundle\DataSchema\Persister;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query;
+use Glavweb\DatagridBundle\DataSchema\DataSchema;
 
 /**
  * Class EntityPersister
@@ -21,7 +22,7 @@ use Doctrine\ORM\Query;
  * @author Andrey Nilov <nilov@glavweb.ru>
  * @package Glavweb\DatagridBundle
  */
-class EntityPersister
+class EntityPersister implements PersisterInterface
 {
     /**
      * @var Registry
@@ -29,23 +30,39 @@ class EntityPersister
     private $doctrine;
 
     /**
+     * @var DataSchema
+     */
+    private $dataSchema;
+
+    /**
+     * @var int
+     */
+    private $hydrationMode;
+
+    /**
      * EntityPersister constructor.
+     *
      * @param Registry $doctrine
+     * @param DataSchema $dataSchema
+     * @param int $hydrationMode
      */
-    public function __construct(Registry $doctrine)
+    public function __construct(Registry $doctrine, DataSchema $dataSchema, $hydrationMode = Query::HYDRATE_ARRAY)
     {
-        $this->doctrine = $doctrine;
+        $this->doctrine      = $doctrine;
+        $this->dataSchema    = $dataSchema;
+        $this->hydrationMode = $hydrationMode;
     }
 
     /**
      * @param array $associationMapping
      * @param mixed $id
      * @param array $databaseFields
+     * @param array $conditions
      * @return array
      */
-    public function getManyToManyData(array $associationMapping, $id, array $databaseFields)
+    public function getManyToManyData(array $associationMapping, $id, array $databaseFields, array $conditions = [])
     {
-        $query = $this->getQuery($associationMapping, $id, $databaseFields);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions);
 
         return $query->getArrayResult();
     }
@@ -54,11 +71,12 @@ class EntityPersister
      * @param array $associationMapping
      * @param mixed $id
      * @param array $databaseFields
+     * @param array $conditions
      * @return array
      */
-    public function getOneToManyData(array $associationMapping, $id, array $databaseFields)
+    public function getOneToManyData(array $associationMapping, $id, array $databaseFields, array $conditions = [])
     {
-        $query = $this->getQuery($associationMapping, $id, $databaseFields);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions);
 
         return $query->getArrayResult();
     }
@@ -67,11 +85,12 @@ class EntityPersister
      * @param array $associationMapping
      * @param mixed $id
      * @param array $databaseFields
+     * @param array $conditions
      * @return array
      */
-    public function getManyToOneData(array $associationMapping, $id, array $databaseFields)
+    public function getManyToOneData(array $associationMapping, $id, array $databaseFields, array $conditions = [])
     {
-        $query = $this->getQuery($associationMapping, $id, $databaseFields);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions);
 
         return (array)$query->getOneOrNullResult();
     }
@@ -80,22 +99,24 @@ class EntityPersister
      * @param array $associationMapping
      * @param mixed $id
      * @param array $databaseFields
+     * @param array $conditions
      * @return array
      */
-    public function getOneToOneData(array $associationMapping, $id, array $databaseFields)
+    public function getOneToOneData(array $associationMapping, $id, array $databaseFields, array $conditions = [])
     {
-        $query = $this->getQuery($associationMapping, $id, $databaseFields);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions);
 
         return (array)$query->getOneOrNullResult();
     }
 
     /**
      * @param array $associationMapping
-     * @param $id
+     * @param mixed $id
      * @param array $databaseFields
-     * @return \Doctrine\ORM\Query
+     * @param array $conditions
+     * @return Query
      */
-    protected function getQuery(array $associationMapping, $id, array $databaseFields)
+    protected function getQuery(array $associationMapping, $id, array $databaseFields, array $conditions = [])
     {
         /** @var EntityManager $em */
         $em = $this->doctrine->getManager();
@@ -113,6 +134,11 @@ class EntityPersister
             ->setParameter('sourceId', $id)
         ;
 
-        return $qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY);
+        foreach ($conditions as $condition) {
+            $preparedCondition = $this->dataSchema->conditionPlaceholder($condition, $targetAlias);
+            $qb->andWhere($preparedCondition);
+        }
+
+        return $qb->getQuery()->setHydrationMode($this->hydrationMode);
     }
 }
