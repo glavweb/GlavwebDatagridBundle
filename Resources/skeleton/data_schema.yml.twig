@@ -1,5 +1,7 @@
 schema:
     class: {{ class }}
+    db_driver: orm
+    glavweb_security: false
     properties:
 
     {%- for field, type in fields %}
