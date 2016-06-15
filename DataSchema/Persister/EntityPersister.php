@@ -136,7 +136,9 @@ class EntityPersister implements PersisterInterface
 
         foreach ($conditions as $condition) {
             $preparedCondition = $this->dataSchema->conditionPlaceholder($condition, $targetAlias);
-            $qb->andWhere($preparedCondition);
+            if ($preparedCondition) {
+                $qb->andWhere($preparedCondition);
+            }
         }
 
         return $qb->getQuery()->setHydrationMode($this->hydrationMode);

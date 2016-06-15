@@ -18,6 +18,7 @@ use Glavweb\DatagridBundle\Loader\Yaml\DataSchemaYamlLoader;
 use Glavweb\DatagridBundle\Loader\Yaml\ScopeYamlLoader;
 use Glavweb\DatagridBundle\Persister\EntityPersister;
 use Glavweb\SecurityBundle\Security\AccessHandler;
+use Glavweb\DatagridBundle\DataSchema\Placeholder;
 use Glavweb\SecurityBundle\Security\QueryBuilderFilter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -69,6 +70,10 @@ class DataSchemaFactory
      * @var string
      */
     private $scopeDir;
+    /**
+     * @var Placeholder
+     */
+    private $placeholder;
 
     /**
      * DataSchema constructor.
@@ -79,10 +84,11 @@ class DataSchemaFactory
      * @param AuthorizationCheckerInterface $authorizationChecker
      * @param AccessHandler $accessHandler
      * @param QueryBuilderFilter $accessQbFilter
+     * @param Placeholder $placeholder
      * @param string $dataSchemaDir
      * @param string $scopeDir
      */
-    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, $dataSchemaDir, $scopeDir)
+    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, $dataSchemaDir, $scopeDir)
     {
         $this->doctrine                = $doctrine;
         $this->dataTransformerRegistry = $dataTransformerRegistry;
@@ -90,6 +96,7 @@ class DataSchemaFactory
         $this->authorizationChecker    = $authorizationChecker;
         $this->accessHandler           = $accessHandler;
         $this->accessQbFilter          = $accessQbFilter;
+        $this->placeholder             = $placeholder;
         $this->dataSchemaDir           = $dataSchemaDir;
         $this->scopeDir                = $scopeDir;
     }
@@ -97,9 +104,10 @@ class DataSchemaFactory
     /**
      * @param string $dataSchemaFile
      * @param string $scopeFile
+     * @param bool   $securityEnabled
      * @return DataSchema
      */
-    public function createDataSchema($dataSchemaFile, $scopeFile = null)
+    public function createDataSchema($dataSchemaFile, $scopeFile = null, $securityEnabled = true)
     {
         $dataSchemaConfig = $this->getDataSchemaConfig($dataSchemaFile);
 
@@ -115,8 +123,10 @@ class DataSchemaFactory
             $this->authorizationChecker,
             $this->accessHandler,
             $this->accessQbFilter,
+            $this->placeholder,
             $dataSchemaConfig,
-            $scopeConfig
+            $scopeConfig,
+            $securityEnabled
         );
     }
 

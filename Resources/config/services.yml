@@ -9,7 +9,11 @@ services:
 
     glavweb_datagrid.data_schema_factory:
         class:  Glavweb\DatagridBundle\DataSchema\DataSchemaFactory
-        arguments: ["@doctrine", "@glavweb_datagrid.filter_registry", "@glavweb_datagrid.persister_factory", "@security.authorization_checker", "@glavweb_security.access_handler", "@glavweb_security.access_query_builder_filter", "%glavweb_datagrid.data_schema_dir%", "%glavweb_datagrid.scope_dir%"]
+        arguments: ["@doctrine", "@glavweb_datagrid.filter_registry", "@glavweb_datagrid.persister_factory", "@security.authorization_checker", "@glavweb_security.access_handler", "@glavweb_security.access_query_builder_filter", "@glavweb_datagrid.placeholder", "%glavweb_datagrid.data_schema_dir%", "%glavweb_datagrid.scope_dir%"]
+
+    glavweb_datagrid.placeholder:
+        class:  Glavweb\DatagridBundle\DataSchema\Placeholder
+        arguments: ["@annotation_reader", "@security.token_storage", "@twig.extension.security"]
 
     glavweb_datagrid.persister_factory:
         class:  Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory

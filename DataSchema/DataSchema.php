@@ -12,7 +12,6 @@
 namespace Glavweb\DatagridBundle\DataSchema;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\Expr\Join;
 use Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory;
@@ -63,6 +62,11 @@ class DataSchema
     private $accessQbFilter;
 
     /**
+     * @var Placeholder
+     */
+    private $placeholder;
+
+    /**
      * @var array
      */
     private $configuration = [];
@@ -73,6 +77,11 @@ class DataSchema
     private $classMetadataCache;
 
     /**
+     * @var bool
+     */
+    private $securityEnabled;
+
+    /**
      * DataSchema constructor.
      *
      * @param Registry $doctrine
@@ -81,16 +90,20 @@ class DataSchema
      * @param AuthorizationCheckerInterface $authorizationChecker
      * @param AccessHandler $accessHandler
      * @param QueryBuilderFilter $accessQbFilter
+     * @param Placeholder $placeholder
      * @param array $configuration
      * @param array $scopeConfig
+     * @param bool $securityEnabled
      */
-    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, array $configuration, array $scopeConfig = null)
+    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, array $configuration, array $scopeConfig = null, $securityEnabled = true)
     {
         $this->doctrine                = $doctrine;
         $this->dataTransformerRegistry = $dataTransformerRegistry;
         $this->authorizationChecker    = $authorizationChecker;
         $this->accessHandler           = $accessHandler;
         $this->accessQbFilter          = $accessQbFilter;
+        $this->placeholder             = $placeholder;
+        $this->securityEnabled         = $securityEnabled;
 
         if (!isset($configuration['class'])) {
             throw new \RuntimeException('Option "class" must be defined.');
@@ -237,8 +250,12 @@ class DataSchema
      */
     protected function prepareConfiguration(array $configuration, $class, array $scopeConfig = null, $glavwebSecurity = false)
     {
-        $classMetadata   = $this->getClassMetadata($class);
-        $glavwebSecurity = isset($configuration['glavweb_security']) ? $configuration['glavweb_security'] : $glavwebSecurity;
+        $classMetadata = $this->getClassMetadata($class);
+
+        $glavwebSecurity = $this->securityEnabled ?
+            isset($configuration['glavweb_security']) ? $configuration['glavweb_security'] : $glavwebSecurity :
+            false
+        ;
 
         // roles
         if (!isset($configuration['roles'])) {
@@ -265,12 +282,12 @@ class DataSchema
             $configuration['conditions'] = [];
         }
 
-        if ($glavwebSecurity) {
-            $securityCondition = $this->accessQbFilter->getSecurityCondition($class);
-            if ($securityCondition) {
-                $configuration['conditions'][] = $securityCondition;
-            }
-        }
+//        if ($glavwebSecurity) {
+//            $securityCondition = $this->accessQbFilter->getSecurityCondition($class);
+//            if ($securityCondition) {
+//                $configuration['conditions'][] = $securityCondition;
+//            }
+//        }
 
         if (isset($configuration['properties'])) {
             $properties = $configuration['properties'];
@@ -452,7 +469,10 @@ class DataSchema
                     $preparedConditions = [];
                     foreach ($conditions as $condition) {
                         if ($condition) {
-                            $preparedConditions[] = '(' . $this->conditionPlaceholder($condition, $joinAlias) . ')';
+                            $preparedCondition = $this->conditionPlaceholder($condition, $joinAlias);
+                            if ($preparedCondition) {
+                                $preparedConditions[] = '(' . $preparedCondition . ')';
+                            }
                         }
                     }
                     $condition = implode('AND', $preparedConditions);
@@ -517,6 +537,6 @@ class DataSchema
      */
     public function conditionPlaceholder($condition, $alias, UserInterface $user = null)
     {
-        return $this->accessHandler->conditionPlaceholder($condition, $alias, $user);
+        return $this->placeholder->condition($condition, $alias, $user);
     }
 }
