@@ -444,7 +444,9 @@ class DatagridBuilder implements DatagridBuilderInterface
             if (isset($dataSchemaConfig['conditions'])) {
                 foreach ($dataSchemaConfig['conditions'] as $condition) {
                     $preparedCondition = $this->dataSchema->conditionPlaceholder($condition, $alias);
-                    $queryBuilder->andWhere($preparedCondition);
+                    if ($preparedCondition) {
+                        $queryBuilder->andWhere($preparedCondition);
+                    }
                 }
             }
 
