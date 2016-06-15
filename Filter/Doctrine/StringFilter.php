@@ -29,10 +29,20 @@ class StringFilter extends Filter
      */
     protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
     {
-        list($operator, $value) = $this->getOperatorAndValue($value);
-
         $field = $alias . '.' . $fieldName;
-        $this->executeCondition($queryBuilder, $operator, $field, $value);
+
+        if (is_array($value) && $this->existsOperatorsInValues($value)) {
+            foreach ($value as $item) {
+                list($operator, $value) = $this->getOperatorAndValue($item);
+
+                $this->executeCondition($queryBuilder, $operator, $field, $value);
+            }
+
+        } else {
+            list($operator, $value) = $this->getOperatorAndValue($value);
+
+            $this->executeCondition($queryBuilder, $operator, $field, $value);
+        }
     }
 
     /**

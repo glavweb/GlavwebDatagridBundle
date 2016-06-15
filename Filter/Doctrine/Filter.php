@@ -335,4 +335,21 @@ abstract class Filter implements FilterInterface
 
         return str_replace('.', '_', $field) . '_' . self::$uniqueParameterId;
     }
+
+    /**
+     * @param array $values
+     * @return bool
+     */
+    protected function existsOperatorsInValues(array $values)
+    {
+        foreach ($values as $value) {
+            list($operator) = self::separateOperator($value, null, null);
+
+            if ($operator) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
