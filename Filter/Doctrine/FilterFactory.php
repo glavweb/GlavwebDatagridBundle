@@ -124,6 +124,10 @@ class FilterFactory
         $options['class_metadata'] = $classMetadata;
         $options['field_name']     = $filterName;
 
+        if (!isset($options['has_select'])) {
+            $options['has_select'] = true;
+        }
+
         $joinMap  = null;
         $joinPath = $alias;
         if (strpos($filterName, '.') > 0) {
@@ -137,7 +141,7 @@ class FilterFactory
                 if ($joinClassMetadata->hasAssociation($joinFieldName)) {
                     $isLastElement = $joinFieldName == $lastFilterElement;
                     if (!$isLastElement) {
-                        $joinMap->join($joinPath, $joinFieldName);
+                        $joinMap->join($joinPath, $joinFieldName, $options['has_select']);
 
                         $joinAssociationMapping = $joinClassMetadata->getAssociationMapping($joinFieldName);
                         $joinClassName = $joinAssociationMapping['targetEntity'];
@@ -162,7 +166,7 @@ class FilterFactory
                 $joinMap = new JoinMap($alias);
             }
 
-            $joinMap->join($joinPath, $options['field_name']);
+            $joinMap->join($joinPath, $options['field_name'], $options['has_select']);
         }
 
         $options['join_map'] = $joinMap;
