@@ -39,12 +39,13 @@ class SimpleDataTransformer implements DataTransformerInterface
     }
 
     /**
-     * @param mixed $value
-     * @param array $data
+     * @param mixed          $value
+     * @param array          $data
+     * @param TransformEvent $transformEvent
      * @return mixed
      */
-    public function transform($value, array $data)
+    public function transform($value, array $data, TransformEvent $transformEvent)
     {
-        return call_user_func($this->callable, $value, $data);
+        return call_user_func($this->callable, $value, $data, $transformEvent);
     }
 }

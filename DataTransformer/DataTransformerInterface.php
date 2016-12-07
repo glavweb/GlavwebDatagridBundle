@@ -20,9 +20,10 @@ namespace Glavweb\DatagridBundle\DataTransformer;
 interface DataTransformerInterface
 {
     /**
-     * @param mixed $value
-     * @param array $data
+     * @param mixed          $value
+     * @param array          $data
+     * @param TransformEvent $transformEvent
      * @return mixed
      */
-    public function transform($value, array $data);
+    public function transform($value, array $data, TransformEvent $transformEvent);
 }

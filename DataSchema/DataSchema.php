@@ -17,6 +17,7 @@ use Doctrine\ORM\Query\Expr\Join;
 use Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory;
 use Glavweb\DatagridBundle\DataSchema\Persister\PersisterInterface;
 use Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry;
+use Glavweb\DatagridBundle\DataTransformer\TransformEvent;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 use Glavweb\SecurityBundle\Security\AccessHandler;
 use Glavweb\SecurityBundle\Security\QueryBuilderFilter;
@@ -127,11 +128,14 @@ class DataSchema
     }
 
     /**
-     * @param array $data
-     * @param array $config
+     * @param array  $data
+     * @param array  $config
+     * @param string $parentClassName
+     * @param string $parentPropertyName
      * @return array
+     * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    public function getData(array $data, array $config = null)
+    public function getData(array $data, array $config = null, $parentClassName = null, $parentPropertyName = null)
     {
         if ($config === null) {
             $config = $this->configuration;
@@ -142,49 +146,70 @@ class DataSchema
         }
 
         $preparedData = [];
-        foreach ($config['properties'] as $key => $info) {
-            if (isset($info['hidden']) && $info['hidden'] == true) {
+
+        foreach ($config['properties'] as $propertyName => $propertyConfig) {
+            if (isset($propertyConfig['hidden']) && $propertyConfig['hidden'] == true) {
                 continue;
             }
 
-            if (isset($data[$key])) {
-                $value = $data[$key];
+            if (isset($data[$propertyName])) {
+                $value = $data[$propertyName];
 
-            } elseif (isset($info['source']) && isset($data[$info['source']])) {
-                $value = $data[$info['source']];
+            } elseif (isset($propertyConfig['source']) && isset($data[$propertyConfig['source']])) {
+                $value = $data[$propertyConfig['source']];
 
-            } elseif (isset($info['properties']) && isset($info['class'])) {
+            } elseif (isset($propertyConfig['properties']) && isset($propertyConfig['class'])) {
                 $metadata = $this->getClassMetadata($config['class']);
-                if (!$metadata->hasAssociation($key)) {
+                if (!$metadata->hasAssociation($propertyName)) {
                     continue;
                 }
 
-                $associationMapping = $metadata->getAssociationMapping($key);
-                $databaseFields = self::getDatabaseFields($info['properties']);
-                $conditions     = $info['conditions'];
+                $associationMapping = $metadata->getAssociationMapping($propertyName);
+                $databaseFields = self::getDatabaseFields($propertyConfig['properties']);
+                $conditions     = $propertyConfig['conditions'];
 
                 switch ($associationMapping['type']) {
                     case ClassMetadata::MANY_TO_MANY:
                         $modelData = $this->persister->getManyToManyData($associationMapping, $data['id'], $databaseFields, $conditions);
-                        $preparedData[$key] = $this->getList($modelData, $info);
+                        $preparedData[$propertyName] = $this->getList(
+                            $modelData,
+                            $propertyConfig,
+                            $config['class'],
+                            $propertyName
+                        );
 
                         break;
 
                     case ClassMetadata::ONE_TO_MANY:
                         $modelData = $this->persister->getOneToManyData($associationMapping, $data['id'], $databaseFields, $conditions);
-                        $preparedData[$key] = $this->getList($modelData, $info);
+                        $preparedData[$propertyName] = $this->getList(
+                            $modelData,
+                            $propertyConfig,
+                            $config['class'],
+                            $propertyName
+                        );
 
                         break;
 
                     case ClassMetadata::MANY_TO_ONE:
                         $modelData = $this->persister->getManyToOneData($associationMapping, $data['id'], $databaseFields, $conditions);
-                        $preparedData[$key] = $this->getData($modelData, $info);
+                        $preparedData[$propertyName] = $this->getData(
+                            $modelData,
+                            $propertyConfig,
+                            $config['class'],
+                            $propertyName
+                        );
 
                         break;
 
                     case ClassMetadata::ONE_TO_ONE:
                         $modelData = $this->persister->getOneToOneData($associationMapping, $data['id'], $databaseFields, $conditions);
-                        $preparedData[$key] = $this->getData($modelData, $info);
+                        $preparedData[$propertyName] = $this->getData(
+                            $modelData,
+                            $propertyConfig,
+                            $config['class'],
+                            $propertyName
+                        );
 
                         break;
                 }
@@ -196,45 +221,58 @@ class DataSchema
             }
 
             if (is_array($value)) {
-                $subConfig = $config['properties'][$key];
+                $subConfig = $config['properties'][$propertyName];
 
                 if ($subConfig['type'] == 'entity') {
-                    $preparedData[$key] = $this->getData($value, $config['properties'][$key]);
+                    $preparedData[$propertyName] = $this->getData(
+                        $value,
+                        $config['properties'][$propertyName],
+                        $config['class'],
+                        $propertyName
+                    );
 
                     continue;
 
                 } elseif ($subConfig['type'] == 'collection') {
                     foreach ($value as $subKey => $subInfo) {
-                        $preparedData[$key][$subKey] = $this->getData($subInfo, $config['properties'][$key]);
+                        $preparedData[$propertyName][$subKey] = $this->getData(
+                            $subInfo,
+                            $config['properties'][$propertyName],
+                            $config['class'],
+                            $propertyName
+                        );
                     }
 
                     continue;
                 }
             }
 
-            if (isset($info['decode'])) {
-                $value = $this->decode($value, $info['decode'], $data);
+            if (isset($propertyConfig['decode'])) {
+                $transformEvent = new TransformEvent($config['class'], $propertyName, $propertyConfig, $parentClassName, $parentPropertyName);
+                $value = $this->decode($value, $propertyConfig['decode'], $data, $transformEvent);
             }
 
-            $preparedData[$key] = $value;
+            $preparedData[$propertyName] = $value;
         }
 
         return $preparedData;
     }
 
     /**
-     * @param array $list
-     * @param array $config
+     * @param array  $list
+     * @param array  $config
+     * @param string $parentClassName
+     * @param string $parentPropertyName
      * @return array
      */
-    public function getList(array $list, array $config = null)
+    public function getList(array $list, array $config = null, $parentClassName = null, $parentPropertyName = null)
     {
         if ($config === null) {
             $config = $this->configuration;
         }
 
         foreach ($list as $key => $value) {
-            $list[$key] = $this->getData($value, $config);
+            $list[$key] = $this->getData($value, $config, $parentClassName, $parentPropertyName);
         }
 
         return $list;
@@ -281,13 +319,6 @@ class DataSchema
         if (!isset($configuration['conditions'])) {
             $configuration['conditions'] = [];
         }
-
-//        if ($glavwebSecurity) {
-//            $securityCondition = $this->accessQbFilter->getSecurityCondition($class);
-//            if ($securityCondition) {
-//                $configuration['conditions'][] = $securityCondition;
-//            }
-//        }
 
         if (isset($configuration['properties'])) {
             $properties = $configuration['properties'];
@@ -360,12 +391,13 @@ class DataSchema
     }
 
     /**
-     * @param mixed  $value
-     * @param string $decodeString
-     * @param array  $data
+     * @param mixed          $value
+     * @param string         $decodeString
+     * @param array          $data
+     * @param TransformEvent $transformEvent
      * @return mixed
      */
-    protected function decode($value, $decodeString, array $data)
+    protected function decode($value, $decodeString, array $data, TransformEvent $transformEvent)
     {
         $dataTransformerNames = explode('|', $decodeString);
         $dataTransformerNames = array_map('trim', $dataTransformerNames);
@@ -374,8 +406,8 @@ class DataSchema
             $hasDataTransformer = $this->dataTransformerRegistry->has($dataTransformerName);
 
             if ($hasDataTransformer) {
-                $transformer = $this->dataTransformerRegistry->get($dataTransformerName) ;
-                $value = $transformer->transform($value, $data);
+                $transformer = $this->dataTransformerRegistry->get($dataTransformerName);
+                $value = $transformer->transform($value, $data, $transformEvent);
             }
         }
 
