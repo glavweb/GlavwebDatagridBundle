@@ -147,6 +147,12 @@ class DataSchema
 
         $preparedData = [];
 
+        $class = $config['class'];
+        if ($config['discriminatorMap']) {
+            $discriminator = $data[$config['discriminatorColumnName']];
+            $class = $config['discriminatorMap'][$discriminator];
+        }
+
         foreach ($config['properties'] as $propertyName => $propertyConfig) {
             if (isset($propertyConfig['hidden']) && $propertyConfig['hidden'] == true) {
                 continue;
@@ -174,7 +180,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getList(
                             $modelData,
                             $propertyConfig,
-                            $config['class'],
+                            $class,
                             $propertyName
                         );
 
@@ -185,7 +191,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getList(
                             $modelData,
                             $propertyConfig,
-                            $config['class'],
+                            $class,
                             $propertyName
                         );
 
@@ -196,7 +202,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getData(
                             $modelData,
                             $propertyConfig,
-                            $config['class'],
+                            $class,
                             $propertyName
                         );
 
@@ -207,7 +213,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getData(
                             $modelData,
                             $propertyConfig,
-                            $config['class'],
+                            $class,
                             $propertyName
                         );
 
@@ -227,7 +233,7 @@ class DataSchema
                     $preparedData[$propertyName] = $this->getData(
                         $value,
                         $config['properties'][$propertyName],
-                        $config['class'],
+                        $class,
                         $propertyName
                     );
 
@@ -238,7 +244,7 @@ class DataSchema
                         $preparedData[$propertyName][$subKey] = $this->getData(
                             $subInfo,
                             $config['properties'][$propertyName],
-                            $config['class'],
+                            $class,
                             $propertyName
                         );
                     }
@@ -248,7 +254,7 @@ class DataSchema
             }
 
             if (isset($propertyConfig['decode'])) {
-                $transformEvent = new TransformEvent($config['class'], $propertyName, $propertyConfig, $parentClassName, $parentPropertyName);
+                $transformEvent = new TransformEvent($class, $propertyName, $propertyConfig, $parentClassName, $parentPropertyName);
                 $value = $this->decode($value, $propertyConfig['decode'], $data, $transformEvent);
             }
 
@@ -313,7 +319,14 @@ class DataSchema
         }
 
         // class
-        $configuration['class'] = $class;
+        $configuration['class']                   = $class;
+        $configuration['discriminatorColumnName'] = null;
+        $configuration['discriminatorMap']        = [];
+
+        if ($classMetadata->subClasses) {
+            $configuration['discriminatorColumnName'] = $classMetadata->discriminatorColumn['name'];
+            $configuration['discriminatorMap']        = $classMetadata->discriminatorMap;
+        }
 
         // condition
         if (!isset($configuration['conditions'])) {
@@ -325,7 +338,7 @@ class DataSchema
 
             // Set ids
             $identifierFieldNames = $classMetadata->getIdentifierFieldNames();
-            foreach ($properties as $name => $value) {
+            foreach ($properties as $propertyName => $propertyConfig) {
                 foreach ($identifierFieldNames as $idName) {
                     if (!array_key_exists($idName, $properties)) {
                         $properties[$idName] = ['hidden' => true];
@@ -334,40 +347,57 @@ class DataSchema
                 }
             }
 
-            foreach ($properties as $name => $value) {
+            foreach ($properties as $propertyName => $propertyConfig) {
                 $isRemove =
                     $scopeConfig !== null &&
-                    !in_array($name, $identifierFieldNames) &&
-                    empty($value['hidden']) &&
-                    !array_key_exists($name, $scopeConfig)
+                    !in_array($propertyName, $identifierFieldNames) &&
+                    empty($propertyConfig['hidden']) &&
+                    !array_key_exists($propertyName, $scopeConfig)
                 ;
 
                 if ($isRemove) {
-                    unset($configuration['properties'][$name]);
+                    unset($configuration['properties'][$propertyName]);
                     continue;
                 }
 
-                if (isset($value['properties'])) {
-                    $class = $classMetadata->getAssociationTargetClass($name);
+                // Set default discriminator value for property
+                if (!isset($configuration['properties'][$propertyName]['discriminator'])) {
+                    $configuration['properties'][$propertyName]['discriminator'] = null;
+                }
 
-                    $preparedConfiguration = $this->prepareConfiguration($value, $class, $scopeConfig[$name], $glavwebSecurity);
-                    $configuration['properties'][$name] = $preparedConfiguration;
+                // If has subclasses
+                $hasPropertyClassMetadata =
+                    isset($propertyConfig['discriminator']) &&
+                    isset($configuration['discriminatorMap'][$propertyConfig['discriminator']])
+                ;
+
+                $propertyClassMetadata = $classMetadata;
+                if ($hasPropertyClassMetadata) {
+                    $propertyClass = $configuration['discriminatorMap'][$propertyConfig['discriminator']];
+                    $propertyClassMetadata = $this->getClassMetadata($propertyClass);
+                }
+
+                if (isset($propertyConfig['properties'])) {
+                    $class = $propertyClassMetadata->getAssociationTargetClass($propertyName);
+
+                    $preparedConfiguration = $this->prepareConfiguration($propertyConfig, $class, $scopeConfig[$propertyName], $glavwebSecurity);
+                    $configuration['properties'][$propertyName] = $preparedConfiguration;
 
                     // type
                     if ($preparedConfiguration) {
-                        $associationMapping = $classMetadata->getAssociationMapping($name);
+                        $associationMapping = $propertyClassMetadata->getAssociationMapping($propertyName);
                         $associationType = $associationMapping['type'];
 
                         $type = in_array($associationType, [ClassMetadata::ONE_TO_MANY, ClassMetadata::MANY_TO_MANY]) ? 'collection' : 'entity';
-                        $configuration['properties'][$name]['type'] = $type;
+                        $configuration['properties'][$propertyName]['type'] = $type;
                     }
 
                 } else {
-                    if (!isset($value['type'])) {
-                        $configuration['properties'][$name]['type'] = $classMetadata->getTypeOfField($name);
+                    if (!isset($propertyConfig['type'])) {
+                        $configuration['properties'][$propertyName]['type'] = $propertyClassMetadata->getTypeOfField($propertyName);
                     }
 
-                    $configuration['properties'][$name]['from_db'] = (bool)$classMetadata->getTypeOfField($name);
+                    $configuration['properties'][$propertyName]['from_db'] = (bool)$propertyClassMetadata->getTypeOfField($propertyName);
                 }
             }
         }
@@ -422,14 +452,19 @@ class DataSchema
     {
         $databaseFields = [];
         foreach ($properties as $propertyName => $propertyData) {
-            $isValid = (isset($propertyData['from_db']) && $propertyData['from_db']);
+            $field = null;
 
+            $isValid = (isset($propertyData['from_db']) && $propertyData['from_db']);
             if ($isValid) {
-                $databaseFields[] = $propertyName;
+                $field = $propertyName;
             }
 
             if (isset($propertyData['source'])) {
-                $databaseFields[] = $propertyData['source'];
+                $field = $propertyData['source'];
+            }
+
+            if ($field && !in_array($field, $databaseFields)) {
+                $databaseFields[] = $field;
             }
         }
 
@@ -460,6 +495,13 @@ class DataSchema
             $conditionType = $joinData['conditionType'];
             $condition     = $joinData['condition'];
 
+            // If any of these join fields not exist in the class -> join fields is empty
+            $classMetadata = $this->getClassMetadata($joinData['class']);
+            $isDifferentFields = (bool)array_diff($joinFields, $classMetadata->getFieldNames());
+            if ($isDifferentFields) {
+                $joinFields = [];
+            }
+
             $joinMap->join($path, $field, true, $joinFields, $joinType, $conditionType, $condition);
         }
 
@@ -481,9 +523,9 @@ class DataSchema
 
         if (isset($config['properties'])) {
             $properties = $config['properties'];
-            foreach ($properties as $key => $value) {
-                if (isset($value['properties'])) {
-                    $joinType = isset($value['join']) && $value['join'] != 'none' ? $value['join'] : false;
+            foreach ($properties as $key => $propertyConfig) {
+                if (isset($propertyConfig['properties'])) {
+                    $joinType = isset($propertyConfig['join']) && $propertyConfig['join'] != 'none' ? $propertyConfig['join'] : false;
 
                     if (!$joinType) {
                         continue;
@@ -493,10 +535,10 @@ class DataSchema
                     $joinAlias = str_replace('.', '_', $join);
 
                     // Join fields
-                    $joinFields = DataSchema::getDatabaseFields($value['properties']);
+                    $joinFields = DataSchema::getDatabaseFields($propertyConfig['properties']);
 
-                    $conditionType = isset($value['conditionType']) ? $value['conditionType'] : Join::WITH;
-                    $conditions    = isset($value['conditions']) ? $value['conditions'] : [];
+                    $conditionType = isset($propertyConfig['conditionType']) ? $propertyConfig['conditionType'] : Join::WITH;
+                    $conditions    = isset($propertyConfig['conditions']) ? $propertyConfig['conditions'] : [];
 
                     $preparedConditions = [];
                     foreach ($conditions as $condition) {
@@ -510,15 +552,15 @@ class DataSchema
                     $condition = implode('AND', $preparedConditions);
 
                     $result[$join] = [
+                        'class'         => $propertyConfig['class'],
                         'alias'         => $joinAlias,
                         'fields'        => $joinFields,
                         'joinType'      => $joinType,
                         'conditionType' => $conditionType,
                         'condition'     => $condition,
-
                     ];
 
-                    $this->getJoinsByConfig($value, $firstAlias, $joinAlias, $result);
+                    $this->getJoinsByConfig($propertyConfig, $firstAlias, $joinAlias, $result);
                 }
             }
         }
