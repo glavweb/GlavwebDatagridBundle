@@ -146,7 +146,7 @@ class DataSchema
      * @param array  $config
      * @param string $parentClassName
      * @param string $parentPropertyName
-     * @return array|null
+     * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
     public function getData(array $data, array $config = null, $parentClassName = null, $parentPropertyName = null)
@@ -156,7 +156,7 @@ class DataSchema
         }
 
         if (!$data) {
-            return null;
+            return [];
         }
 
         if (!isset($config['properties'])) {
