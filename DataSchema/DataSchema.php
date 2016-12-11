@@ -33,6 +33,11 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class DataSchema
 {
     /**
+     * @var DataSchemaFactory
+     */
+    private $dataSchemaFactory;
+
+    /**
      * @var Registry
      */
     private $doctrine;
@@ -83,8 +88,14 @@ class DataSchema
     private $securityEnabled;
 
     /**
+     * @var bool
+     */
+    private $withoutEmbed;
+
+    /**
      * DataSchema constructor.
      *
+     * @param DataSchemaFactory $dataSchemaFactory
      * @param Registry $doctrine
      * @param DataTransformerRegistry $dataTransformerRegistry
      * @param PersisterFactory $persisterFactory
@@ -95,9 +106,11 @@ class DataSchema
      * @param array $configuration
      * @param array $scopeConfig
      * @param bool $securityEnabled
+     * @param bool $withoutEmbed
      */
-    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, array $configuration, array $scopeConfig = null, $securityEnabled = true)
+    public function __construct(DataSchemaFactory $dataSchemaFactory, Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, array $configuration, array $scopeConfig = null, $securityEnabled = true, $withoutEmbed = false)
     {
+        $this->dataSchemaFactory       = $dataSchemaFactory;
         $this->doctrine                = $doctrine;
         $this->dataTransformerRegistry = $dataTransformerRegistry;
         $this->authorizationChecker    = $authorizationChecker;
@@ -105,6 +118,7 @@ class DataSchema
         $this->accessQbFilter          = $accessQbFilter;
         $this->placeholder             = $placeholder;
         $this->securityEnabled         = $securityEnabled;
+        $this->withoutEmbed            = $withoutEmbed;
 
         if (!isset($configuration['class'])) {
             throw new \RuntimeException('Option "class" must be defined.');
@@ -132,13 +146,17 @@ class DataSchema
      * @param array  $config
      * @param string $parentClassName
      * @param string $parentPropertyName
-     * @return array
+     * @return array|null
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
     public function getData(array $data, array $config = null, $parentClassName = null, $parentPropertyName = null)
     {
         if ($config === null) {
             $config = $this->configuration;
+        }
+
+        if (!$data) {
+            return null;
         }
 
         if (!isset($config['properties'])) {
@@ -148,7 +166,7 @@ class DataSchema
         $preparedData = [];
 
         $class = $config['class'];
-        if ($config['discriminatorMap']) {
+        if ($config['discriminatorMap'] && isset($data[$config['discriminatorColumnName']])) {
             $discriminator = $data[$config['discriminatorColumnName']];
             $class = $config['discriminatorMap'][$discriminator];
         }
@@ -333,6 +351,14 @@ class DataSchema
             $configuration['conditions'] = [];
         }
 
+        // inject properties
+        if (isset($configuration['schema']) && !$this->withoutEmbed) {
+            $configuration['properties'] = $this->injectDataSchemaProperties(
+                $configuration['schema'],
+                isset($configuration['properties']) ? $configuration['properties'] : []
+            );
+        }
+
         if (isset($configuration['properties'])) {
             $properties = $configuration['properties'];
 
@@ -354,6 +380,7 @@ class DataSchema
                     empty($propertyConfig['hidden']) &&
                     !array_key_exists($propertyName, $scopeConfig)
                 ;
+                $isRemove = $isRemove || ($this->withoutEmbed && isset($propertyConfig['properties']));
 
                 if ($isRemove) {
                     unset($configuration['properties'][$propertyName]);
@@ -377,7 +404,12 @@ class DataSchema
                     $propertyClassMetadata = $this->getClassMetadata($propertyClass);
                 }
 
-                if (isset($propertyConfig['properties'])) {
+                $isEmbeddedField =
+                    isset($propertyConfig['properties']) ||
+                    isset($propertyConfig['schema'])
+                ;
+
+                if ($isEmbeddedField) {
                     $class = $propertyClassMetadata->getAssociationTargetClass($propertyName);
 
                     $preparedConfiguration = $this->prepareConfiguration($propertyConfig, $class, $scopeConfig[$propertyName], $glavwebSecurity);
@@ -612,5 +644,23 @@ class DataSchema
     public function conditionPlaceholder($condition, $alias, UserInterface $user = null)
     {
         return $this->placeholder->condition($condition, $alias, $user);
+    }
+
+    /**
+     * @param string $dataSchemaFile
+     * @param array  $properties
+     * @return array
+     */
+    private function injectDataSchemaProperties($dataSchemaFile, array $properties)
+    {
+        $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, null, true, true);
+        $configuration        = $dataSchema->getConfiguration();
+        $dataSchemaProperties = $configuration['properties'];
+
+        foreach ($properties as $propertyName => $propertyConfig) {
+            $dataSchemaProperties[$propertyName] = $propertyConfig;
+        }
+
+        return $dataSchemaProperties;
     }
 }

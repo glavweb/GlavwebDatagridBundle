@@ -105,9 +105,10 @@ class DataSchemaFactory
      * @param string $dataSchemaFile
      * @param string $scopeFile
      * @param bool   $securityEnabled
+     * @param bool   $withoutInheritance
      * @return DataSchema
      */
-    public function createDataSchema($dataSchemaFile, $scopeFile = null, $securityEnabled = true)
+    public function createDataSchema($dataSchemaFile, $scopeFile = null, $securityEnabled = true, $withoutInheritance = false)
     {
         $dataSchemaConfig = $this->getDataSchemaConfig($dataSchemaFile);
 
@@ -117,6 +118,7 @@ class DataSchemaFactory
         }
 
         return new DataSchema(
+            $this,
             $this->doctrine,
             $this->dataTransformerRegistry,
             $this->persisterFactory,
@@ -126,7 +128,8 @@ class DataSchemaFactory
             $this->placeholder,
             $dataSchemaConfig,
             $scopeConfig,
-            $securityEnabled
+            $securityEnabled,
+            $withoutInheritance
         );
     }
 
