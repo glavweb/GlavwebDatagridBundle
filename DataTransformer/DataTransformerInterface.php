@@ -21,9 +21,8 @@ interface DataTransformerInterface
 {
     /**
      * @param mixed          $value
-     * @param array          $data
      * @param TransformEvent $transformEvent
      * @return mixed
      */
-    public function transform($value, array $data, TransformEvent $transformEvent);
+    public function transform($value, TransformEvent $transformEvent);
 }

@@ -45,21 +45,28 @@ class TransformEvent
     private $parentPropertyName;
 
     /**
+     * @var array
+     */
+    private $data;
+
+    /**
      * TransformEvent constructor.
      *
      * @param string $className
      * @param string $propertyName
-     * @param array $propertyConfig
+     * @param array  $propertyConfig
      * @param string $parentClassName
      * @param string $parentPropertyName
+     * @param array  $data
      */
-    public function __construct($className, $propertyName, array $propertyConfig, $parentClassName, $parentPropertyName)
+    public function __construct($className, $propertyName, array $propertyConfig, $parentClassName, $parentPropertyName, array $data)
     {
         $this->className          = $className;
         $this->propertyName       = $propertyName;
         $this->propertyConfig     = $propertyConfig;
         $this->parentClassName    = $parentClassName;
         $this->parentPropertyName = $parentPropertyName;
+        $this->data               = $data;
     }
 
     /**
@@ -100,5 +107,13 @@ class TransformEvent
     public function getParentPropertyName()
     {
         return $this->parentPropertyName;
+    }
+
+    /**
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->data;
     }
 }

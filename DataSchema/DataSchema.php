@@ -272,8 +272,8 @@ class DataSchema
             }
 
             if (isset($propertyConfig['decode'])) {
-                $transformEvent = new TransformEvent($class, $propertyName, $propertyConfig, $parentClassName, $parentPropertyName);
-                $value = $this->decode($value, $propertyConfig['decode'], $data, $transformEvent);
+                $transformEvent = new TransformEvent($class, $propertyName, $propertyConfig, $parentClassName, $parentPropertyName, $data);
+                $value = $this->decode($value, $propertyConfig['decode'], $transformEvent);
             }
 
             $preparedData[$propertyName] = $value;
@@ -455,11 +455,10 @@ class DataSchema
     /**
      * @param mixed          $value
      * @param string         $decodeString
-     * @param array          $data
      * @param TransformEvent $transformEvent
      * @return mixed
      */
-    protected function decode($value, $decodeString, array $data, TransformEvent $transformEvent)
+    protected function decode($value, $decodeString, TransformEvent $transformEvent)
     {
         $dataTransformerNames = explode('|', $decodeString);
         $dataTransformerNames = array_map('trim', $dataTransformerNames);
@@ -469,7 +468,7 @@ class DataSchema
 
             if ($hasDataTransformer) {
                 $transformer = $this->dataTransformerRegistry->get($dataTransformerName);
-                $value = $transformer->transform($value, $data, $transformEvent);
+                $value = $transformer->transform($value, $transformEvent);
             }
         }
 
