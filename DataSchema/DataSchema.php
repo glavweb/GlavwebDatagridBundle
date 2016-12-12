@@ -146,21 +146,22 @@ class DataSchema
      * @param array  $config
      * @param string $parentClassName
      * @param string $parentPropertyName
+     * @param array  $defaultData
      * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    public function getData(array $data, array $config = null, $parentClassName = null, $parentPropertyName = null)
+    public function getData(array $data, array $config = null, $parentClassName = null, $parentPropertyName = null, $defaultData = [])
     {
         if ($config === null) {
             $config = $this->configuration;
         }
 
         if (!$data) {
-            return [];
+            return $defaultData;
         }
 
         if (!isset($config['properties'])) {
-            return [];
+            return $defaultData;
         }
 
         $preparedData = [];
@@ -176,7 +177,7 @@ class DataSchema
                 continue;
             }
 
-            if (isset($data[$propertyName])) {
+            if (array_key_exists($propertyName, $data)) {
                 $value = $data[$propertyName];
 
             } elseif (isset($propertyConfig['source']) && isset($data[$propertyConfig['source']])) {
@@ -221,7 +222,8 @@ class DataSchema
                             $modelData,
                             $propertyConfig,
                             $class,
-                            $propertyName
+                            $propertyName,
+                            null
                         );
 
                         break;
@@ -232,7 +234,8 @@ class DataSchema
                             $modelData,
                             $propertyConfig,
                             $class,
-                            $propertyName
+                            $propertyName,
+                            null
                         );
 
                         break;
