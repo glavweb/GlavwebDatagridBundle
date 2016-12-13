@@ -90,7 +90,7 @@ class DataSchema
     /**
      * @var bool
      */
-    private $withoutEmbed;
+    private $withoutAssociations;
 
     /**
      * DataSchema constructor.
@@ -106,9 +106,9 @@ class DataSchema
      * @param array $configuration
      * @param array $scopeConfig
      * @param bool $securityEnabled
-     * @param bool $withoutEmbed
+     * @param bool $withoutAssociations
      */
-    public function __construct(DataSchemaFactory $dataSchemaFactory, Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, array $configuration, array $scopeConfig = null, $securityEnabled = true, $withoutEmbed = false)
+    public function __construct(DataSchemaFactory $dataSchemaFactory, Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, array $configuration, array $scopeConfig = null, $securityEnabled = true, $withoutAssociations = false)
     {
         $this->dataSchemaFactory       = $dataSchemaFactory;
         $this->doctrine                = $doctrine;
@@ -118,7 +118,7 @@ class DataSchema
         $this->accessQbFilter          = $accessQbFilter;
         $this->placeholder             = $placeholder;
         $this->securityEnabled         = $securityEnabled;
-        $this->withoutEmbed            = $withoutEmbed;
+        $this->withoutAssociations     = $withoutAssociations;
 
         if (!isset($configuration['class'])) {
             throw new \RuntimeException('Option "class" must be defined.');
@@ -355,11 +355,8 @@ class DataSchema
         }
 
         // inject properties
-        if (isset($configuration['schema']) && !$this->withoutEmbed) {
-            $configuration['properties'] = $this->injectDataSchemaProperties(
-                $configuration['schema'],
-                isset($configuration['properties']) ? $configuration['properties'] : []
-            );
+        if (isset($configuration['schema']) && !$this->withoutAssociations) {
+            $configuration = $this->injectDataSchema($configuration['schema'], $configuration);
         }
 
         if (isset($configuration['properties'])) {
@@ -377,13 +374,20 @@ class DataSchema
             }
 
             foreach ($properties as $propertyName => $propertyConfig) {
+                $isAssociationField =
+                    isset($propertyConfig['properties']) ||
+                    isset($propertyConfig['schema'])
+                ;
+
                 $isRemove =
                     $scopeConfig !== null &&
                     !in_array($propertyName, $identifierFieldNames) &&
                     empty($propertyConfig['hidden']) &&
                     !array_key_exists($propertyName, $scopeConfig)
                 ;
-                $isRemove = $isRemove || ($this->withoutEmbed && isset($propertyConfig['properties']));
+
+                // if without associations
+                $isRemove = $isRemove || ($this->withoutAssociations && $isAssociationField);
 
                 if ($isRemove) {
                     unset($configuration['properties'][$propertyName]);
@@ -407,13 +411,11 @@ class DataSchema
                     $propertyClassMetadata = $this->getClassMetadata($propertyClass);
                 }
 
-                $isEmbeddedField =
-                    isset($propertyConfig['properties']) ||
-                    isset($propertyConfig['schema'])
-                ;
-
-                if ($isEmbeddedField) {
-                    $class = $propertyClassMetadata->getAssociationTargetClass($propertyName);
+                if ($isAssociationField) {
+                    $class = isset($propertyConfig['class']) ?
+                        $propertyConfig['class'] :
+                        $propertyClassMetadata->getAssociationTargetClass($propertyName)
+                    ;
 
                     $preparedConfiguration = $this->prepareConfiguration($propertyConfig, $class, $scopeConfig[$propertyName], $glavwebSecurity);
                     $configuration['properties'][$propertyName] = $preparedConfiguration;
@@ -650,19 +652,34 @@ class DataSchema
 
     /**
      * @param string $dataSchemaFile
-     * @param array  $properties
+     * @param array  $configuration
      * @return array
      */
-    private function injectDataSchemaProperties($dataSchemaFile, array $properties)
+    private function injectDataSchema($dataSchemaFile, array $configuration)
     {
         $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, null, true, true);
-        $configuration        = $dataSchema->getConfiguration();
-        $dataSchemaProperties = $configuration['properties'];
+        $injectedConfiguration = $dataSchema->getConfiguration();
 
-        foreach ($properties as $propertyName => $propertyConfig) {
-            $dataSchemaProperties[$propertyName] = $propertyConfig;
+        // inject properties (save source property order)
+        if (isset($injectedConfiguration['properties'])) {
+            $injectedProperties = $injectedConfiguration['properties'];
+
+            $properties = isset($configuration['properties']) ? $configuration['properties'] : [];
+            foreach ($properties as $propertyName => $propertyConfig) {
+                $injectedProperties[$propertyName] = $propertyConfig;
+            }
+
+            $configuration['properties'] = $injectedProperties;
+            unset($injectedConfiguration['properties']);
         }
 
-        return $dataSchemaProperties;
+        // inject rest configuration parameters
+        foreach ($injectedConfiguration as $key => $value) {
+            if (!array_key_exists($key, $configuration)) {
+                $configuration[$key] = $value;
+            }
+        }
+
+        return $configuration;
     }
 }
