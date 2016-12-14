@@ -244,31 +244,23 @@ class DataSchema
                 continue;
 
             } else {
-                continue;
+                $value = null;
             }
 
             if (is_array($value)) {
-                $subConfig = $config['properties'][$propertyName];
-
-                if ($subConfig['type'] == 'entity') {
+                if ($propertyConfig['type'] == 'entity') {
                     $preparedData[$propertyName] = $this->getData(
                         $value,
-                        $config['properties'][$propertyName],
+                        $propertyConfig,
                         $class,
-                        $propertyName
+                        $propertyName,
+                        null
                     );
 
                     continue;
 
-                } elseif ($subConfig['type'] == 'collection') {
-                    foreach ($value as $subKey => $subInfo) {
-                        $preparedData[$propertyName][$subKey] = $this->getData(
-                            $subInfo,
-                            $config['properties'][$propertyName],
-                            $class,
-                            $propertyName
-                        );
-                    }
+                } elseif ($propertyConfig['type'] == 'collection') {
+                    $preparedData[$propertyName] = $this->getList($value, $propertyConfig, $class, $propertyName);
 
                     continue;
                 }
@@ -299,7 +291,7 @@ class DataSchema
         }
 
         foreach ($list as $key => $value) {
-            $list[$key] = $this->getData($value, $config, $parentClassName, $parentPropertyName);
+            $list[$key] = $this->getData($value, $config, $parentClassName, $parentPropertyName, null);
         }
 
         return $list;
