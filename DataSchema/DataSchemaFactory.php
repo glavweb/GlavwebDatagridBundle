@@ -14,11 +14,10 @@ namespace Glavweb\DatagridBundle\DataSchema;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory;
 use Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry;
+use Glavweb\DatagridBundle\Hydrator\Doctrine\ObjectHydrator;
 use Glavweb\DatagridBundle\Loader\Yaml\DataSchemaYamlLoader;
 use Glavweb\DatagridBundle\Loader\Yaml\ScopeYamlLoader;
-use Glavweb\DatagridBundle\Persister\EntityPersister;
 use Glavweb\SecurityBundle\Security\AccessHandler;
-use Glavweb\DatagridBundle\DataSchema\Placeholder;
 use Glavweb\SecurityBundle\Security\QueryBuilderFilter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -70,25 +69,32 @@ class DataSchemaFactory
      * @var string
      */
     private $scopeDir;
+
     /**
      * @var Placeholder
      */
     private $placeholder;
 
     /**
+     * @var ObjectHydrator
+     */
+    private $objectHydrator;
+
+    /**
      * DataSchema constructor.
      *
-     * @param Registry $doctrine
-     * @param DataTransformerRegistry $dataTransformerRegistry
-     * @param PersisterFactory $persisterFactory
+     * @param Registry                      $doctrine
+     * @param DataTransformerRegistry       $dataTransformerRegistry
+     * @param PersisterFactory              $persisterFactory
      * @param AuthorizationCheckerInterface $authorizationChecker
-     * @param AccessHandler $accessHandler
-     * @param QueryBuilderFilter $accessQbFilter
-     * @param Placeholder $placeholder
-     * @param string $dataSchemaDir
-     * @param string $scopeDir
+     * @param AccessHandler                 $accessHandler
+     * @param QueryBuilderFilter            $accessQbFilter
+     * @param Placeholder                   $placeholder
+     * @param ObjectHydrator                $objectHydrator
+     * @param string                        $dataSchemaDir
+     * @param string                        $scopeDir
      */
-    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, $dataSchemaDir, $scopeDir)
+    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, ObjectHydrator $objectHydrator, $dataSchemaDir, $scopeDir)
     {
         $this->doctrine                = $doctrine;
         $this->dataTransformerRegistry = $dataTransformerRegistry;
@@ -97,6 +103,7 @@ class DataSchemaFactory
         $this->accessHandler           = $accessHandler;
         $this->accessQbFilter          = $accessQbFilter;
         $this->placeholder             = $placeholder;
+        $this->objectHydrator          = $objectHydrator;
         $this->dataSchemaDir           = $dataSchemaDir;
         $this->scopeDir                = $scopeDir;
     }
@@ -126,6 +133,7 @@ class DataSchemaFactory
             $this->accessHandler,
             $this->accessQbFilter,
             $this->placeholder,
+            $this->objectHydrator,
             $dataSchemaConfig,
             $scopeConfig,
             $securityEnabled,

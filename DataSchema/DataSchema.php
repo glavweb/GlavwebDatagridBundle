@@ -18,6 +18,7 @@ use Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory;
 use Glavweb\DatagridBundle\DataSchema\Persister\PersisterInterface;
 use Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry;
 use Glavweb\DatagridBundle\DataTransformer\TransformEvent;
+use Glavweb\DatagridBundle\Hydrator\Doctrine\ObjectHydrator;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 use Glavweb\SecurityBundle\Security\AccessHandler;
 use Glavweb\SecurityBundle\Security\QueryBuilderFilter;
@@ -93,22 +94,28 @@ class DataSchema
     private $withoutAssociations;
 
     /**
+     * @var ObjectHydrator
+     */
+    private $objectHydrator;
+
+    /**
      * DataSchema constructor.
      *
-     * @param DataSchemaFactory $dataSchemaFactory
-     * @param Registry $doctrine
-     * @param DataTransformerRegistry $dataTransformerRegistry
-     * @param PersisterFactory $persisterFactory
+     * @param DataSchemaFactory             $dataSchemaFactory
+     * @param Registry                      $doctrine
+     * @param DataTransformerRegistry       $dataTransformerRegistry
+     * @param PersisterFactory              $persisterFactory
      * @param AuthorizationCheckerInterface $authorizationChecker
-     * @param AccessHandler $accessHandler
-     * @param QueryBuilderFilter $accessQbFilter
-     * @param Placeholder $placeholder
-     * @param array $configuration
-     * @param array $scopeConfig
-     * @param bool $securityEnabled
-     * @param bool $withoutAssociations
+     * @param AccessHandler                 $accessHandler
+     * @param QueryBuilderFilter            $accessQbFilter
+     * @param Placeholder                   $placeholder
+     * @param ObjectHydrator                $objectHydrator
+     * @param array                         $configuration
+     * @param array                         $scopeConfig
+     * @param bool                          $securityEnabled
+     * @param bool                          $withoutAssociations
      */
-    public function __construct(DataSchemaFactory $dataSchemaFactory, Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, array $configuration, array $scopeConfig = null, $securityEnabled = true, $withoutAssociations = false)
+    public function __construct(DataSchemaFactory $dataSchemaFactory, Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, ObjectHydrator $objectHydrator, array $configuration, array $scopeConfig = null, $securityEnabled = true, $withoutAssociations = false)
     {
         $this->dataSchemaFactory       = $dataSchemaFactory;
         $this->doctrine                = $doctrine;
@@ -117,6 +124,7 @@ class DataSchema
         $this->accessHandler           = $accessHandler;
         $this->accessQbFilter          = $accessQbFilter;
         $this->placeholder             = $placeholder;
+        $this->objectHydrator          = $objectHydrator;
         $this->securityEnabled         = $securityEnabled;
         $this->withoutAssociations     = $withoutAssociations;
 
@@ -267,7 +275,7 @@ class DataSchema
             }
 
             if (isset($propertyConfig['decode'])) {
-                $transformEvent = new TransformEvent($class, $propertyName, $propertyConfig, $parentClassName, $parentPropertyName, $data);
+                $transformEvent = new TransformEvent($class, $propertyName, $propertyConfig, $parentClassName, $parentPropertyName, $data, $this->objectHydrator);
                 $value = $this->decode($value, $propertyConfig['decode'], $transformEvent);
             }
 

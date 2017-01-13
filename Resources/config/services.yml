@@ -9,7 +9,7 @@ services:
 
     glavweb_datagrid.data_schema_factory:
         class:  Glavweb\DatagridBundle\DataSchema\DataSchemaFactory
-        arguments: ["@doctrine", "@glavweb_datagrid.data_transformer_registry", "@glavweb_datagrid.persister_factory", "@security.authorization_checker", "@glavweb_security.access_handler", "@glavweb_security.access_query_builder_filter", "@glavweb_datagrid.placeholder", "%glavweb_datagrid.data_schema_dir%", "%glavweb_datagrid.scope_dir%"]
+        arguments: ["@doctrine", "@glavweb_datagrid.data_transformer_registry", "@glavweb_datagrid.persister_factory", "@security.authorization_checker", "@glavweb_security.access_handler", "@glavweb_security.access_query_builder_filter", "@glavweb_datagrid.placeholder", "@glavweb_datagrid.orm_object_hydrator", "%glavweb_datagrid.data_schema_dir%", "%glavweb_datagrid.scope_dir%"]
 
     glavweb_datagrid.placeholder:
         class:  Glavweb\DatagridBundle\DataSchema\Placeholder
@@ -21,3 +21,7 @@ services:
 
     glavweb_datagrid.data_transformer_registry:
         class:  Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry
+
+    glavweb_datagrid.orm_object_hydrator:
+        class:  Glavweb\DatagridBundle\Hydrator\Doctrine\ObjectHydrator
+        arguments: ["@doctrine"]

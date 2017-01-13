@@ -11,6 +11,8 @@
 
 namespace Glavweb\DatagridBundle\DataTransformer;
 
+use Glavweb\DatagridBundle\Hydrator\Doctrine\ObjectHydrator;
+
 /**
  * Class TransformEvent
  *
@@ -50,23 +52,30 @@ class TransformEvent
     private $data;
 
     /**
+     * @var ObjectHydrator
+     */
+    private $objectHydrator;
+
+    /**
      * TransformEvent constructor.
      *
-     * @param string $className
-     * @param string $propertyName
-     * @param array  $propertyConfig
-     * @param string $parentClassName
-     * @param string $parentPropertyName
-     * @param array  $data
+     * @param string         $className
+     * @param string         $propertyName
+     * @param array          $propertyConfig
+     * @param string         $parentClassName
+     * @param string         $parentPropertyName
+     * @param array          $data
+     * @param ObjectHydrator $objectHydrator
      */
-    public function __construct($className, $propertyName, array $propertyConfig, $parentClassName, $parentPropertyName, array $data)
+    public function __construct($className, $propertyName, array $propertyConfig, $parentClassName, $parentPropertyName, array $data, ObjectHydrator $objectHydrator)
     {
-        $this->className          = $className;
-        $this->propertyName       = $propertyName;
-        $this->propertyConfig     = $propertyConfig;
-        $this->parentClassName    = $parentClassName;
-        $this->parentPropertyName = $parentPropertyName;
-        $this->data               = $data;
+        $this->className           = $className;
+        $this->propertyName        = $propertyName;
+        $this->propertyConfig      = $propertyConfig;
+        $this->parentClassName     = $parentClassName;
+        $this->parentPropertyName  = $parentPropertyName;
+        $this->data                = $data;
+        $this->objectHydrator      = $objectHydrator;
     }
 
     /**
@@ -115,5 +124,14 @@ class TransformEvent
     public function getData()
     {
         return $this->data;
+    }
+
+    /**
+     * @return object
+     * @throws \Exception
+     */
+    public function getEntity()
+    {
+        return $this->objectHydrator->hydrate($this->getClassName(), $this->getData());
     }
 }
