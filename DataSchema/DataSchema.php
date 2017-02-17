@@ -18,6 +18,7 @@ use Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory;
 use Glavweb\DatagridBundle\DataSchema\Persister\PersisterInterface;
 use Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry;
 use Glavweb\DatagridBundle\DataTransformer\TransformEvent;
+use Glavweb\DatagridBundle\Exception\DataSchema\InvalidConfigurationException;
 use Glavweb\DatagridBundle\Hydrator\Doctrine\ObjectHydrator;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 use Glavweb\SecurityBundle\Security\AccessHandler;
@@ -191,8 +192,9 @@ class DataSchema
             } elseif (isset($propertyConfig['source']) && isset($data[$propertyConfig['source']])) {
                 $value = $data[$propertyConfig['source']];
 
-            } elseif (isset($propertyConfig['properties']) && isset($propertyConfig['class'])) {
-                $metadata = $this->getClassMetadata($config['class']);
+                // if property is nested object
+            } elseif (isset($propertyConfig['class']) && isset($propertyConfig['properties'])) {
+                $metadata = $this->getClassMetadata($class);
                 if (!$metadata->hasAssociation($propertyName)) {
                     continue;
                 }
@@ -311,6 +313,7 @@ class DataSchema
      * @param array  $scopeConfig
      * @param bool   $glavwebSecurity
      * @return array
+     * @throws InvalidConfigurationException
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
     protected function prepareConfiguration(array $configuration, $class, array $scopeConfig = null, $glavwebSecurity = false)
@@ -398,10 +401,11 @@ class DataSchema
                 if (!isset($configuration['properties'][$propertyName]['discriminator'])) {
                     $configuration['properties'][$propertyName]['discriminator'] = null;
                 }
+                $propertyConfig = $configuration['properties'][$propertyName]; // update $propertyConfig
 
                 // If has subclasses
                 $hasPropertyClassMetadata =
-                    isset($propertyConfig['discriminator']) &&
+                    $propertyConfig['discriminator'] &&
                     isset($configuration['discriminatorMap'][$propertyConfig['discriminator']])
                 ;
 
@@ -412,6 +416,10 @@ class DataSchema
                 }
 
                 if ($isAssociationField) {
+                    if ($propertyConfig['discriminator'] && isset($propertyConfig['join']) && $propertyConfig['join'] != 'none') {
+                        throw new InvalidConfigurationException('The join type cannot be other than "none" if the discriminator is defined.');
+                    }
+
                     $class = isset($propertyConfig['class']) ?
                         $propertyConfig['class'] :
                         $propertyClassMetadata->getAssociationTargetClass($propertyName)

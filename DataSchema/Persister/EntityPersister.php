@@ -15,6 +15,7 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Query;
 use Glavweb\DatagridBundle\DataSchema\DataSchema;
+use Glavweb\DatagridBundle\Exception\Persister\InvalidQueryException;
 
 /**
  * Class EntityPersister
@@ -115,6 +116,7 @@ class EntityPersister implements PersisterInterface
      * @param array $databaseFields
      * @param array $conditions
      * @return Query
+     * @throws InvalidQueryException
      */
     protected function getQuery(array $associationMapping, $id, array $databaseFields, array $conditions = [])
     {
@@ -125,6 +127,13 @@ class EntityPersister implements PersisterInterface
         $joinField   = $associationMapping['isOwningSide'] ? $associationMapping['inversedBy'] : $associationMapping['mappedBy'];
         $targetAlias = uniqid('t');
         $sourceAlias = uniqid('s');
+
+        if (!$joinField) {
+            throw new InvalidQueryException(sprintf('The join filed part cannot be defined. May be you need configure association mapping for classes "%s" and "%s".',
+                $associationMapping['sourceEntity'],
+                $targetClass
+            ));
+        }
 
         $qb = $em->createQueryBuilder()
             ->select(sprintf('PARTIAL %s.{%s}', $targetAlias, implode(',', $databaseFields)))
