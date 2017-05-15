@@ -11,6 +11,7 @@
 
 namespace Glavweb\DatagridBundle\DataTransformer;
 
+use Glavweb\DatagridBundle\DataSchema\DataSchemaFactory;
 use Glavweb\DatagridBundle\Hydrator\Doctrine\ObjectHydrator;
 
 /**
@@ -57,25 +58,32 @@ class TransformEvent
     private $objectHydrator;
 
     /**
+     * @var DataSchemaFactory
+     */
+    private $dataSchemaFactory;
+
+    /**
      * TransformEvent constructor.
      *
-     * @param string         $className
-     * @param string         $propertyName
-     * @param array          $propertyConfig
-     * @param string         $parentClassName
-     * @param string         $parentPropertyName
-     * @param array          $data
-     * @param ObjectHydrator $objectHydrator
+     * @param string            $className
+     * @param string            $propertyName
+     * @param array             $propertyConfig
+     * @param string            $parentClassName
+     * @param string            $parentPropertyName
+     * @param array             $data
+     * @param ObjectHydrator    $objectHydrator
+     * @param DataSchemaFactory $dataSchemaFactory
      */
-    public function __construct($className, $propertyName, array $propertyConfig, $parentClassName, $parentPropertyName, array $data, ObjectHydrator $objectHydrator)
+    public function __construct($className, $propertyName, array $propertyConfig, $parentClassName, $parentPropertyName, array $data, ObjectHydrator $objectHydrator, DataSchemaFactory $dataSchemaFactory)
     {
-        $this->className           = $className;
-        $this->propertyName        = $propertyName;
-        $this->propertyConfig      = $propertyConfig;
-        $this->parentClassName     = $parentClassName;
-        $this->parentPropertyName  = $parentPropertyName;
-        $this->data                = $data;
-        $this->objectHydrator      = $objectHydrator;
+        $this->className          = $className;
+        $this->propertyName       = $propertyName;
+        $this->propertyConfig     = $propertyConfig;
+        $this->parentClassName    = $parentClassName;
+        $this->parentPropertyName = $parentPropertyName;
+        $this->data               = $data;
+        $this->objectHydrator     = $objectHydrator;
+        $this->dataSchemaFactory  = $dataSchemaFactory;
     }
 
     /**
@@ -133,5 +141,13 @@ class TransformEvent
     public function getEntity()
     {
         return $this->objectHydrator->hydrate($this->getClassName(), $this->getData());
+    }
+
+    /**
+     * @return DataSchemaFactory
+     */
+    public function getDataSchemaFactory()
+    {
+        return $this->dataSchemaFactory;
     }
 }

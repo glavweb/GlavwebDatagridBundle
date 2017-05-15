@@ -130,7 +130,7 @@ class DataSchema
         $this->withoutAssociations     = $withoutAssociations;
 
         if (!isset($configuration['class'])) {
-            throw new \RuntimeException('Option "class" must be defined.');
+            $configuration['class'] = null;
         }
         $class = $configuration['class'];
 
@@ -258,6 +258,10 @@ class DataSchema
             }
 
             if (is_array($value)) {
+                if (!isset($propertyConfig['type'])) {
+                    throw new \RuntimeException('Option "type" must be defined.');
+                }
+
                 if ($propertyConfig['type'] == 'entity') {
                     $preparedData[$propertyName] = $this->getData(
                         $value,
@@ -277,7 +281,16 @@ class DataSchema
             }
 
             if (isset($propertyConfig['decode'])) {
-                $transformEvent = new TransformEvent($class, $propertyName, $propertyConfig, $parentClassName, $parentPropertyName, $data, $this->objectHydrator);
+                $transformEvent = new TransformEvent(
+                    $class,
+                    $propertyName,
+                    $propertyConfig,
+                    $parentClassName,
+                    $parentPropertyName,
+                    $data,
+                    $this->objectHydrator,
+                    $this->dataSchemaFactory
+                );
                 $value = $this->decode($value, $propertyConfig['decode'], $transformEvent);
             }
 
@@ -316,9 +329,9 @@ class DataSchema
      * @throws InvalidConfigurationException
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    protected function prepareConfiguration(array $configuration, $class, array $scopeConfig = null, $glavwebSecurity = false)
+    protected function prepareConfiguration(array $configuration, $class = null, array $scopeConfig = null, $glavwebSecurity = false)
     {
-        $classMetadata = $this->getClassMetadata($class);
+        $classMetadata = $class ? $this->getClassMetadata($class) : null;
 
         $glavwebSecurity = $this->securityEnabled ?
             isset($configuration['glavweb_security']) ? $configuration['glavweb_security'] : $glavwebSecurity :
@@ -347,7 +360,7 @@ class DataSchema
         $configuration['discriminatorColumnName'] = null;
         $configuration['discriminatorMap']        = [];
 
-        if ($classMetadata->subClasses) {
+        if ($classMetadata instanceof ClassMetadata && $classMetadata->subClasses) {
             $configuration['discriminatorColumnName'] = $classMetadata->discriminatorColumn['name'];
             $configuration['discriminatorMap']        = $classMetadata->discriminatorMap;
         }
@@ -366,7 +379,11 @@ class DataSchema
             $properties = $configuration['properties'];
 
             // Set ids
-            $identifierFieldNames = $classMetadata->getIdentifierFieldNames();
+            $identifierFieldNames = $classMetadata instanceof ClassMetadata ?
+                $classMetadata->getIdentifierFieldNames() :
+                []
+            ;
+
             foreach ($properties as $propertyName => $propertyConfig) {
                 foreach ($identifierFieldNames as $idName) {
                     if (!array_key_exists($idName, $properties)) {
@@ -422,14 +439,17 @@ class DataSchema
 
                     $class = isset($propertyConfig['class']) ?
                         $propertyConfig['class'] :
-                        $propertyClassMetadata->getAssociationTargetClass($propertyName)
+                        ($propertyClassMetadata instanceof ClassMetadata ?
+                            $propertyClassMetadata->getAssociationTargetClass($propertyName) :
+                            null
+                        )
                     ;
 
                     $preparedConfiguration = $this->prepareConfiguration($propertyConfig, $class, $scopeConfig[$propertyName], $glavwebSecurity);
                     $configuration['properties'][$propertyName] = $preparedConfiguration;
 
                     // type
-                    if ($preparedConfiguration) {
+                    if ($preparedConfiguration && $propertyClassMetadata instanceof ClassMetadata) {
                         $associationMapping = $propertyClassMetadata->getAssociationMapping($propertyName);
                         $associationType = $associationMapping['type'];
 
@@ -438,11 +458,14 @@ class DataSchema
                     }
 
                 } else {
-                    if (!isset($propertyConfig['type'])) {
+                    if (!isset($propertyConfig['type']) && $propertyClassMetadata instanceof ClassMetadata) {
                         $configuration['properties'][$propertyName]['type'] = $propertyClassMetadata->getTypeOfField($propertyName);
                     }
 
-                    $configuration['properties'][$propertyName]['from_db'] = (bool)$propertyClassMetadata->getTypeOfField($propertyName);
+                    $configuration['properties'][$propertyName]['from_db'] =
+                        $propertyClassMetadata instanceof ClassMetadata &&
+                        (bool)$propertyClassMetadata->getTypeOfField($propertyName)
+                    ;
                 }
             }
         }
