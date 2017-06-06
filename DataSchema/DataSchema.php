@@ -258,7 +258,7 @@ class DataSchema
             }
 
             if (is_array($value)) {
-                if (!isset($propertyConfig['type'])) {
+                if (!array_key_exists('type', $propertyConfig)) {
                     throw new \RuntimeException('Option "type" must be defined.');
                 }
 
