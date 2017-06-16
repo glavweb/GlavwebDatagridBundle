@@ -205,7 +205,16 @@ class DataSchema
 
                 switch ($associationMapping['type']) {
                     case ClassMetadata::MANY_TO_MANY:
-                        $modelData = $this->persister->getManyToManyData($associationMapping, $data['id'], $databaseFields, $conditions);
+                        $orderByExpressions = isset($associationMapping['orderBy']) ? $associationMapping['orderBy'] : [];
+
+                        $modelData = $this->persister->getManyToManyData(
+                            $associationMapping,
+                            $data['id'],
+                            $databaseFields,
+                            $conditions,
+                            $orderByExpressions
+                        );
+
                         $preparedData[$propertyName] = $this->getList(
                             $modelData,
                             $propertyConfig,
@@ -216,7 +225,16 @@ class DataSchema
                         break;
 
                     case ClassMetadata::ONE_TO_MANY:
-                        $modelData = $this->persister->getOneToManyData($associationMapping, $data['id'], $databaseFields, $conditions);
+                        $orderByExpressions = isset($associationMapping['orderBy']) ? $associationMapping['orderBy'] : [];
+
+                        $modelData = $this->persister->getOneToManyData(
+                            $associationMapping,
+                            $data['id'],
+                            $databaseFields,
+                            $conditions,
+                            $orderByExpressions
+                        );
+
                         $preparedData[$propertyName] = $this->getList(
                             $modelData,
                             $propertyConfig,

@@ -59,11 +59,12 @@ class EntityPersister implements PersisterInterface
      * @param mixed $id
      * @param array $databaseFields
      * @param array $conditions
+     * @param array $orderByExpressions
      * @return array
      */
-    public function getManyToManyData(array $associationMapping, $id, array $databaseFields, array $conditions = [])
+    public function getManyToManyData(array $associationMapping, $id, array $databaseFields, array $conditions = [], array $orderByExpressions = [])
     {
-        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions, $orderByExpressions);
 
         return $query->getArrayResult();
     }
@@ -73,11 +74,12 @@ class EntityPersister implements PersisterInterface
      * @param mixed $id
      * @param array $databaseFields
      * @param array $conditions
+     * @param array $orderByExpressions
      * @return array
      */
-    public function getOneToManyData(array $associationMapping, $id, array $databaseFields, array $conditions = [])
+    public function getOneToManyData(array $associationMapping, $id, array $databaseFields, array $conditions = [], array $orderByExpressions = [])
     {
-        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions);
+        $query = $this->getQuery($associationMapping, $id, $databaseFields, $conditions, $orderByExpressions);
 
         return $query->getArrayResult();
     }
@@ -115,10 +117,11 @@ class EntityPersister implements PersisterInterface
      * @param mixed $id
      * @param array $databaseFields
      * @param array $conditions
+     * @param array $orderByExpressions
      * @return Query
      * @throws InvalidQueryException
      */
-    protected function getQuery(array $associationMapping, $id, array $databaseFields, array $conditions = [])
+    protected function getQuery(array $associationMapping, $id, array $databaseFields, array $conditions = [], array $orderByExpressions = [])
     {
         /** @var EntityManager $em */
         $em = $this->doctrine->getManager();
@@ -148,6 +151,10 @@ class EntityPersister implements PersisterInterface
             if ($preparedCondition) {
                 $qb->andWhere($preparedCondition);
             }
+        }
+
+        foreach ($orderByExpressions as $sort => $direction) {
+            $qb->addOrderBy("$targetAlias.$sort", $direction);
         }
 
         return $qb->getQuery()->setHydrationMode($this->hydrationMode);
