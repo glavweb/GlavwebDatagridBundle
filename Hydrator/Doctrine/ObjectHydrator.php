@@ -84,7 +84,7 @@ class ObjectHydrator
         $metaData = $this->entityManager->getClassMetadata(get_class($entity));
 
         foreach ($metaData->getFieldNames() as $propertyName) {
-            if (isset($data[$propertyName]) && !in_array($propertyName, $metaData->getIdentifier())) {
+            if (isset($data[$propertyName])) {
                 $entity = $this->setProperty($entity, $propertyName, $data[$propertyName], $reflectionClass);
             }
         }
@@ -184,7 +184,7 @@ class ObjectHydrator
         }
 
         $property = $reflectionObject->getProperty($propertyName);
-        
+
         $property->setAccessible(true);
         $property->setValue($entity, $value);
 
