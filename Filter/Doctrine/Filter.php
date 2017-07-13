@@ -174,10 +174,14 @@ abstract class Filter implements FilterInterface
         $expr = $queryBuilder->expr();
 
         if ($operator == self::CONTAINS) {
+            $value = mb_strtolower($value, 'UTF-8');
+
             $queryBuilder->andWhere($expr->like($field, ':' . $parameterName));
             $queryBuilder->setParameter($parameterName, "%$value%");
 
         } elseif ($operator == self::NOT_CONTAINS) {
+            $value = mb_strtolower($value, 'UTF-8');
+
             $queryBuilder->andWhere($expr->notLike($field, ':' . $parameterName));
             $queryBuilder->setParameter($parameterName, "%$value%");
 
