@@ -176,13 +176,13 @@ abstract class Filter implements FilterInterface
         if ($operator == self::CONTAINS) {
             $value = mb_strtolower($value, 'UTF-8');
 
-            $queryBuilder->andWhere($expr->like($field, ':' . $parameterName));
+            $queryBuilder->andWhere($expr->like('LOWER(' . $field . ')', ':' . $parameterName));
             $queryBuilder->setParameter($parameterName, "%$value%");
 
         } elseif ($operator == self::NOT_CONTAINS) {
             $value = mb_strtolower($value, 'UTF-8');
 
-            $queryBuilder->andWhere($expr->notLike($field, ':' . $parameterName));
+            $queryBuilder->andWhere($expr->notLike('LOWER(' . $field . ')', ':' . $parameterName));
             $queryBuilder->setParameter($parameterName, "%$value%");
 
         } elseif ($operator == self::IN) {
