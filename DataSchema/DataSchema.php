@@ -80,6 +80,11 @@ class DataSchema
     private $configuration = [];
 
     /**
+     * @var array
+     */
+    private $scopeConfig = [];
+
+    /**
      * @var ClassMetadata[]
      */
     private $classMetadataCache;
@@ -139,6 +144,7 @@ class DataSchema
         }
         $this->persister = $persisterFactory->createPersister($configuration['db_driver'], $this);
 
+        $this->scopeConfig = $scopeConfig;
         $this->configuration = $this->prepareConfiguration($configuration, $class, $scopeConfig);
     }
 
@@ -153,16 +159,21 @@ class DataSchema
     /**
      * @param array  $data
      * @param array  $config
+     * @param array  $scopeConfig
      * @param string $parentClassName
      * @param string $parentPropertyName
      * @param array  $defaultData
      * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    public function getData(array $data, array $config = null, $parentClassName = null, $parentPropertyName = null, $defaultData = [])
+    public function getData(array $data, array $config = null, array $scopeConfig = null, $parentClassName = null, $parentPropertyName = null, $defaultData = [])
     {
         if ($config === null) {
             $config = $this->configuration;
+        }
+
+        if ($scopeConfig === null) {
+            $scopeConfig = $this->scopeConfig;
         }
 
         if (!$data) {
@@ -185,6 +196,12 @@ class DataSchema
             if (isset($propertyConfig['hidden']) && $propertyConfig['hidden'] == true) {
                 continue;
             }
+
+            if (!array_key_exists($propertyName, $scopeConfig)) {
+                continue;
+            }
+
+            $propertyScopeConfig = $scopeConfig[$propertyName] ?: [];
 
             if (array_key_exists($propertyName, $data)) {
                 $value = $data[$propertyName];
@@ -218,6 +235,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getList(
                             $modelData,
                             $propertyConfig,
+                            $propertyScopeConfig,
                             $class,
                             $propertyName
                         );
@@ -238,6 +256,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getList(
                             $modelData,
                             $propertyConfig,
+                            $propertyScopeConfig,
                             $class,
                             $propertyName
                         );
@@ -249,6 +268,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getData(
                             $modelData,
                             $propertyConfig,
+                            $propertyScopeConfig,
                             $class,
                             $propertyName,
                             null
@@ -261,6 +281,7 @@ class DataSchema
                         $preparedData[$propertyName] = $this->getData(
                             $modelData,
                             $propertyConfig,
+                            $propertyScopeConfig,
                             $class,
                             $propertyName,
                             null
@@ -284,6 +305,7 @@ class DataSchema
                     $preparedData[$propertyName] = $this->getData(
                         $value,
                         $propertyConfig,
+                        $propertyScopeConfig,
                         $class,
                         $propertyName,
                         null
@@ -292,7 +314,13 @@ class DataSchema
                     continue;
 
                 } elseif ($propertyConfig['type'] == 'collection') {
-                    $preparedData[$propertyName] = $this->getList($value, $propertyConfig, $class, $propertyName);
+                    $preparedData[$propertyName] = $this->getList(
+                        $value,
+                        $propertyConfig,
+                        $propertyScopeConfig,
+                        $class,
+                        $propertyName
+                    );
 
                     continue;
                 }
@@ -310,6 +338,13 @@ class DataSchema
                     $this->dataSchemaFactory
                 );
                 $value = $this->decode($value, $propertyConfig['decode'], $transformEvent);
+
+                if (is_array($value) && $propertyScopeConfig) {
+                    $value = $this->getScopedData(
+                        $value,
+                        $propertyScopeConfig
+                    );
+                }
             }
 
             $preparedData[$propertyName] = $value;
@@ -321,18 +356,30 @@ class DataSchema
     /**
      * @param array  $list
      * @param array  $config
+     * @param array  scopeConfig
      * @param string $parentClassName
      * @param string $parentPropertyName
      * @return array
      */
-    public function getList(array $list, array $config = null, $parentClassName = null, $parentPropertyName = null)
+    public function getList(array $list, array $config = null, array $scopeConfig = null, $parentClassName = null, $parentPropertyName = null)
     {
         if ($config === null) {
             $config = $this->configuration;
         }
 
+        if ($scopeConfig === null) {
+            $scopeConfig = $this->scopeConfig;
+        }
+
         foreach ($list as $key => $value) {
-            $list[$key] = $this->getData($value, $config, $parentClassName, $parentPropertyName, null);
+            $list[$key] = $this->getData(
+                $value,
+                $config,
+                $scopeConfig,
+                $parentClassName,
+                $parentPropertyName,
+                null
+            );
         }
 
         return $list;
@@ -489,6 +536,29 @@ class DataSchema
         }
 
         return $configuration;
+    }
+
+    /**
+     * @param array $value
+     * @param array $scope
+     * @return array
+     */
+    protected function getScopedData(array $data, array $scope): array
+    {
+        $scopedData = [];
+
+        foreach ($data as $key => $value) {
+            if (array_key_exists($key, $scope)) {
+                if (is_array($value) && $scope[$key]) {
+                    $scopedData[$key] = $this->getScopedData($value, $scope[$key]);
+
+                } else {
+                    $scopedData[$key] = $value;
+                }
+            }
+        }
+
+        return $scopedData;
     }
 
     /**
