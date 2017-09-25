@@ -33,7 +33,14 @@ This bundle was designed to just work out of the box. The only thing you have to
 ```yaml
 # app/config/config.yml
 
+# Add hydrators to Doctrine
+doctrine:
+    orm:
+        hydrators:
+            DatagridHydrator: Glavweb\DatagridBundle\Hydrator\Doctrine\DatagridHydrator
+
 glavweb_datagrid:
+    default_hydrator_mode: DatagridHydrator
     data_schema:
         dir: "%kernel.root_dir%/config/data_schema"
 

@@ -53,6 +53,10 @@ class NativeSqlDatagrid extends AbstractDatagrid
         $this->orderings   = $context->transformOrderingForNativeSql($context->getOrderings());
         $this->firstResult = $context->getFirstResult();
         $this->maxResults  = $context->getMaxResults();
+
+        if ($this->dataSchema->getHydrationMode() !== null) {
+            $this->setHydrationMode($this->dataSchema->getHydrationMode());
+        }
     }
 
     /**

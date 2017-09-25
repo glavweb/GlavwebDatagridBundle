@@ -1,7 +1,10 @@
 services:
     glavweb_datagrid.doctrine_datagrid_builder:
         class: Glavweb\DatagridBundle\Builder\Doctrine\DatagridBuilder
-        arguments: ["@doctrine", "@glavweb_datagrid.doctrine_filter_factory", "@glavweb_datagrid.data_schema_factory"]
+        arguments:
+            - "@doctrine"
+            - "@glavweb_datagrid.doctrine_filter_factory"
+            - "@glavweb_datagrid.data_schema_factory"
 
     glavweb_datagrid.doctrine_filter_factory:
         class: Glavweb\DatagridBundle\Filter\Doctrine\FilterFactory
@@ -9,11 +12,25 @@ services:
 
     glavweb_datagrid.data_schema_factory:
         class:  Glavweb\DatagridBundle\DataSchema\DataSchemaFactory
-        arguments: ["@doctrine", "@glavweb_datagrid.data_transformer_registry", "@glavweb_datagrid.persister_factory", "@security.authorization_checker", "@glavweb_security.access_handler", "@glavweb_security.access_query_builder_filter", "@glavweb_datagrid.placeholder", "@glavweb_datagrid.orm_object_hydrator", "%glavweb_datagrid.data_schema_dir%", "%glavweb_datagrid.scope_dir%"]
+        arguments:
+            - "@doctrine"
+            - "@glavweb_datagrid.data_transformer_registry"
+            - "@glavweb_datagrid.persister_factory"
+            - "@security.authorization_checker"
+            - "@glavweb_security.access_handler"
+            - "@glavweb_security.access_query_builder_filter"
+            - "@glavweb_datagrid.placeholder"
+            - "@glavweb_datagrid.orm_object_hydrator"
+            - "%glavweb_datagrid.data_schema_dir%"
+            - "%glavweb_datagrid.scope_dir%"
+            - "%glavweb_datagrid.default_hydrator_mode%"
 
     glavweb_datagrid.placeholder:
         class:  Glavweb\DatagridBundle\DataSchema\Placeholder
-        arguments: ["@annotation_reader", "@security.token_storage", "@twig.extension.security"]
+        arguments:
+            - "@annotation_reader"
+            - "@security.token_storage"
+            - "@twig.extension.security"
 
     glavweb_datagrid.persister_factory:
         class:  Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory

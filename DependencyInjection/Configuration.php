@@ -36,6 +36,7 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->scalarNode('default_hydrator_mode')->cannotBeEmpty()->end()
                 ->arrayNode('data_schema')
                     ->children()
                         ->scalarNode('dir')->end()

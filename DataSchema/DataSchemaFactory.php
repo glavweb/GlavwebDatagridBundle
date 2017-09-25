@@ -71,6 +71,11 @@ class DataSchemaFactory
     private $scopeDir;
 
     /**
+     * @var string
+     */
+    private $defaultHydratorMode;
+
+    /**
      * @var Placeholder
      */
     private $placeholder;
@@ -93,9 +98,21 @@ class DataSchemaFactory
      * @param ObjectHydrator                $objectHydrator
      * @param string                        $dataSchemaDir
      * @param string                        $scopeDir
+     * @param string                        $defaultHydratorMode
      */
-    public function __construct(Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, ObjectHydrator $objectHydrator, $dataSchemaDir, $scopeDir)
-    {
+    public function __construct(
+        Registry $doctrine,
+        DataTransformerRegistry $dataTransformerRegistry,
+        PersisterFactory $persisterFactory,
+        AuthorizationCheckerInterface $authorizationChecker,
+        AccessHandler $accessHandler,
+        QueryBuilderFilter $accessQbFilter,
+        Placeholder $placeholder,
+        ObjectHydrator $objectHydrator,
+        string $dataSchemaDir,
+        string $scopeDir,
+        $defaultHydratorMode = null
+    ){
         $this->doctrine                = $doctrine;
         $this->dataTransformerRegistry = $dataTransformerRegistry;
         $this->persisterFactory        = $persisterFactory;
@@ -106,6 +123,7 @@ class DataSchemaFactory
         $this->objectHydrator          = $objectHydrator;
         $this->dataSchemaDir           = $dataSchemaDir;
         $this->scopeDir                = $scopeDir;
+        $this->defaultHydratorMode     = $defaultHydratorMode;
     }
 
     /**
@@ -137,7 +155,8 @@ class DataSchemaFactory
             $dataSchemaConfig,
             $scopeConfig,
             $securityEnabled,
-            $withoutInheritance
+            $withoutInheritance,
+            $this->defaultHydratorMode
         );
     }
 

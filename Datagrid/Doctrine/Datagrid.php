@@ -61,6 +61,10 @@ class Datagrid extends AbstractDatagrid
         $this->firstResult  = $context->getFirstResult();
         $this->maxResults   = $context->getMaxResults();
         $this->alias        = $context->getAlias();
+
+        if ($this->dataSchema->getHydrationMode() !== null) {
+            $this->setHydrationMode($this->dataSchema->getHydrationMode());
+        }
     }
 
     /**
@@ -182,12 +186,19 @@ class Datagrid extends AbstractDatagrid
     private function createQuery()
     {
         $queryBuilder = $this->getQueryBuilder();
-        $alias = $this->getAlias();
-        $firstResult = $this->getFirstResult();
-        $maxResults = $this->getMaxResults();
+        $alias        = $this->getAlias();
+        $firstResult  = $this->getFirstResult();
+        $maxResults   = $this->getMaxResults();
 
         $queryBuilder->setFirstResult($firstResult);
         $queryBuilder->setMaxResults($maxResults);
+
+        $querySelects = $this->dataSchema->getQuerySelects();
+        foreach ($querySelects as $propertyName => $querySelect) {
+            if ($this->dataSchema->hasProperty($propertyName)) {
+                $queryBuilder->addSelect(sprintf('(%s) as %s', $querySelect, $propertyName));
+            }
+        }
 
         $orderings = $this->getOrderings();
         foreach ($orderings as $fieldName => $order) {

@@ -100,6 +100,11 @@ class DataSchema
     private $withoutAssociations;
 
     /**
+     * @var string|null
+     */
+    private $defaultHydratorMode;
+
+    /**
      * @var ObjectHydrator
      */
     private $objectHydrator;
@@ -120,9 +125,24 @@ class DataSchema
      * @param array                         $scopeConfig
      * @param bool                          $securityEnabled
      * @param bool                          $withoutAssociations
+     * @param string|null                   $defaultHydratorMode
      */
-    public function __construct(DataSchemaFactory $dataSchemaFactory, Registry $doctrine, DataTransformerRegistry $dataTransformerRegistry, PersisterFactory $persisterFactory, AuthorizationCheckerInterface $authorizationChecker, AccessHandler $accessHandler, QueryBuilderFilter $accessQbFilter, Placeholder $placeholder, ObjectHydrator $objectHydrator, array $configuration, array $scopeConfig = null, $securityEnabled = true, $withoutAssociations = false)
-    {
+    public function __construct(
+        DataSchemaFactory $dataSchemaFactory,
+        Registry $doctrine,
+        DataTransformerRegistry $dataTransformerRegistry,
+        PersisterFactory $persisterFactory,
+        AuthorizationCheckerInterface $authorizationChecker,
+        AccessHandler $accessHandler,
+        QueryBuilderFilter $accessQbFilter,
+        Placeholder $placeholder,
+        ObjectHydrator $objectHydrator,
+        array $configuration,
+        array $scopeConfig = null,
+        bool $securityEnabled = true,
+        bool $withoutAssociations = false,
+        $defaultHydratorMode = null
+    ) {
         $this->dataSchemaFactory       = $dataSchemaFactory;
         $this->doctrine                = $doctrine;
         $this->dataTransformerRegistry = $dataTransformerRegistry;
@@ -133,6 +153,7 @@ class DataSchema
         $this->objectHydrator          = $objectHydrator;
         $this->securityEnabled         = $securityEnabled;
         $this->withoutAssociations     = $withoutAssociations;
+        $this->defaultHydratorMode     = $defaultHydratorMode;
 
         if (!isset($configuration['class'])) {
             $configuration['class'] = null;
@@ -661,6 +682,31 @@ class DataSchema
         }
 
         return $joinMap;
+    }
+
+    /**
+     * @return array
+     */
+    public function getQuerySelects(): array
+    {
+        return isset($this->configuration['query']['selects']) ? $this->configuration['query']['selects'] : [];
+    }
+
+    /**
+     * @param string $propertyName
+     * @return bool
+     */
+    public function hasProperty(string $propertyName): bool
+    {
+        return isset($this->configuration['properties'][$propertyName]);
+    }
+
+    /**
+     * @return string|int|null
+     */
+    public function getHydrationMode()
+    {
+        return isset($this->configuration['hydration_mode']) ? $this->configuration['hydration_mode'] : $this->defaultHydratorMode;
     }
 
     /**

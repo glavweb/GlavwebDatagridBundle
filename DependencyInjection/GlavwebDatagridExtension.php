@@ -39,6 +39,7 @@ class GlavwebDatagridExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
 
+        $container->setParameter('glavweb_datagrid.default_hydrator_mode', $config['default_hydrator_mode']);
         $container->setParameter('glavweb_datagrid.data_schema_dir', $config['data_schema']['dir']);
         $container->setParameter('glavweb_datagrid.scope_dir', $config['scope']['dir']);
     }
