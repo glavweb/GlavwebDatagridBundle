@@ -698,7 +698,40 @@ class DataSchema
      */
     public function hasProperty(string $propertyName): bool
     {
-        return isset($this->configuration['properties'][$propertyName]);
+        return $this->getPropertyConfiguration($propertyName) !== null;
+    }
+
+    /**
+     * @param string $propertyName
+     * @return bool
+     */
+    public function hasPropertyInDb(string $propertyName): bool
+    {
+        $propertyConfiguration = $this->getPropertyConfiguration($propertyName);
+
+        return $propertyConfiguration !== null &&
+            isset($propertyConfiguration['from_db']) && $propertyConfiguration['from_db']
+        ;
+    }
+
+    /**
+     * @param string $propertyName
+     * @return array|null
+     */
+    public function getPropertyConfiguration(string $propertyName):? array
+    {
+        $propertyConfiguration = $this->configuration;
+
+        $propertyNameParts = explode('.', $propertyName);
+        foreach ($propertyNameParts as $propertyNamePart) {
+            if (!isset($propertyConfiguration['properties'][$propertyNamePart])) {
+                return null;
+            }
+
+            $propertyConfiguration = $propertyConfiguration['properties'][$propertyNamePart];
+        }
+
+        return $propertyConfiguration;
     }
 
     /**

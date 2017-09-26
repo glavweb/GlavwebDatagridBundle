@@ -16,6 +16,7 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Glavweb\DatagridBundle\Builder\Doctrine\DatagridContext;
 use Glavweb\DatagridBundle\DataSchema\DataSchema;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
 /**
  * Class Datagrid
@@ -202,7 +203,30 @@ class Datagrid extends AbstractDatagrid
 
         $orderings = $this->getOrderings();
         foreach ($orderings as $fieldName => $order) {
-            $queryBuilder->addOrderBy($alias . '.' . $fieldName, $order);
+            if (isset($querySelects[$fieldName]) && $this->dataSchema->hasProperty($propertyName)) {
+                $queryBuilder->addOrderBy($fieldName, $order);
+
+                continue;
+            }
+
+            if (!$this->dataSchema->hasPropertyInDb($propertyName)) {
+                continue;
+            }
+
+            $sortAlias = $alias;
+            $sortFieldName = $fieldName;
+
+            // If the field name have a dot
+            $fieldNameParts = explode('.', $fieldName);
+            if (count($fieldNameParts) > 1) {
+                $sortFieldName = array_pop($fieldNameParts);
+
+                foreach ($fieldNameParts as $fieldPart) {
+                    $sortAlias = JoinMap::makeAlias($sortAlias, $fieldPart);
+                }
+            }
+
+            $queryBuilder->addOrderBy($sortAlias . '.' . $sortFieldName, $order);
         }
 
         $query = $queryBuilder->getQuery();
