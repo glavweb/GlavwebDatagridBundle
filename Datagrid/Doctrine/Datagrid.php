@@ -203,13 +203,13 @@ class Datagrid extends AbstractDatagrid
 
         $orderings = $this->getOrderings();
         foreach ($orderings as $fieldName => $order) {
-            if (isset($querySelects[$fieldName]) && $this->dataSchema->hasProperty($propertyName)) {
+            if (isset($querySelects[$fieldName]) && $this->dataSchema->hasProperty($fieldName)) {
                 $queryBuilder->addOrderBy($fieldName, $order);
 
                 continue;
             }
 
-            if (!$this->dataSchema->hasPropertyInDb($propertyName)) {
+            if (!$this->dataSchema->hasPropertyInDb($fieldName)) {
                 continue;
             }
 
