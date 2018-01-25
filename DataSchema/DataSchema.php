@@ -218,11 +218,14 @@ class DataSchema
                 continue;
             }
 
-            if (!array_key_exists($propertyName, $scopeConfig)) {
-                continue;
-            }
+            $propertyScopeConfig = null;
+            if ($scopeConfig !== null) {
+                if (!array_key_exists($propertyName, $scopeConfig)) {
+                    continue;
+                }
 
-            $propertyScopeConfig = $scopeConfig[$propertyName] ?: [];
+                $propertyScopeConfig = $scopeConfig[$propertyName] ?: [];
+            }
 
             if (array_key_exists($propertyName, $data)) {
                 $value = $data[$propertyName];
