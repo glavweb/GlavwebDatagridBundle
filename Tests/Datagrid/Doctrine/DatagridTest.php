@@ -14,7 +14,7 @@ namespace Glavweb\DatagridBundle\Tests\Datagrid\Doctrine;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
-use Glavweb\DatagridBundle\Builder\Doctrine\DatagridBuilder;
+use Glavweb\DatagridBundle\Builder\Doctrine\AbstractDatagridBuilder;
 use Glavweb\DatagridBundle\Builder\Doctrine\DatagridContext;
 use Glavweb\DatagridBundle\Tests\WebTestCase;
 
@@ -27,7 +27,7 @@ use Glavweb\DatagridBundle\Tests\WebTestCase;
 class DatagridTest extends WebTestCase
 {
     /**
-     * @var DatagridBuilder
+     * @var AbstractDatagridBuilder
      */
     private $datagridBuilder;
 

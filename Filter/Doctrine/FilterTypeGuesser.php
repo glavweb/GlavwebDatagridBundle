@@ -14,8 +14,7 @@ namespace Glavweb\DatagridBundle\Filter\Doctrine;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use Symfony\Component\Form\Guess\Guess;
-use Symfony\Component\Form\Guess\TypeGuess;
+use Glavweb\DatagridBundle\Filter\TypeGuess;
 
 /**
  * Class FilterTypeGuesser
@@ -41,12 +40,12 @@ class FilterTypeGuesser
             ];
 
             if (in_array($mapping['type'], $types)) {
-                return new TypeGuess('doctrine_orm_model', $options, Guess::HIGH_CONFIDENCE);
+                return new TypeGuess('model', $options, TypeGuess::HIGH_CONFIDENCE);
             }
         }
 
         if (!isset($metadata->fieldMappings[$propertyName]['fieldName'])) {
-            throw new \RuntimeException(sprintf('Field name "%s" not found in class "%s".', $propertyName, $metadata->getName()));
+            throw new \RuntimeException(sprintf('Field na1me "%s" not found in class "%s".', $propertyName, $metadata->getName()));
         }
 
         $options['field_name'] = $metadata->fieldMappings[$propertyName]['fieldName'];
@@ -55,33 +54,33 @@ class FilterTypeGuesser
         // Is field type
         switch ($options['field_type']) {
             case 'boolean':
-                return new TypeGuess('doctrine_orm_boolean', $options, Guess::HIGH_CONFIDENCE);
+                return new TypeGuess('boolean', $options, TypeGuess::HIGH_CONFIDENCE);
 
             case 'datetime':
             case 'vardatetime':
             case 'datetimetz':
             case 'time':
             case 'date':
-                return new TypeGuess('doctrine_orm_datetime', $options, Guess::HIGH_CONFIDENCE);
+                return new TypeGuess('datetime', $options, TypeGuess::HIGH_CONFIDENCE);
 
             case 'decimal':
             case 'float':
             case 'integer':
             case 'bigint':
             case 'smallint':
-                return new TypeGuess('doctrine_orm_number', $options, Guess::HIGH_CONFIDENCE);
+                return new TypeGuess('number', $options, TypeGuess::HIGH_CONFIDENCE);
 
             case 'string':
             case 'text':
-                return new TypeGuess('doctrine_orm_string', $options, Guess::HIGH_CONFIDENCE);
+                return new TypeGuess('string', $options, TypeGuess::HIGH_CONFIDENCE);
         }
 
         // If enum type
         $reflectionClass = new \ReflectionClass(Type::getType($options['field_type']));
         if ($reflectionClass->isSubclassOf('\Fresh\DoctrineEnumBundle\DBAL\Types\AbstractEnumType')) {
-            return new TypeGuess('doctrine_orm_enum', $options, Guess::HIGH_CONFIDENCE);
+            return new TypeGuess('enum', $options, TypeGuess::HIGH_CONFIDENCE);
         }
 
-        return new TypeGuess('doctrine_orm_string', $options, Guess::LOW_CONFIDENCE);
+        return new TypeGuess('string', $options, TypeGuess::LOW_CONFIDENCE);
     }
 }

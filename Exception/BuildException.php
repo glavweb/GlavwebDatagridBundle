@@ -9,17 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Glavweb\DatagridBundle;
-
-use Glavweb\DatagridBundle\DependencyInjection\Compiler\DataTransformerPass;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\HttpKernel\Bundle\Bundle;
+namespace Glavweb\DatagridBundle\Exception;
 
 /**
- * Class GlavwebDatagridBundle
+ * Class BuildException
  *
  * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
-class GlavwebDatagridBundle extends Bundle
+class BuildException extends Exception
 {}

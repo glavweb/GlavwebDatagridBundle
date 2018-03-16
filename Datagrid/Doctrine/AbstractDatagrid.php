@@ -12,7 +12,6 @@
 namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 
 use Doctrine\ORM\AbstractQuery;
-use Doctrine\ORM\Query;
 use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
 
 /**

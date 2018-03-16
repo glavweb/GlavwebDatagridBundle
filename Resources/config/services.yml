@@ -1,44 +1,34 @@
 services:
-    glavweb_datagrid.doctrine_datagrid_builder:
-        class: Glavweb\DatagridBundle\Builder\Doctrine\DatagridBuilder
+    glavweb_datagrid.native_factory:
+        class: Glavweb\DatagridBundle\Factory\NativeDatagridFactory
+        public: true
         arguments:
             - "@doctrine"
+            - "@glavweb_data_schema.data_schema_factory"
+            - "@glavweb_datagrid.doctrine_native_filter_factory"
+            - "@glavweb_datagrid.native_query_builder_factory"
+
+    glavweb_datagrid.orm_factory:
+        class: Glavweb\DatagridBundle\Factory\ORMDatagridFactory
+        public: true
+        arguments:
+            - "@doctrine"
+            - "@glavweb_data_schema.data_schema_factory"
             - "@glavweb_datagrid.doctrine_filter_factory"
-            - "@glavweb_datagrid.data_schema_factory"
+            - "@glavweb_datagrid.query_builder_factory"
 
     glavweb_datagrid.doctrine_filter_factory:
-        class: Glavweb\DatagridBundle\Filter\Doctrine\FilterFactory
+        class: Glavweb\DatagridBundle\Filter\Doctrine\ORM\FilterFactory
         arguments: ["@doctrine"]
 
-    glavweb_datagrid.data_schema_factory:
-        class:  Glavweb\DatagridBundle\DataSchema\DataSchemaFactory
-        arguments:
-            - "@doctrine"
-            - "@glavweb_datagrid.data_transformer_registry"
-            - "@glavweb_datagrid.persister_factory"
-            - "@security.authorization_checker"
-            - "@glavweb_security.access_handler"
-            - "@glavweb_security.access_query_builder_filter"
-            - "@glavweb_datagrid.placeholder"
-            - "@glavweb_datagrid.orm_object_hydrator"
-            - "%glavweb_datagrid.data_schema_dir%"
-            - "%glavweb_datagrid.scope_dir%"
-            - "%glavweb_datagrid.default_hydrator_mode%"
-
-    glavweb_datagrid.placeholder:
-        class:  Glavweb\DatagridBundle\DataSchema\Placeholder
-        arguments:
-            - "@annotation_reader"
-            - "@security.token_storage"
-            - "@twig.extension.security"
-
-    glavweb_datagrid.persister_factory:
-        class:  Glavweb\DatagridBundle\DataSchema\Persister\PersisterFactory
+    glavweb_datagrid.doctrine_native_filter_factory:
+        class: Glavweb\DatagridBundle\Filter\Doctrine\Native\FilterFactory
         arguments: ["@doctrine"]
 
-    glavweb_datagrid.data_transformer_registry:
-        class:  Glavweb\DatagridBundle\DataTransformer\DataTransformerRegistry
+    glavweb_datagrid.query_builder_factory:
+        class:  Glavweb\DatagridBundle\Builder\Doctrine\ORM\QueryBuilderFactory
+        arguments: ["@doctrine"]
 
-    glavweb_datagrid.orm_object_hydrator:
-        class:  Glavweb\DatagridBundle\Hydrator\Doctrine\ObjectHydrator
+    glavweb_datagrid.native_query_builder_factory:
+        class:  Glavweb\DatagridBundle\Builder\Doctrine\Native\QueryBuilderFactory
         arguments: ["@doctrine"]

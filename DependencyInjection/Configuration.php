@@ -34,22 +34,6 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('glavweb_datagrid');
 
-        $rootNode
-            ->children()
-                ->scalarNode('default_hydrator_mode')->cannotBeEmpty()->end()
-                ->arrayNode('data_schema')
-                    ->children()
-                        ->scalarNode('dir')->end()
-                    ->end()
-                ->end()
-                ->arrayNode('scope')
-                    ->children()
-                        ->scalarNode('dir')->end()
-                    ->end()
-                ->end()
-            ->end()
-        ;
-
         return $treeBuilder;
     }
 }

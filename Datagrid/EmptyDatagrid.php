@@ -52,6 +52,14 @@ class EmptyDatagrid implements DatagridInterface
     }
 
     /**
+     * @return array
+     */
+    public function getItem()
+    {
+        return [];
+    }
+
+    /**
      * @return int
      */
     public function getTotal()

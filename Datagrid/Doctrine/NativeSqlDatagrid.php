@@ -13,8 +13,8 @@ namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 
 use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
-use Glavweb\DatagridBundle\Builder\Doctrine\DatagridContext;
-use Glavweb\DatagridBundle\DataSchema\DataSchema;
+use Glavweb\DatagridBundle\Builder\Doctrine\ORM\DatagridContext;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 
 /**
  * Class NativeSqlDatagrid

@@ -30,25 +30,6 @@ public function registerBundles()
 
 This bundle was designed to just work out of the box. The only thing you have to configure in order to get this bundle up and running is a mapping.
 
-```yaml
-# app/config/config.yml
-
-# Add hydrators to Doctrine
-doctrine:
-    orm:
-        hydrators:
-            DatagridHydrator: Glavweb\DatagridBundle\Hydrator\Doctrine\DatagridHydrator
-
-glavweb_datagrid:
-    default_hydrator_mode: DatagridHydrator
-    data_schema:
-        dir: "%kernel.root_dir%/config/data_schema"
-
-    scope:
-        dir: "%kernel.root_dir%/config/scopes"
-            
-```
-
 Basic Usage
 ===========
 

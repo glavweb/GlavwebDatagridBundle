@@ -44,4 +44,11 @@ interface FilterInterface
      * @return mixed
      */
     public function getOption($name);
+
+    /**
+     * @param mixed $queryBuilder
+     * @param string $alias
+     * @param string $value
+     */
+    public function filter($queryBuilder, $alias, $value);
 }
