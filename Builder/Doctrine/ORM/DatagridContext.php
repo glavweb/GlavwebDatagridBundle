@@ -76,35 +76,52 @@ class DatagridContext
     private $resultSetMappingCache = [];
 
     /**
+     * @var array
+     */
+    private $parameters;
+
+    /**
      * DatagridContext constructor.
      *
-     * @param string        $class
+     * @param string $class
      * @param EntityManager $entityManger
-     * @param QueryBuilder  $queryBuilder
-     * @param FilterStack   $filterStack
-     * @param DataSchema    $dataSchema
-     * @param array         $orderings
-     * @param int           $firstResult
-     * @param int           $maxResults
-     * @param string        $alias
+     * @param QueryBuilder $queryBuilder
+     * @param FilterStack $filterStack
+     * @param DataSchema $dataSchema
+     * @param array $orderings
+     * @param int $firstResult
+     * @param int $maxResults
+     * @param string $alias
+     * @param array $parameters
      */
-    public function __construct($class, EntityManager $entityManger, QueryBuilder $queryBuilder, FilterStack $filterStack, DataSchema $dataSchema, array $orderings = null, $firstResult = 0, $maxResults = null, $alias = 't')
-    {
+    public function __construct(
+        $class,
+        EntityManager $entityManger,
+        QueryBuilder $queryBuilder,
+        FilterStack $filterStack,
+        DataSchema $dataSchema,
+        array $orderings = null,
+        int $firstResult = 0,
+        int $maxResults = null,
+        string $alias = 't',
+        array $parameters = []
+    ) {
         $this->class        = $class;
         $this->entityManger = $entityManger;
         $this->queryBuilder = $queryBuilder;
         $this->dataSchema   = $dataSchema;
         $this->filterStack  = $filterStack;
-        $this->orderings    = (array)$orderings;
-        $this->firstResult  = (int)$firstResult;
+        $this->orderings    = $orderings;
+        $this->firstResult  = $firstResult;
         $this->maxResults   = $maxResults;
         $this->alias        = $alias;
+        $this->parameters   = $parameters;
     }
 
     /**
      * @return string
      */
-    public function getClass()
+    public function getClass(): string
     {
         return $this->class;
     }
@@ -112,7 +129,7 @@ class DatagridContext
     /**
      * @return EntityManager
      */
-    public function getEntityManger()
+    public function getEntityManger(): EntityManager
     {
         return $this->entityManger;
     }
@@ -120,7 +137,7 @@ class DatagridContext
     /**
      * @return QueryBuilder
      */
-    public function getQueryBuilder()
+    public function getQueryBuilder(): QueryBuilder
     {
         return $this->queryBuilder;
     }
@@ -128,7 +145,7 @@ class DatagridContext
     /**
      * @return FilterStack
      */
-    public function getFilterStack()
+    public function getFilterStack(): FilterStack
     {
         return $this->filterStack;
     }
@@ -136,7 +153,7 @@ class DatagridContext
     /**
      * @return DataSchema
      */
-    public function getDataSchema()
+    public function getDataSchema(): DataSchema
     {
         return $this->dataSchema;
     }
@@ -144,7 +161,7 @@ class DatagridContext
     /**
      * @return array
      */
-    public function getOrderings()
+    public function getOrderings(): array
     {
         return $this->orderings;
     }
@@ -152,15 +169,15 @@ class DatagridContext
     /**
      * @return int
      */
-    public function getFirstResult()
+    public function getFirstResult(): int
     {
         return $this->firstResult;
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getMaxResults()
+    public function getMaxResults(): ?int
     {
         return $this->maxResults;
     }
@@ -168,15 +185,23 @@ class DatagridContext
     /**
      * @return string
      */
-    public function getAlias()
+    public function getAlias(): string
     {
         return $this->alias;
     }
 
     /**
+     * @return array
+     */
+    public function getParameters(): array
+    {
+        return $this->parameters;
+    }
+
+    /**
      * @return ResultSetMapping
      */
-    public function getResultSetMapping()
+    public function getResultSetMapping(): ResultSetMapping
     {
         $class = $this->class;
         $alias = $this->alias;
@@ -192,7 +217,7 @@ class DatagridContext
     /**
      * @return string
      */
-    public function getSql()
+    public function getSql(): string
     {
         return $this->buildSql($this->queryBuilder, true);
     }
@@ -202,7 +227,7 @@ class DatagridContext
      * @param bool         $replaceSelect
      * @return string
      */
-    public function buildSql(QueryBuilder $queryBuilder, $replaceSelect = true)
+    public function buildSql(QueryBuilder $queryBuilder, $replaceSelect = true): string
     {
         $sql = $queryBuilder->getQuery()->getSQL();
 
@@ -224,7 +249,7 @@ class DatagridContext
      * @param string $alias
      * @return ResultSetMapping
      */
-    protected function createResultSetMapping($class, $alias)
+    protected function createResultSetMapping($class, $alias): ResultSetMapping
     {
         $em = $this->entityManger;
 
@@ -244,7 +269,7 @@ class DatagridContext
      * @param array $orderings
      * @return array
      */
-    public function transformOrderingForNativeSql(array $orderings)
+    public function transformOrderingForNativeSql(array $orderings): array
     {
         $rsm = $this->getResultSetMapping();
         $scalarMappings = $rsm->scalarMappings;

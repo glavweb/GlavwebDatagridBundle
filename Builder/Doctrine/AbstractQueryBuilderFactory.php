@@ -54,23 +54,6 @@ abstract class AbstractQueryBuilderFactory
     }
 
     /**
-     * @param $parameters
-     * @return array
-     */
-    protected function clearParameters(array $parameters)
-    {
-        $parameters = array_filter($parameters, function ($value) {
-            if (is_array($value) && empty($value)) {
-                return false;
-            }
-
-            return $value !== null;
-        });
-
-        return $parameters;
-    }
-
-    /**
      * @param array $config
      * @param string|null $discriminator
      * @return string

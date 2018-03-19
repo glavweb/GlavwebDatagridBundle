@@ -69,30 +69,6 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             $joinMap->apply($queryBuilder);
         }
 
-        // Apply filter
-        $parameters = $this->clearParameters($parameters);
-        foreach ($parameters as $key => $parameter) {
-            if (!$parameter || !is_scalar($parameter)) {
-                continue;
-            }
-
-            $jsonDecoded = json_decode($parameter);
-
-            if (json_last_error() == JSON_ERROR_NONE) {
-                $parameters[$key] = $jsonDecoded;
-            }
-        }
-
-        foreach ($parameters as $name => $value) {
-            $filter = $filterStack->getByParam($name);
-
-            if (!$filter) {
-                continue;
-            }
-
-            $filter->filter($queryBuilder, $alias, $value);
-        }
-
         return $queryBuilder;
     }
 

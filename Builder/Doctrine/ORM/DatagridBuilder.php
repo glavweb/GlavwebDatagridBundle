@@ -57,10 +57,11 @@ class DatagridBuilder extends AbstractDatagridBuilder implements DatagridBuilder
                 $queryBuilder,
                 $this->filterStack,
                 $this->dataSchema,
-                $orderings,
-                $firstResult,
+                (array)$orderings,
+                (int)$firstResult,
                 $maxResults,
-                $alias
+                $alias,
+                $parameters
             );
 
             if (is_callable($callback)) {

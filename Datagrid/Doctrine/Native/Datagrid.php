@@ -14,6 +14,7 @@ namespace Glavweb\DatagridBundle\Datagrid\Doctrine\Native;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Glavweb\DatagridBundle\Builder\Doctrine\Native\DatagridContext;
 use Glavweb\DatagridBundle\Datagrid\Doctrine\AbstractDatagrid;
+use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
@@ -41,16 +42,28 @@ class Datagrid extends AbstractDatagrid
     private $alias;
 
     /**
+     * @var FilterStack
+     */
+    private $filterStack;
+
+    /**
+     * @var array
+     */
+    private $parameters;
+
+    /**
      * @param DatagridContext $context
      */
     public function __construct(DatagridContext $context)
     {
         $this->queryBuilder = $context->getQueryBuilder();
         $this->dataSchema   = $context->getDataSchema();
+        $this->filterStack  = $context->getFilterStack();
         $this->orderings    = $context->getOrderings();
         $this->firstResult  = $context->getFirstResult();
         $this->maxResults   = $context->getMaxResults();
         $this->alias        = $context->getAlias();
+        $this->parameters   = $context->getParameters();
     }
 
     /**
@@ -104,7 +117,7 @@ class Datagrid extends AbstractDatagrid
      */
     public function getItem(): array
     {
-        $itemData = \GuzzleHttp\json_decode($this->getItemAsJson(), true);
+        $itemData = json_decode($this->getItemAsJson(), true);
 
         if ($this->dataSchema) {
             return $this->dataSchema->getData($itemData);
@@ -149,7 +162,7 @@ class Datagrid extends AbstractDatagrid
      */
     public function getList(): array
     {
-        $listData = \GuzzleHttp\json_decode($this->getListAsJson(), true);
+        $listData = json_decode($this->getListAsJson(), true);
 
         if ($this->dataSchema) {
             return $this->dataSchema->getList($listData);
@@ -186,6 +199,31 @@ class Datagrid extends AbstractDatagrid
             $queryBuilder->setMaxResults($maxResults);
         }
 
+        // Apply filter
+        $parameters = $this->clearParameters($this->parameters);
+        foreach ($parameters as $key => $parameter) {
+            if (!$parameter || !is_scalar($parameter)) {
+                continue;
+            }
+
+            $jsonDecoded = json_decode($parameter);
+
+            if (json_last_error() == JSON_ERROR_NONE) {
+                $parameters[$key] = $jsonDecoded;
+            }
+        }
+
+        foreach ($parameters as $name => $value) {
+            $filter = $this->filterStack->getByParam($name);
+
+            if (!$filter) {
+                continue;
+            }
+
+            $filter->filter($queryBuilder, $alias, $value);
+        }
+
+        // Apply query selects
         $querySelects = $this->dataSchema->getQuerySelects();
         foreach ($querySelects as $propertyName => $querySelect) {
             if ($this->dataSchema->hasProperty($propertyName)) {
@@ -193,6 +231,7 @@ class Datagrid extends AbstractDatagrid
             }
         }
 
+        // Apply orderings
         $orderings = $this->getOrderings();
         foreach ($orderings as $fieldName => $order) {
             if (isset($querySelects[$fieldName]) && $this->dataSchema->hasProperty($fieldName)) {
