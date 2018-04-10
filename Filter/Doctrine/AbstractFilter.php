@@ -12,6 +12,7 @@
 namespace Glavweb\DatagridBundle\Filter\Doctrine;
 
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
@@ -48,8 +49,7 @@ abstract class AbstractFilter implements FilterInterface
     protected $options = [
         'field_type' => null,
         'operator'   => null,
-        'param_name' => null,
-        'join_map'   => null,
+        'param_name' => null
     ];
 
     /**
@@ -57,6 +57,25 @@ abstract class AbstractFilter implements FilterInterface
      */
     protected $name;
 
+    /**
+     * @var string
+     */
+    protected $fieldName;
+
+    /**
+     * @var ClassMetadata
+     */
+    protected $classMetadata;
+
+    /**
+     * @var JoinBuilderInterface
+     */
+    protected $joinBuilder;
+
+    /**
+     * @var JoinMap|null
+     */
+    protected $joinMap;
 
     /**
      * @param mixed $queryBuilder
@@ -129,15 +148,30 @@ abstract class AbstractFilter implements FilterInterface
      *
      * @param string $name
      * @param array $options
+     * @param string $fieldName
+     * @param ClassMetadata $classMetadata
+     * @param JoinBuilderInterface $joinBuilder
+     * @param JoinMap|null $joinMap
      */
-    public function __construct($name, array $options = [])
-    {
+    public function __construct(
+        string $name,
+        array $options,
+        string $fieldName,
+        ClassMetadata $classMetadata,
+        JoinBuilderInterface $joinBuilder,
+        JoinMap $joinMap = null
+    ) {
         $this->name    = $name;
         $this->options = array_merge($this->options, $options);
 
         if (!isset($this->options['param_name'])) {
             $this->options['param_name'] = $name;
         }
+
+        $this->fieldName = $fieldName;
+        $this->classMetadata = $classMetadata;
+        $this->joinBuilder = $joinBuilder;
+        $this->joinMap = $joinMap;
     }
 
     /**
@@ -190,7 +224,7 @@ abstract class AbstractFilter implements FilterInterface
      */
     public function getJoinMap()
     {
-        return $this->getOption('join_map');
+        return $this->joinMap;
     }
 
     /**
@@ -302,13 +336,6 @@ abstract class AbstractFilter implements FilterInterface
      */
     protected function getColumnName(string $fieldName): string
     {
-        /** @var ClassMetadata $classMetadata */
-        $classMetadata = $this->getOption('class_metadata');
-
-        if (!$classMetadata instanceof ClassMetadata) {
-            throw new \RuntimeException('The ClassMetadata is not defined.');
-        }
-
-        return $classMetadata->getColumnName($fieldName);
+        return $this->classMetadata->getColumnName($fieldName);
     }
 }

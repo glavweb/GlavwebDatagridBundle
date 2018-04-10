@@ -1,5 +1,6 @@
 schema:
     class: Glavweb\DatagridBundle\Tests\Fixtures\Entity\Event
+    db_driver: orm
     properties:
         name:
 

@@ -227,7 +227,7 @@ class Datagrid extends AbstractDatagrid
         $querySelects = $this->dataSchema->getQuerySelects();
         foreach ($querySelects as $propertyName => $querySelect) {
             if ($this->dataSchema->hasProperty($propertyName)) {
-                $queryBuilder->addSelect(sprintf('(%s) as %s', $querySelect, $propertyName));
+                $queryBuilder->addSelect(sprintf('(%s) as "%s"', $querySelect, $propertyName));
             }
         }
 

@@ -1,10 +1,14 @@
+imports:
+    - { resource: security.yml }
+    - { resource: services.yml }
+
 parameters:
     locale: en
-    database_host: localhost
+    database_host: db
     database_port: null
-    database_name: glavweb_datagrid
-    database_user: root
-    database_password: null
+    database_name: glavweb
+    database_user: glavweb
+    database_password: glavweb
 
 framework:
     secret:        test
@@ -26,7 +30,7 @@ parameters:
 # Doctrine Configuration
 doctrine:
     dbal:
-        driver:   pdo_mysql
+        driver:   pdo_pgsql
         host:     "%database_host%"
         port:     "%database_port%"
         dbname:   "%database_name%"
@@ -47,9 +51,16 @@ doctrine:
         auto_generate_proxy_classes: "%kernel.debug%"
         naming_strategy: doctrine.orm.naming_strategy.underscore
         auto_mapping: true
+        hydrators:
+            DatagridHydrator: Glavweb\DataSchemaBundle\Hydrator\Doctrine\DatagridHydrator
+
+        dql:
+            string_functions:
+                Cast: Glavweb\DatagridBundle\Doctrine\ORM\Functions\Cast
 
 # GlavwebDatagrid Configuration
-glavweb_datagrid:
+glavweb_data_schema:
+    default_hydrator_mode: DatagridHydrator
     data_schema:
         dir: "%kernel.root_dir%/config/data_schema"
 

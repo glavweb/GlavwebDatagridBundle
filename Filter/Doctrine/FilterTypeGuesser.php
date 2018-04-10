@@ -29,23 +29,12 @@ class FilterTypeGuesser
      */
     public function guessType($propertyName, ClassMetadata $metadata, array $options = [])
     {
-        // Is association
-        if ($metadata->hasAssociation($propertyName)) {
-            $mapping = $metadata->getAssociationMapping($propertyName);
-            $types = [
-                ClassMetadataInfo::ONE_TO_ONE,
-                ClassMetadataInfo::ONE_TO_MANY,
-                ClassMetadataInfo::MANY_TO_ONE,
-                ClassMetadataInfo::MANY_TO_MANY
-            ];
-
-            if (in_array($mapping['type'], $types)) {
-                return new TypeGuess('model', $options, TypeGuess::HIGH_CONFIDENCE);
-            }
+        if (!isset($metadata->fieldMappings[$propertyName]['fieldName'])) {
+            throw new \RuntimeException(sprintf('Field name "%s" not found in class "%s".', $propertyName, $metadata->getName()));
         }
 
-        if (!isset($metadata->fieldMappings[$propertyName]['fieldName'])) {
-            throw new \RuntimeException(sprintf('Field na1me "%s" not found in class "%s".', $propertyName, $metadata->getName()));
+        if (isset($metadata->fieldMappings[$propertyName]['id']) && $metadata->fieldMappings[$propertyName]['id']) {
+            return new TypeGuess('model', $options, TypeGuess::HIGH_CONFIDENCE);
         }
 
         $options['field_name'] = $metadata->fieldMappings[$propertyName]['fieldName'];

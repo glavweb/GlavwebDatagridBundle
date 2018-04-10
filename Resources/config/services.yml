@@ -14,21 +14,30 @@ services:
         arguments:
             - "@doctrine"
             - "@glavweb_data_schema.data_schema_factory"
-            - "@glavweb_datagrid.doctrine_filter_factory"
-            - "@glavweb_datagrid.query_builder_factory"
-
-    glavweb_datagrid.doctrine_filter_factory:
-        class: Glavweb\DatagridBundle\Filter\Doctrine\ORM\FilterFactory
-        arguments: ["@doctrine"]
+            - "@glavweb_datagrid.doctrine_orm_filter_factory"
+            - "@glavweb_datagrid.orm_query_builder_factory"
 
     glavweb_datagrid.doctrine_native_filter_factory:
         class: Glavweb\DatagridBundle\Filter\Doctrine\Native\FilterFactory
-        arguments: ["@doctrine"]
+        arguments: ["@doctrine", "@glavweb_datagrid.native_join_builder"]
 
-    glavweb_datagrid.query_builder_factory:
-        class:  Glavweb\DatagridBundle\Builder\Doctrine\ORM\QueryBuilderFactory
-        arguments: ["@doctrine"]
+    glavweb_datagrid.doctrine_orm_filter_factory:
+        class: Glavweb\DatagridBundle\Filter\Doctrine\ORM\FilterFactory
+        arguments: ["@doctrine", "@glavweb_datagrid.orm_join_builder"]
 
     glavweb_datagrid.native_query_builder_factory:
         class:  Glavweb\DatagridBundle\Builder\Doctrine\Native\QueryBuilderFactory
         arguments: ["@doctrine"]
+
+    glavweb_datagrid.orm_query_builder_factory:
+        class:  Glavweb\DatagridBundle\Builder\Doctrine\ORM\QueryBuilderFactory
+        arguments: ["@doctrine", "@glavweb_datagrid.orm_join_builder"]
+
+    glavweb_datagrid.native_join_builder:
+        class:  Glavweb\DatagridBundle\JoinMap\Doctrine\Native\JoinBuilder
+        arguments: ["@doctrine"]
+
+    glavweb_datagrid.orm_join_builder:
+        class:  Glavweb\DatagridBundle\JoinMap\Doctrine\ORM\JoinBuilder
+        arguments: ["@doctrine"]
+

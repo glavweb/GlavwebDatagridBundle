@@ -39,9 +39,11 @@ abstract class AbstractFilter extends BaseFilter implements FilterInterface
      */
     public function filter($queryBuilder, $alias, $value)
     {
-        $fieldName = $this->getOption('field_name');
+        if ($this->joinMap) {
+            $alias = $this->joinBuilder->apply($queryBuilder, $this->joinMap);
+        }
 
-        $this->doFilter($queryBuilder, $alias, $fieldName, $value);
+        $this->doFilter($queryBuilder, $alias, $this->fieldName, $value);
     }
 
     /**
@@ -58,13 +60,29 @@ abstract class AbstractFilter extends BaseFilter implements FilterInterface
         if ($operator == self::CONTAINS) {
             $value = mb_strtolower($value, 'UTF-8');
 
-            $queryBuilder->andWhere($expr->like('LOWER(' . $field . ')', ':' . $parameterName));
+            if ($value === '') {
+                return;
+            }
+
+            if (is_numeric($value)) {
+                $queryBuilder->andWhere($expr->like('CAST(' . $field . ' AS TEXT)', ':' . $parameterName));
+
+            } else {
+                $queryBuilder->andWhere($expr->like('LOWER(' . $field . ')', ':' . $parameterName));
+            }
+
             $queryBuilder->setParameter($parameterName, "%$value%");
 
         } elseif ($operator == self::NOT_CONTAINS) {
             $value = mb_strtolower($value, 'UTF-8');
 
-            $queryBuilder->andWhere($expr->notLike('LOWER(' . $field . ')', ':' . $parameterName));
+            if (is_numeric($value)) {
+                $queryBuilder->andWhere($expr->notLike('CAST(' . $field . ' AS TEXT)', ':' . $parameterName));
+
+            } else {
+                $queryBuilder->andWhere($expr->notLike('LOWER(' . $field . ')', ':' . $parameterName));
+            }
+
             $queryBuilder->setParameter($parameterName, "%$value%");
 
         } elseif ($operator == self::IN) {

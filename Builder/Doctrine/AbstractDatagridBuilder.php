@@ -13,6 +13,7 @@ namespace Glavweb\DatagridBundle\Builder\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Glavweb\DatagridBundle\Builder\DatagridBuilderInterface;
+use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
 use Glavweb\DatagridBundle\Exception\BuildException;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
@@ -27,7 +28,7 @@ use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
  * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
-class AbstractDatagridBuilder implements DatagridBuilderInterface
+abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
 {
     /**
      * @var Registry
@@ -93,6 +94,14 @@ class AbstractDatagridBuilder implements DatagridBuilderInterface
      * @var DataSchema
      */
     protected $dataSchema;
+
+    /**
+     * @param array $parameters
+     * @param \Closure $callback
+     * @return DatagridInterface
+     * @throws BuildException
+     */
+    abstract public function build(array $parameters = [], $callback = null);
 
     /**
      * DoctrineDatagridBuilder constructor.

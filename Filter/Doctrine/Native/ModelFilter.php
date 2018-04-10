@@ -30,42 +30,11 @@ class ModelFilter extends AbstractFilter
      */
     protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
     {
-        list($operator, $value) = $this->getOperatorAndValue($value, [
+        [$operator, $value] = $this->getOperatorAndValue($value, [
             self::NOT_CONTAINS => self::NEQ,
         ]);
 
-        $type = $this->getAssociationType($fieldName);
-        if (in_array($type, [ClassMetadataInfo::MANY_TO_MANY, ClassMetadataInfo::ONE_TO_MANY])) {
-            $this->handleToMany($queryBuilder, $alias, $operator, $fieldName, $value);
-        } else {
-            $this->handleToOne($queryBuilder, $alias, $operator, $fieldName, $value);
-        }
-    }
-
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param string $operator
-     * @param string $fieldName
-     * @param mixed $value
-     */
-    private function handleToOne(QueryBuilder $queryBuilder, $alias, $operator, $fieldName, $value)
-    {
-        $field = $alias . '.' . $fieldName;
-        $this->executeCondition($queryBuilder, $operator, $field, $value);
-    }
-
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param string $operator
-     * @param string $fieldName
-     * @param mixed $value
-     */
-    private function handleToMany(QueryBuilder $queryBuilder, $alias, $operator, $fieldName, $value)
-    {
-        $field = $alias;
-        $this->executeCondition($queryBuilder, $operator, $field, $value);
+        $this->executeCondition($queryBuilder, $operator, $alias . '.' . $fieldName, $value);
     }
 
     /**
@@ -101,8 +70,7 @@ class ModelFilter extends AbstractFilter
      */
     protected function getAssociationType($fieldName)
     {
-        $classMetadata      = $this->getOption('class_metadata');
-        $associationMapping = $classMetadata->getAssociationMapping($fieldName);
+        $associationMapping = $this->classMetadata->getAssociationMapping($fieldName);
         $type = $associationMapping['type'];
 
         return $type;

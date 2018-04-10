@@ -40,7 +40,7 @@ class NumberFilter extends AbstractFilter
 
         } else {
             list($operator, $value) = $this->getOperatorAndValue($value);
-
+            
             $this->executeCondition($queryBuilder, $operator, $field, $value);
         }
     }

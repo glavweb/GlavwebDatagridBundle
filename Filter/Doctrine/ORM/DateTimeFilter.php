@@ -29,19 +29,21 @@ class DateTimeFilter extends AbstractFilter
      */
     protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
     {
+        $executeCondition = function ($field, $inValue) use ($queryBuilder) {
+            [$operator, $value] = $this->getOperatorAndValue($inValue, $this->replaceOperators());
+
+            $this->executeCondition($queryBuilder, $operator, $field, $value);
+        };
+
         $field = $alias . '.' . $fieldName;
 
         if (is_array($value) && $this->existsOperatorsInValues($value)) {
             foreach ($value as $item) {
-                list($operator, $value) = $this->getOperatorAndValue($item);
-
-                $this->executeCondition($queryBuilder, $operator, $field, $value);
+                $executeCondition($field, $item);
             }
 
         } else {
-            list($operator, $value) = $this->getOperatorAndValue($value);
-
-            $this->executeCondition($queryBuilder, $operator, $field, $value);
+            $executeCondition($field, $value);
         }
     }
 
@@ -61,6 +63,17 @@ class DateTimeFilter extends AbstractFilter
             self::NIN,
             self::CONTAINS,
             self::NOT_CONTAINS
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    protected function replaceOperators(): array
+    {
+        return [
+            self::CONTAINS => self::EQ,
+            self::NOT_CONTAINS => self::NEQ
         ];
     }
 

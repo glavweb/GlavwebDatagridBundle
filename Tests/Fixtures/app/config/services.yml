@@ -1,0 +1,5 @@
+services:
+    app_data_schema_extension:
+        class: Glavweb\DatagridBundle\Tests\Fixtures\DataSchema\AppDataSchemaExtension
+        tags:
+            - { name: glavweb_data_schema.extension }

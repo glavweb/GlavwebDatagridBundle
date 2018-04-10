@@ -11,8 +11,8 @@
 
 namespace Glavweb\DatagridBundle\JoinMap\Doctrine;
 
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\Expr\Join;
-use Doctrine\ORM\QueryBuilder;
 
 /**
  * Class JoinMap
@@ -28,6 +28,16 @@ class JoinMap
     const JOIN_TYPE_INNER = 'inner';
 
     /**
+     * @var string
+     */
+    private $alias;
+
+    /**
+     * @var ClassMetadata
+     */
+    private $classMetadata;
+
+    /**
      * @var array
      */
     private $joinMap = [];
@@ -36,9 +46,13 @@ class JoinMap
      * JoinMap constructor.
      *
      * @param string $alias
+     * @param ClassMetadata $classMetadata
      */
-    public function __construct($alias)
+    public function __construct($alias, ClassMetadata $classMetadata)
     {
+        $this->alias = $alias;
+        $this->classMetadata = $classMetadata;
+
         $this->joinMap[$alias] = [];
     }
 
@@ -77,62 +91,34 @@ class JoinMap
     }
 
     /**
-     * Apply joins and get last alias.
-     *
-     * @param QueryBuilder $queryBuilder
-     * @return string|null
-     */
-    public function apply(QueryBuilder $queryBuilder)
-    {
-        $alias = null;
-
-        $executedAliases = $queryBuilder->getAllAliases();
-        foreach ($this->joinMap as $path => $fields) {
-            foreach ($fields as $fieldData) {
-                $field         = $fieldData['field'];
-                $hasSelect     = $fieldData['hasSelect'];
-                $selectFields  = $fieldData['selectFields'];
-                $joinType      = $fieldData['joinType'];
-                $conditionType = $fieldData['conditionType'];
-                $condition     = $fieldData['condition'];
-
-                $pathAlias = str_replace('.', '_', $path);
-                $alias     = $pathAlias . '_' . $field;
-                $join      = $pathAlias . '.' . $field;
-
-                if (in_array($alias, $executedAliases)) {
-                    continue;
-                }
-
-                if ($hasSelect) {
-                    if (!$selectFields) {
-                        $queryBuilder->addSelect($alias);
-
-                    } else {
-                        $queryBuilder->addSelect(sprintf('PARTIAL %s.{%s}', $alias, implode(',', $selectFields)));
-                    }
-                }
-
-                if ($joinType == self::JOIN_TYPE_LEFT) {
-                    $queryBuilder->leftJoin($join, $alias, $conditionType, $condition);
-
-                } elseif ($joinType == self::JOIN_TYPE_INNER) {
-                    $queryBuilder->innerJoin($join, $alias, $conditionType, $condition);
-
-                } else {
-                    throw new \RuntimeException('Join type not defined or has wrong type.');
-                }
-            }
-        }
-
-        return $alias;
-    }
-
-    /**
      * @param JoinMap $joinMap
      */
     public function merge(JoinMap $joinMap)
     {
         $this->joinMap = array_merge_recursive($this->joinMap, $joinMap);
+    }
+
+    /**
+     * @return array
+     */
+    public function getJoinMap()
+    {
+        return $this->joinMap;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAlias(): string
+    {
+        return $this->alias;
+    }
+
+    /**
+     * @return ClassMetadata
+     */
+    public function getClassMetadata(): ClassMetadata
+    {
+        return $this->classMetadata;
     }
 }

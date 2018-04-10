@@ -1,0 +1,9 @@
+schema:
+    class: Glavweb\DatagridBundle\Tests\Fixtures\Entity\EventDetail
+    db_driver: orm
+    properties:
+        body:
+
+        event:
+            properties:
+                name:

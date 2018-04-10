@@ -52,6 +52,7 @@ class Event
      * @var ArrayCollection
      *
      * @ORM\ManyToMany(targetEntity="Tag", inversedBy="events")
+     * @ORM\OrderBy({"id": "asc"})
      */
     private $tags;
 
@@ -59,6 +60,7 @@ class Event
      * @var ArrayCollection
      *
      * @ORM\ManyToMany(targetEntity="Article", mappedBy="events")
+     * @ORM\OrderBy({"id": "asc"})
      */
     private $articles;
 
@@ -66,6 +68,7 @@ class Event
      * @var ArrayCollection
      *
      * @ORM\OneToMany(targetEntity="Session", mappedBy="event")
+     * @ORM\OrderBy({"id": "asc"})
      */
     private $sessions;
 

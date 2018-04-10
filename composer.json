@@ -22,8 +22,11 @@
         "glavweb/data-schema-bundle": "^1.0"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^2.7|^3.0|^4.0",
-        "phpunit/phpunit": "~4.8"
+        "symfony/symfony": "3.2.*",
+        "symfony/phpunit-bridge": "^3.3",
+        "doctrine/doctrine-fixtures-bundle": "^2.3",
+        "sensio/framework-extra-bundle": "^3.0.2",
+        "phpunit/phpunit": "^6.4"
     },
     "autoload": {
         "psr-4": { "Glavweb\\DatagridBundle\\": "" }

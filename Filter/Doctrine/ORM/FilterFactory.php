@@ -11,6 +11,9 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine\ORM;
 
+use Doctrine\Bundle\DoctrineBundle\Registry;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\ORM\JoinBuilder;
 use Glavweb\DatagridBundle\Filter\Doctrine\AbstractFilterFactory;
 
 /**
@@ -21,15 +24,44 @@ use Glavweb\DatagridBundle\Filter\Doctrine\AbstractFilterFactory;
 class FilterFactory extends AbstractFilterFactory
 {
     /**
-     * @var array
+     * @var JoinBuilder
      */
-    protected $types = [
-        'string'   => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\StringFilter',
-        'number'   => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\NumberFilter',
-        'boolean'  => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\BooleanFilter',
-        'datetime' => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\DateTimeFilter',
-        'enum'     => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\EnumFilter',
-        'model'    => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\ModelFilter',
-        'callback' => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\CallbackFilter',
-    ];
+    private $joinBuilder;
+
+    /**
+     * FilterFactory constructor.
+     *
+     * @param Registry $doctrine
+     * @param JoinBuilder $joinBuilder
+     */
+    public function __construct(Registry $doctrine, JoinBuilder $joinBuilder)
+    {
+        parent::__construct($doctrine);
+
+        $this->joinBuilder = $joinBuilder;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getTypes(): array
+    {
+        return [
+            'string'   => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\StringFilter',
+            'number'   => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\NumberFilter',
+            'boolean'  => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\BooleanFilter',
+            'datetime' => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\DateTimeFilter',
+            'enum'     => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\EnumFilter',
+            'model'    => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\ModelFilter',
+            'callback' => 'Glavweb\DatagridBundle\Filter\Doctrine\ORM\CallbackFilter',
+        ];
+    }
+
+    /**
+     * @return JoinBuilderInterface
+     */
+    protected function getJoinBuilder(): JoinBuilderInterface
+    {
+        return $this->joinBuilder;
+    }
 }

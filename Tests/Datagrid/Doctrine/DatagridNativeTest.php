@@ -13,32 +13,27 @@ namespace Glavweb\DatagridBundle\Tests\Datagrid\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
-use Doctrine\ORM\Query;
 use Glavweb\DatagridBundle\Builder\Doctrine\AbstractDatagridBuilder;
-use Glavweb\DatagridBundle\Builder\Doctrine\DatagridContext;
+use Glavweb\DatagridBundle\Factory\DatagridFactoryInterface;
 use Glavweb\DatagridBundle\Tests\WebTestCase;
 
 /**
- * Class DatagridTest
+ * Class DatagridNativeTest
  *
  * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
-class DatagridTest extends WebTestCase
+class DatagridNativeTest extends WebTestCase
 {
     /**
-     * @var AbstractDatagridBuilder
+     * @return DatagridFactoryInterface
      */
-    private $datagridBuilder;
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function setUp()
+    protected function getDatagridFactory(): DatagridFactoryInterface
     {
-        parent::setUp();
+        /** @var DatagridFactoryInterface $factory */
+        $factory = $this->getContainer()->get('glavweb_datagrid.native_factory');
 
-        $this->datagridBuilder = $this->getContainer()->get('glavweb_datagrid.doctrine_datagrid_builder');
+        return $factory;
     }
 
     /**
@@ -46,13 +41,12 @@ class DatagridTest extends WebTestCase
      */
     public function testDatagridDataSchema()
     {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article')
-            ->setAlias('t')
-            ->setDataSchema('article/simple_data.schema.yml')
-        ;
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'article/simple_data.schema.yml'
+        );
 
-        $datagrid = $this->datagridBuilder->build();
+        $datagrid = $datagridBuilder->build();
         $list = $datagrid->getList();
 
         $this->assertEquals(3, count($list));
@@ -69,44 +63,15 @@ class DatagridTest extends WebTestCase
      */
     public function testDatagridScope()
     {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article')
-            ->setAlias('t')
-            ->setDataSchema('article/simple_data.schema.yml', 'article/short.yml')
-        ;
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'article/simple_data.schema.yml',
+            'article/short.yml'
+        );
 
-        $datagrid = $this->datagridBuilder->build();
+        $datagrid = $datagridBuilder->build();
         $list = $datagrid->getList();
 
-        $this->assertEquals(3, count($list));
-
-        $this->assertEquals([
-            'name' => 'Article 1',
-        ], $list[0]);
-    }
-
-    /**
-     * Test native SQL
-     */
-    public function testNativeSql()
-    {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article')
-            ->setAlias('t')
-            ->setDataSchema('article/simple_data.schema.yml', 'article/short.yml')
-        ;
-
-        $datagrid = $this->datagridBuilder->buildNativeSql(function (DatagridContext $context) {
-            $em  = $context->getEntityManger();
-            $rsm = $context->getResultSetMapping();
-
-            $sql = 'SELECT w.*  FROM (' . $context->getSql() . ') as w';
-            $query = $em->createNativeQuery($sql, $rsm);
-
-            return $query;
-        });
-
-        $list = $datagrid->getList();
         $this->assertEquals(3, count($list));
 
         $this->assertEquals([
@@ -119,13 +84,12 @@ class DatagridTest extends WebTestCase
      */
     public function testJoinFirstLevel()
     {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Event')
-            ->setAlias('t')
-            ->setDataSchema('test_joins_first_level.schema.yml')
-        ;
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'test_joins_first_level.schema.yml'
+        );
 
-        $datagrid = $this->datagridBuilder->build();
+        $datagrid = $datagridBuilder->build();
         $list = $datagrid->getList();
 
         $this->assertEquals([
@@ -152,13 +116,12 @@ class DatagridTest extends WebTestCase
      */
     public function testJoinSecondLevel()
     {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article')
-            ->setAlias('t')
-            ->setDataSchema('test_joins_second_level.schema.yml')
-        ;
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'test_joins_second_level.schema.yml'
+        );
 
-        $datagrid = $this->datagridBuilder->build();
+        $datagrid = $datagridBuilder->build();
         $list = $datagrid->getList();
 
         $this->assertEquals([
@@ -192,6 +155,30 @@ class DatagridTest extends WebTestCase
     }
 
     /**
+     * Test simple decode
+     *
+     * @dataProvider dataTestDecodeWithQuerySelects
+     * @param string $dataSchemaFile
+     */
+    public function testDecodeWithQuerySelects($dataSchemaFile)
+    {
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            $dataSchemaFile
+        );
+
+        $datagrid = $datagridBuilder->build();
+        $item = $datagrid->getItem();
+
+        $this->assertArraySubset([
+            'name' => 'ARTICLE 1',
+            'slugWithYear' => 'article-1_2016',
+            'allEvents' => 3,
+            'hasEvents' => true
+        ], $item);
+    }
+
+    /**
      * Test datagrid filters
      *
      * @dataProvider dataTestFilters
@@ -201,19 +188,19 @@ class DatagridTest extends WebTestCase
      */
     public function testDatagridFilters($filterName, $cases)
     {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article')
-            ->setAlias('t')
-            ->setDataSchema('article/simple_data.schema.yml', 'article/short.yml')
-        ;
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'article/simple_data.schema.yml', 
+            'article/short.yml'
+        );
 
         // Define filters
-        $this->datagridBuilder
+        $datagridBuilder
             ->addFilter($filterName)
         ;
 
         foreach ($cases as $key => $case) {
-            $datagrid = $this->datagridBuilder->build($case['params']);
+            $datagrid = $datagridBuilder->build($case['params']);
             $list = $datagrid->getList();
 
             $message = sprintf('Filter name: %s, Case: %s', $filterName, $key);
@@ -233,27 +220,90 @@ class DatagridTest extends WebTestCase
      */
     public function testDatagridSecondFilters($filterName, $paramName, $cases)
     {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Event')
-            ->setAlias('t')
-            ->setDataSchema('event/simple_data.schema.yml', 'event/short.yml')
-        ;
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'event/simple_data.schema.yml',
+            'event/short.yml'
+        );
 
         // Define filters
-        $this->datagridBuilder
+        $datagridBuilder
             ->addFilter($filterName, null, [
                 'param_name' => $paramName
             ])
         ;
 
         foreach ($cases as $key => $case) {
-            $datagrid = $this->datagridBuilder->build($case['params']);
+            $datagrid = $datagridBuilder->build($case['params']);
             $list = $datagrid->getList();
 
             $message = sprintf('Filter name: %s, Case: %s', $filterName, $key);
             $this->assertEquals($case['count'], count($list), $message);
             $this->assertEquals($case['actual'], $list, $message);
         }
+    }
+
+    /**
+     * Test datagrid second filters
+     *
+     * @dataProvider dataTestJoinedFilters
+     *
+     * @param string $filterName
+     * @param string $paramName
+     * @param array  $cases
+     */
+    public function testDatagridJoinedFilters($filterName, $paramName, $cases)
+    {
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'event/simple_data.schema.yml',
+            'event/short.yml'
+        );
+
+        // Define filters
+        $datagridBuilder
+            ->addFilter($filterName, null, [
+                'param_name' => $paramName
+            ])
+        ;
+
+        foreach ($cases as $key => $case) {
+            $datagrid = $datagridBuilder->build($case['params']);
+            $list = $datagrid->getList();
+
+            $message = sprintf('Filter name: %s, Case: %s', $filterName, $key);
+            $this->assertEquals($case['count'], count($list), $message);
+            $this->assertEquals($case['actual'], $list, $message);
+        }
+    }
+
+    /**
+     * Test datagrid filters
+     */
+    public function testDatagridOneToOneJoinedFilters()
+    {
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'event_detail/simple_data.schema.yml',
+            'event_detail/short.yml'
+        );
+
+        // Define filters
+        $datagridBuilder
+            ->addFilter('event.name', null, [
+                'param_name' => 'eventName'
+            ])
+        ;
+
+        $datagrid = $datagridBuilder->build([
+            'eventName' => 'Event 1'
+        ]);
+
+        $list = $datagrid->getList();
+
+        $this->assertEquals($list, [
+            ['body' => 'Body for event detail 1']
+        ]);
     }
 
     /**
@@ -267,14 +317,14 @@ class DatagridTest extends WebTestCase
      */
     public function testDatagridModelFilters($filterName, $paramName, $cases)
     {
-        $this->datagridBuilder
-            ->setEntityClassName('Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article')
-            ->setAlias('t')
-            ->setDataSchema('article/simple_data.schema.yml', 'article/short.yml')
-        ;
+        /** @var AbstractDatagridBuilder $datagridBuilder */
+        $datagridBuilder = $this->getDatagridFactory()->createBuilder(
+            'article/simple_data.schema.yml',
+            'article/short.yml'
+        );
 
         // Define filters
-        $this->datagridBuilder
+        $datagridBuilder
             ->addFilter($filterName, null, [
                 'param_name' => $paramName
             ])
@@ -282,7 +332,7 @@ class DatagridTest extends WebTestCase
 
         foreach ($cases as $key => $case) {
             $entity = $this->getEntityByName($case['entity']['className'], $case['entity']['name']);
-            $datagrid = $this->datagridBuilder->build([
+            $datagrid = $datagridBuilder->build([
                 $case['entity']['param'] => $entity->getId()
             ]);
             $list = $datagrid->getList();
@@ -291,6 +341,18 @@ class DatagridTest extends WebTestCase
             $this->assertEquals($case['count'], count($list), $message);
             $this->assertEquals($case['actual'], $list, $message);
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function dataTestDecodeWithQuerySelects()
+    {
+        return [
+            [
+                'dataSchemaFile' => 'test_decode_with_query_selects.schema.yml'
+            ]
+        ];
     }
 
     /**
@@ -601,11 +663,80 @@ class DatagridTest extends WebTestCase
     /**
      * @return array
      */
+    public function dataTestJoinedFilters()
+    {
+        return [
+            // ManyToMany inversed side
+            [
+                'filterName' => 'articles.name',
+                'paramName'  => 'articleName',
+                'cases' => [
+                    [
+                        'params' => ['articleName' => '=Article 2'],
+                        'count'  => 1,
+                        'actual' => [
+                            ['name' => 'Event 3']
+                        ]
+                    ],
+                ]
+            ],
+
+            // OneToMany
+            [
+                'filterName' => 'sessions.name',
+                'paramName'  => 'sessionName',
+                'cases' => [
+                    [
+                        'params' => ['sessionName' => '=Session 1'],
+                        'count'  => 1,
+                        'actual' => [
+                            ['name' => 'Event 1']
+                        ]
+                    ],
+                ]
+            ],
+
+            // ManyToOne
+            [
+                'filterName' => 'eventGroup.name',
+                'paramName'  => 'eventGroupName',
+                'cases' => [
+                    [
+                        'params' => ['eventGroupName' => '=Event group 1'],
+                        'count'  => 2,
+                        'actual' => [
+                            ['name' => 'Event 2'],
+                            ['name' => 'Event 1'],
+                        ]
+                    ],
+                ]
+            ],
+
+            // OneToOne owning side
+            [
+                'filterName' => 'eventDetail.body',
+                'paramName'  => 'eventDetailBody',
+                'cases' => [
+                    [
+                        'params' => ['eventDetailBody' => '=Body for event detail 1'],
+                        'count'  => 1,
+                        'actual' => [
+                            ['name' => 'Event 1'],
+                        ]
+                    ],
+                ]
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
     public function dataTestModelFilters()
     {
         return [
             [
-                'filterName' => 'events',
+                'filterName' => 'events.id',
                 'paramName'  => 'events',
                 'cases' => [
                     [
@@ -622,7 +753,7 @@ class DatagridTest extends WebTestCase
                 ]
             ],
             [
-                'filterName' => 'events.tags',
+                'filterName' => 'events.tags.id',
                 'paramName'  => 'eventTag',
                 'cases' => [
                     [

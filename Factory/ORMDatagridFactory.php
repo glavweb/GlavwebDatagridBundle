@@ -12,6 +12,7 @@
 namespace Glavweb\DatagridBundle\Factory;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use Glavweb\DatagridBundle\Builder\Doctrine\AbstractDatagridBuilder;
 use Glavweb\DatagridBundle\Builder\Doctrine\ORM\DatagridBuilder;
 use Glavweb\DatagridBundle\Builder\Doctrine\ORM\QueryBuilderFactory;
 use Glavweb\DatagridBundle\Filter\Doctrine\ORM\FilterFactory;
@@ -22,7 +23,7 @@ use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
-class ORMDatagridFactory
+class ORMDatagridFactory implements DatagridFactoryInterface
 {
     /**
      * @var Registry
@@ -63,9 +64,9 @@ class ORMDatagridFactory
     /**
      * @param string $dataSchemaFile
      * @param string|null $scopeFile
-     * @return DatagridBuilder
+     * @return AbstractDatagridBuilder
      */
-    public function createBuilder(string $dataSchemaFile, string $scopeFile = null): DatagridBuilder
+    public function createBuilder(string $dataSchemaFile, string $scopeFile = null): AbstractDatagridBuilder
     {
         $builder = new DatagridBuilder(
             $this->doctrine,

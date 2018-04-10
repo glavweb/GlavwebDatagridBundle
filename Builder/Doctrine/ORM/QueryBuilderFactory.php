@@ -11,9 +11,11 @@
 
 namespace Glavweb\DatagridBundle\Builder\Doctrine\ORM;
 
+use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Glavweb\DatagridBundle\Builder\Doctrine\AbstractQueryBuilderFactory;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\ORM\JoinBuilder;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
@@ -27,6 +29,24 @@ use Doctrine\ORM\Query\Expr\Join;
  */
 class QueryBuilderFactory extends AbstractQueryBuilderFactory
 {
+    /**
+     * @var JoinBuilder
+     */
+    private $joinBuilder;
+
+    /**
+     * QueryBuilderFactory constructor.
+     *
+     * @param Registry $doctrine
+     * @param JoinBuilder $joinBuilder
+     */
+    public function __construct(Registry $doctrine, JoinBuilder $joinBuilder)
+    {
+        parent::__construct($doctrine);
+
+        $this->joinBuilder = $joinBuilder;
+    }
+
     /**
      * @param array $parameters
      * @param string $alias
@@ -66,7 +86,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         }
 
         if ($joinMap) {
-            $joinMap->apply($queryBuilder);
+            $this->joinBuilder->apply($queryBuilder, $joinMap);
         }
 
         return $queryBuilder;
@@ -79,8 +99,8 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
      */
     public function createJoinMap(DataSchema $dataSchema, $alias)
     {
-        $joinMap          = new JoinMap($alias);
         $dataSchemaConfig = $dataSchema->getConfiguration();
+        $joinMap          = new JoinMap($alias, $this->getClassMetadata($dataSchemaConfig['class']));
 
         $joins = $this->getJoinsByConfig($dataSchema, $dataSchemaConfig, $alias);
         foreach ($joins as $fullPath => $joinData) {

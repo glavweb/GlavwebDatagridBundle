@@ -9,8 +9,6 @@
  * file that was distributed with this source code.
  */
 
-//namespace Glavweb\DatagridBundle\Tests;
-
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\HttpKernel\Kernel;
 
@@ -23,9 +21,12 @@ class AppKernel extends Kernel
     {
         $bundles = array(
             new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
+            new \Symfony\Bundle\SecurityBundle\SecurityBundle(),
             new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
             new \Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle(),
+            new \Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle(),
             new \Glavweb\DatagridBundle\GlavwebDatagridBundle(),
+            new \Glavweb\DataSchemaBundle\GlavwebDataSchemaBundle(),
             new \Glavweb\DatagridBundle\Tests\Fixtures\GlavwebDatagridTestBundle(),
         );
 

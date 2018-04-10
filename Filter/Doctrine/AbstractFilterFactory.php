@@ -15,6 +15,7 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
@@ -24,13 +25,8 @@ use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
  * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
-class AbstractFilterFactory
+abstract class AbstractFilterFactory
 {
-    /**
-     * @var array
-     */
-    protected $types = [];
-
     /**
      * @var Registry
      */
@@ -40,6 +36,16 @@ class AbstractFilterFactory
      * @var FilterTypeGuesser
      */
     protected $filterTypeGuesser;
+
+    /**
+     * @return array
+     */
+    abstract protected function getTypes(): array;
+
+    /**
+     * @return JoinBuilderInterface
+     */
+    abstract protected function getJoinBuilder(): JoinBuilderInterface;
 
     /**
      * DoctrineDatagridBuilder constructor.
@@ -65,16 +71,45 @@ class AbstractFilterFactory
         /** @var ClassMetadata $classMetadata */
         $classMetadata = $this->doctrine->getManager()->getClassMetadata($entityClass);
 
-        $options = $this->defineOptions($classMetadata, $alias, $name, $options);
+        $options = $this->fixOptions($options);
+        [$fieldName, $classMetadata, $joinMap] = $this->parse($classMetadata, $alias, $name, $options);
 
         if (!$type) {
-            $guessType = $this->filterTypeGuesser->guessType($options['field_name'], $options['class_metadata'], $options);
+            $guessType = $this->filterTypeGuesser->guessType($fieldName, $classMetadata, $options);
 
             $options = array_merge($guessType->getOptions(), $options);
             $type    = $guessType->getType();
         }
 
-        return $this->create($name, $type, $options);
+        return $this->createByType($type, $name, $options, $fieldName, $classMetadata, $joinMap);
+    }
+
+    /**
+     * @param string $type
+     * @param string $name
+     * @param array $options
+     * @param string $fieldName
+     * @param ClassMetadata $classMetadata
+     * @param JoinMap|null $joinMap
+     * @return FilterInterface
+     */
+    protected function createByType(
+        string $type,
+        string $name,
+        array $options,
+        string $fieldName,
+        ClassMetadata $classMetadata,
+        JoinMap $joinMap = null
+    ): FilterInterface {
+        $types = $this->getTypes();
+
+        if (!isset($types[$type])) {
+            throw new \RuntimeException(sprintf('Type of filter "%s" is not defined.', $type));
+        }
+
+        $class = $types[$type];
+
+        return new $class($name, $options, $fieldName, $classMetadata, $this->getJoinBuilder(), $joinMap);
     }
 
     /**
@@ -95,50 +130,44 @@ class AbstractFilterFactory
     }
 
     /**
-     * @param string $name
-     * @param string $type
      * @param array $options
-     * @return FilterInterface
+     * @return array
+     * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    public function create($name, $type = null, $options = [])
+    private function fixOptions(array $options = [])
     {
-        if (!isset($this->types[$type])) {
-            throw new \RuntimeException(sprintf('Type %s is not defined', $type));
+        if (!isset($options['has_select'])) {
+            $options['has_select'] = true;
         }
-        $class = $this->types[$type];
 
-        return new $class($name, $options);
+        return $options;
     }
 
     /**
-     * @param ClassMetadata $classMetadata
+     * @param ClassMetadata $inClassMetadata
      * @param string $alias
      * @param string $filterName
      * @param array $options
      * @return array
      * @throws \Doctrine\ORM\Mapping\MappingException
      */
-    private function defineOptions(ClassMetadata $classMetadata, $alias, $filterName, array $options = [])
+    private function parse(ClassMetadata $inClassMetadata, $alias, $filterName, array $options = [])
     {
+        $fieldName     = $filterName;
+        $classMetadata = $inClassMetadata;
+        $joinMap       = null;
+
         /** @var EntityManager $em */
         $em = $this->doctrine->getManager();
 
-        $options['class_metadata'] = $classMetadata;
-        $options['field_name']     = $filterName;
-
-        if (!isset($options['has_select'])) {
-            $options['has_select'] = true;
-        }
-
-        $joinMap  = null;
         $joinPath = $alias;
         if (strpos($filterName, '.') > 0) {
             $filterElements    = explode('.', $filterName);
             $lastFilterElement = $filterElements[count($filterElements) - 1];
 
-            $joinMap           = new JoinMap($alias);
+            $joinMap           = new JoinMap($alias, $inClassMetadata);
             $joinFieldName     = null;
-            $joinClassMetadata = $classMetadata;
+            $joinClassMetadata = $inClassMetadata;
             foreach ($filterElements as $joinFieldName) {
                 if ($joinClassMetadata->hasAssociation($joinFieldName)) {
                     $isLastElement = $joinFieldName == $lastFilterElement;
@@ -157,22 +186,10 @@ class AbstractFilterFactory
                 }
             }
 
-            $options['class_metadata'] = $joinClassMetadata;
-            $options['field_name']     = $joinFieldName;
+            $classMetadata = $joinClassMetadata;
+            $fieldName     = $joinFieldName;
         }
 
-        // Add join for to-many associations
-        $associationType = $this->getAssociationType($options['class_metadata'], $options['field_name']);
-        if (in_array($associationType, [ClassMetadataInfo::MANY_TO_MANY, ClassMetadataInfo::ONE_TO_MANY])) {
-            if (!$joinMap) {
-                $joinMap = new JoinMap($alias);
-            }
-
-            $joinMap->join($joinPath, $options['field_name'], $options['has_select']);
-        }
-
-        $options['join_map'] = $joinMap;
-
-        return $options;
+        return [$fieldName, $classMetadata, $joinMap];
     }
 }

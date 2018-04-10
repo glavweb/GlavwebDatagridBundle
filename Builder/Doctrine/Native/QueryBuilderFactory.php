@@ -44,6 +44,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             $alias,
             [],
             [],
+            [],
             true
         );
 
@@ -55,11 +56,18 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
      * @param string $alias
      * @param array $inConditions
      * @param array $inJoins
+     * @param array $inOrderBy
      * @param bool $hasFrom
      * @return QueryBuilder
      */
-    private function createQueryBuilderBySchema(array $dataSchemaConfig, string $alias, array $inConditions = [], array $inJoins = [], bool $hasFrom = true): QueryBuilder
-    {
+    private function createQueryBuilderBySchema(
+        array $dataSchemaConfig,
+        string $alias,
+        array $inConditions = [],
+        array $inJoins = [],
+        array $inOrderBy = [],
+        bool $hasFrom = true
+    ): QueryBuilder {
         /** @var EntityManager $em */
         /** @var Connection $connection */
         $em = $this->doctrine->getManager();
@@ -144,6 +152,13 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             }
         }
 
+        // Order by
+        if ($inOrderBy) {
+            foreach ($inOrderBy as $sort => $order) {
+                $queryBuilder->addOrderBy($sort, $order);
+            }
+        }
+
         return $queryBuilder;
     }
 
@@ -220,6 +235,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             $propertyAlias,
             $conditions,
             [],
+            [],
             !empty($conditions) // If has conditions add FROM clause
         );
 
@@ -251,6 +267,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
 
         $conditions = [];
         $joins      = [];
+        $orderBy    = isset($propertyAssociationMapping['orderBy']) ? $propertyAssociationMapping['orderBy'] : [];
 
         // Many-To-Many
         if ($propertyAssociationMapping['type'] === ClassMetadataInfo::MANY_TO_MANY) {
@@ -318,6 +335,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             $propertyAlias,
             $conditions,
             $joins,
+            $orderBy,
             true
         );
 

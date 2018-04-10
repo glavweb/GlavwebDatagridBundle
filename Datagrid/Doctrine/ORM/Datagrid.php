@@ -128,7 +128,7 @@ class Datagrid extends AbstractDatagrid
      */
     public function getItem()
     {
-        $query = $this->createQuery();
+        $query = $this->createQuery(1);
 
         $query->setHydrationMode($this->getHydrationMode());
         $this->setHintsToQuery($query);
@@ -187,7 +187,7 @@ class Datagrid extends AbstractDatagrid
     protected function getPaginator()
     {
         if (!$this->paginator) {
-            $query = $this->createQuery();
+            $query = $this->createQuery($this->getMaxResults());
 
             $this->paginator = new Paginator($query);
         }
@@ -196,14 +196,18 @@ class Datagrid extends AbstractDatagrid
     }
 
     /**
+     * @param int|null $maxResults
      * @return Query
      */
-    private function createQuery()
+    private function createQuery(?int $maxResults)
     {
         $queryBuilder = $this->getQueryBuilder();
         $alias        = $this->getAlias();
         $firstResult  = $this->getFirstResult();
-        $maxResults   = $this->getMaxResults();
+
+        if ($maxResults) {
+            $queryBuilder->setMaxResults($maxResults);
+        }
 
         $queryBuilder->setFirstResult($firstResult);
         $queryBuilder->setMaxResults($maxResults);

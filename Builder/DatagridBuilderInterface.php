@@ -108,7 +108,8 @@ interface DatagridBuilderInterface
 
     /**
      * @param array $parameters
+     * @param \Closure $callback
      * @return DatagridInterface
      */
-//    public function build(array $parameters = []);
+    public function build(array $parameters = [], $callback = null);
 }
