@@ -104,28 +104,22 @@ class ObjectHydrator
         foreach ($metaData->getAssociationMappings() as $propertyName => $mapping) {
             if (isset($data[$propertyName])) {
                 if (in_array($mapping['type'], [ClassMetadataInfo::ONE_TO_ONE, ClassMetadataInfo::MANY_TO_ONE])) {
-                    if ($mapping['isOwningSide']) {
-                        $idName = current($mapping['sourceToTargetKeyColumns']);
+                    $metaData = $this->entityManager->getClassMetadata($mapping['targetEntity']);
 
-                    } else {
-                        $idName = key($mapping['sourceToTargetKeyColumns']);
+                    if (count($metaData->identifier) !== 1) {
+                        throw new \RuntimeException('Identifier must be single.');
+                    }
+                    $identifier = $metaData->identifier[0];
+
+                    if (!isset($data[$propertyName][$identifier])) {
+                        throw new \RuntimeException('Identifier "' . $identifier . '" not found in "' . $propertyName . '" data.');
                     }
 
-                    if (!isset($data[$propertyName][$idName])) {
-                        throw new \RuntimeException('Identifier "' . $idName . '" not found in "' . $propertyName . '" data.');
-                    }
-
-                    $entity = $this->hydrateToOneAssociation($entity, $propertyName, $mapping, $data[$propertyName][$idName]);
+                    $entity = $this->hydrateToOneAssociation($entity, $propertyName, $mapping, $data[$propertyName][$identifier]);
                 }
 
                 if (in_array($mapping['type'], [ClassMetadataInfo::ONE_TO_MANY, ClassMetadataInfo::MANY_TO_MANY])) {
-                    $idName = key($mapping['sourceToTargetKeyColumns']);
-
-                    if (!isset($data[$propertyName][$idName])) {
-                        throw new \RuntimeException('Identifier "' . $idName . '" not found in "' . $propertyName . '" data.');
-                    }
-
-                    $entity = $this->hydrateToManyAssociation($entity, $propertyName, $mapping, $data[$propertyName][$idName]);
+                    $entity = $this->hydrateToManyAssociation($entity, $propertyName, $mapping, $data[$propertyName]);
                 }
             }
         }
