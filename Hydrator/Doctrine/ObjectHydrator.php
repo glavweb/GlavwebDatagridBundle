@@ -104,11 +104,28 @@ class ObjectHydrator
         foreach ($metaData->getAssociationMappings() as $propertyName => $mapping) {
             if (isset($data[$propertyName])) {
                 if (in_array($mapping['type'], [ClassMetadataInfo::ONE_TO_ONE, ClassMetadataInfo::MANY_TO_ONE])) {
-                    $entity = $this->hydrateToOneAssociation($entity, $propertyName, $mapping, $data[$propertyName]);
+                    if ($mapping['isOwningSide']) {
+                        $idName = current($mapping['sourceToTargetKeyColumns']);
+
+                    } else {
+                        $idName = key($mapping['sourceToTargetKeyColumns']);
+                    }
+
+                    if (!isset($data[$propertyName][$idName])) {
+                        throw new \RuntimeException('Identifier "' . $idName . '" not found in "' . $propertyName . '" data.');
+                    }
+
+                    $entity = $this->hydrateToOneAssociation($entity, $propertyName, $mapping, $data[$propertyName][$idName]);
                 }
 
                 if (in_array($mapping['type'], [ClassMetadataInfo::ONE_TO_MANY, ClassMetadataInfo::MANY_TO_MANY])) {
-                    $entity = $this->hydrateToManyAssociation($entity, $propertyName, $mapping, $data[$propertyName]);
+                    $idName = key($mapping['sourceToTargetKeyColumns']);
+
+                    if (!isset($data[$propertyName][$idName])) {
+                        throw new \RuntimeException('Identifier "' . $idName . '" not found in "' . $propertyName . '" data.');
+                    }
+
+                    $entity = $this->hydrateToManyAssociation($entity, $propertyName, $mapping, $data[$propertyName][$idName]);
                 }
             }
         }
