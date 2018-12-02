@@ -128,7 +128,7 @@ class Datagrid extends AbstractDatagrid
      */
     public function getItem()
     {
-        $query = $this->createQuery(1);
+        $query = $this->createQuery(null);
 
         $query->setHydrationMode($this->getHydrationMode());
         $this->setHintsToQuery($query);

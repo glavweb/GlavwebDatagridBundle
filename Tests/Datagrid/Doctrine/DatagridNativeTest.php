@@ -168,14 +168,14 @@ class DatagridNativeTest extends WebTestCase
         );
 
         $datagrid = $datagridBuilder->build();
-        $item = $datagrid->getItem();
+        $list = $datagrid->getList();
 
         $this->assertArraySubset([
             'name' => 'ARTICLE 1',
             'slugWithYear' => 'article-1_2016',
             'allEvents' => 3,
             'hasEvents' => true
-        ], $item);
+        ], $list[0]);
     }
 
     /**
