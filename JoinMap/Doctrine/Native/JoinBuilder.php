@@ -63,129 +63,127 @@ class JoinBuilder implements JoinBuilderInterface
                 $joinType = $fieldData['joinType'];
                 $joinAlias = $alias . '_' . $field;
 
-                if (in_array($joinAlias, $executedAliases)) {
-                    continue;
-                }
-
-                if ($path == $rootAlias) {
-                    $classMetadata = $rootClassMetadata;
-
-                } else {
-                    $pathWithoutRootAlias = substr($path, strlen($rootAlias) + 1);
-                    $classMetadata = $this->getClassMetadataByPath($pathWithoutRootAlias, $rootClassMetadata);
-                }
-
-                $joinMethod = $joinType == JoinMap::JOIN_TYPE_LEFT ? 'leftJoin' : ($joinType == JoinMap::JOIN_TYPE_INNER ? 'innerJoin' : null);
-
-                if (!$joinMethod) {
-                    throw new \RuntimeException('Join type not defined or has wrong type.');
-                }
-
-                $associationMapping = $classMetadata->getAssociationMapping($field);
-
-                if ($associationMapping['type'] === ClassMetadata::MANY_TO_MANY) {
-                    // If is owning side
-                    if ($associationMapping['isOwningSide']) {
-                        $joinTable = $associationMapping['joinTable'];
-                        $joinTableName = $joinTable['name'];
-                        $joinTableAlias = $alias . '_' . $joinTable['name'];
-
-                        $relationToSourceKeyColumns = $associationMapping['relationToSourceKeyColumns'];
-
-                        $queryBuilder->$joinMethod(
-                            $alias,
-                            $joinTableName,
-                            $joinTableAlias,
-                            $joinTableAlias . '.' . key($relationToSourceKeyColumns) . ' = ' . $alias . '.' . current($relationToSourceKeyColumns)
-                        );
-
-                        $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
-                        $fieldTableName = $fieldClassMetadata->getTableName();
-                        $relationToTargetKeyColumns = $associationMapping['relationToTargetKeyColumns'];
-
-                        $queryBuilder->$joinMethod(
-                            $alias,
-                            $fieldTableName,
-                            $joinAlias,
-                            $joinAlias . '.' . current($relationToTargetKeyColumns) . ' = ' . $joinTableAlias . '.' . key($relationToTargetKeyColumns)
-                        );
+                if (!in_array($joinAlias, $executedAliases)) {
+                    if ($path == $rootAlias) {
+                        $classMetadata = $rootClassMetadata;
 
                     } else {
+                        $pathWithoutRootAlias = substr($path, strlen($rootAlias) + 1);
+                        $classMetadata = $this->getClassMetadataByPath($pathWithoutRootAlias, $rootClassMetadata);
+                    }
+
+                    $joinMethod = $joinType == JoinMap::JOIN_TYPE_LEFT ? 'leftJoin' : ($joinType == JoinMap::JOIN_TYPE_INNER ? 'innerJoin' : null);
+
+                    if (!$joinMethod) {
+                        throw new \RuntimeException('Join type not defined or has wrong type.');
+                    }
+
+                    $associationMapping = $classMetadata->getAssociationMapping($field);
+
+                    if ($associationMapping['type'] === ClassMetadata::MANY_TO_MANY) {
+                        // If is owning side
+                        if ($associationMapping['isOwningSide']) {
+                            $joinTable = $associationMapping['joinTable'];
+                            $joinTableName = $joinTable['name'];
+                            $joinTableAlias = $alias . '_' . $joinTable['name'];
+
+                            $relationToSourceKeyColumns = $associationMapping['relationToSourceKeyColumns'];
+
+                            $queryBuilder->$joinMethod(
+                                $alias,
+                                $joinTableName,
+                                $joinTableAlias,
+                                $joinTableAlias . '.' . key($relationToSourceKeyColumns) . ' = ' . $alias . '.' . current($relationToSourceKeyColumns)
+                            );
+
+                            $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
+                            $fieldTableName = $fieldClassMetadata->getTableName();
+                            $relationToTargetKeyColumns = $associationMapping['relationToTargetKeyColumns'];
+
+                            $queryBuilder->$joinMethod(
+                                $alias,
+                                $fieldTableName,
+                                $joinAlias,
+                                $joinAlias . '.' . current($relationToTargetKeyColumns) . ' = ' . $joinTableAlias . '.' . key($relationToTargetKeyColumns)
+                            );
+
+                        } else {
+                            $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
+                            $fieldAssociationMapping = $fieldClassMetadata->getAssociationMapping($associationMapping['mappedBy']);
+                            $fieldTableName = $fieldClassMetadata->getTableName();
+
+                            $joinTable = $fieldAssociationMapping['joinTable'];
+                            $joinTableName = $joinTable['name'];
+                            $joinTableAlias = $alias . '_' . $joinTable['name'];
+                            $relationToSourceKeyColumns = $fieldAssociationMapping['relationToSourceKeyColumns'];
+                            $relationToTargetKeyColumns = $fieldAssociationMapping['relationToTargetKeyColumns'];
+
+                            $queryBuilder->$joinMethod(
+                                $alias,
+                                $joinTableName,
+                                $joinTableAlias,
+                                $joinTableAlias . '.' . key($relationToTargetKeyColumns) . ' = ' . $alias . '.' . current($relationToTargetKeyColumns)
+                            );
+
+                            $queryBuilder->$joinMethod(
+                                $alias,
+                                $fieldTableName,
+                                $joinAlias,
+                                $joinAlias . '.' . current($relationToSourceKeyColumns) . ' = ' . $joinTableAlias . '.' . key($relationToSourceKeyColumns)
+                            );
+                        }
+
+                    } elseif ($associationMapping['type'] === ClassMetadata::ONE_TO_MANY) {
                         $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
                         $fieldAssociationMapping = $fieldClassMetadata->getAssociationMapping($associationMapping['mappedBy']);
                         $fieldTableName = $fieldClassMetadata->getTableName();
-
-                        $joinTable = $fieldAssociationMapping['joinTable'];
-                        $joinTableName = $joinTable['name'];
-                        $joinTableAlias = $alias . '_' . $joinTable['name'];
-                        $relationToSourceKeyColumns = $fieldAssociationMapping['relationToSourceKeyColumns'];
-                        $relationToTargetKeyColumns = $fieldAssociationMapping['relationToTargetKeyColumns'];
-
-                        $queryBuilder->$joinMethod(
-                            $alias,
-                            $joinTableName,
-                            $joinTableAlias,
-                            $joinTableAlias . '.' . key($relationToTargetKeyColumns) . ' = ' . $alias . '.' . current($relationToTargetKeyColumns)
-                        );
+                        $sourceToTargetKeyColumns = $fieldAssociationMapping['sourceToTargetKeyColumns'];
 
                         $queryBuilder->$joinMethod(
                             $alias,
                             $fieldTableName,
                             $joinAlias,
-                            $joinAlias . '.' . current($relationToSourceKeyColumns) . ' = ' . $joinTableAlias . '.' . key($relationToSourceKeyColumns)
+                            $joinAlias . '.' . key($sourceToTargetKeyColumns) . ' = ' . $alias . '.' . current($sourceToTargetKeyColumns)
                         );
-                    }
 
-                } elseif ($associationMapping['type'] === ClassMetadata::ONE_TO_MANY) {
-                    $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
-                    $fieldAssociationMapping = $fieldClassMetadata->getAssociationMapping($associationMapping['mappedBy']);
-                    $fieldTableName = $fieldClassMetadata->getTableName();
-                    $sourceToTargetKeyColumns = $fieldAssociationMapping['sourceToTargetKeyColumns'];
-
-                    $queryBuilder->$joinMethod(
-                        $alias,
-                        $fieldTableName,
-                        $joinAlias,
-                        $joinAlias . '.' . key($sourceToTargetKeyColumns) . ' = ' . $alias . '.' . current($sourceToTargetKeyColumns)
-                    );
-
-                } elseif ($associationMapping['type'] === ClassMetadata::MANY_TO_ONE) {
-                    $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
-                    $fieldTableName = $fieldClassMetadata->getTableName();
-                    $sourceToTargetKeyColumns = $associationMapping['sourceToTargetKeyColumns'];
-
-                    $queryBuilder->$joinMethod(
-                        $alias,
-                        $fieldTableName,
-                        $joinAlias,
-                        $joinAlias . '.' . current($sourceToTargetKeyColumns) . ' = ' . $alias . '.' . key($sourceToTargetKeyColumns)
-                    );
-
-                } elseif ($associationMapping['type'] === ClassMetadata::ONE_TO_ONE) {
-                    if ($associationMapping['isOwningSide']) {
+                    } elseif ($associationMapping['type'] === ClassMetadata::MANY_TO_ONE) {
                         $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
                         $fieldTableName = $fieldClassMetadata->getTableName();
                         $sourceToTargetKeyColumns = $associationMapping['sourceToTargetKeyColumns'];
 
-                        $queryBuilder->leftJoin(
+                        $queryBuilder->$joinMethod(
                             $alias,
                             $fieldTableName,
                             $joinAlias,
-                            $alias . '.' . key($sourceToTargetKeyColumns) . ' = ' . $joinAlias . '.' . current($sourceToTargetKeyColumns)
+                            $joinAlias . '.' . current($sourceToTargetKeyColumns) . ' = ' . $alias . '.' . key($sourceToTargetKeyColumns)
                         );
 
-                    } else {
-                        $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
-                        $fieldTableName = $fieldClassMetadata->getTableName();
-                        $fieldAssociationMapping = $fieldClassMetadata->getAssociationMapping($associationMapping['mappedBy']);
-                        $sourceToTargetKeyColumns = $fieldAssociationMapping['sourceToTargetKeyColumns'];
+                    } elseif ($associationMapping['type'] === ClassMetadata::ONE_TO_ONE) {
+                        if ($associationMapping['isOwningSide']) {
+                            $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
+                            $fieldTableName = $fieldClassMetadata->getTableName();
+                            $sourceToTargetKeyColumns = $associationMapping['sourceToTargetKeyColumns'];
 
-                        $queryBuilder->leftJoin(
-                            $alias,
-                            $fieldTableName,
-                            $joinAlias,
-                            $alias . '.' . current($sourceToTargetKeyColumns) . ' = ' . $joinAlias . '.' . key($sourceToTargetKeyColumns)
-                        );
+                            $queryBuilder->leftJoin(
+                                $alias,
+                                $fieldTableName,
+                                $joinAlias,
+                                $alias . '.' . key($sourceToTargetKeyColumns) . ' = ' . $joinAlias . '.' . current($sourceToTargetKeyColumns)
+                            );
+
+                        } else {
+                            $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
+                            $fieldTableName = $fieldClassMetadata->getTableName();
+                            $fieldAssociationMapping = $fieldClassMetadata->getAssociationMapping($associationMapping['mappedBy']);
+                            $sourceToTargetKeyColumns = $fieldAssociationMapping['sourceToTargetKeyColumns'];
+
+                            $queryBuilder->leftJoin(
+                                $alias,
+                                $fieldTableName,
+                                $joinAlias,
+                                $alias . '.' . current($sourceToTargetKeyColumns) . ' = ' . $joinAlias . '.' . key($sourceToTargetKeyColumns)
+                            );
+                        }
                     }
                 }
 
