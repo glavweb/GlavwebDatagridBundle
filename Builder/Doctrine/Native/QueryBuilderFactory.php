@@ -95,7 +95,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             }
 
             // Entity
-            if ($property['type'] === 'entity') {
+            if (isset($property['type']) && $property['type'] === 'entity') {
                 $part = $this->entitySelectPart(
                     $queryBuilder,
                     $alias,
@@ -106,7 +106,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             }
 
             // Collection
-            if ($property['type'] === 'collection') {
+            if (isset($property['type']) && $property['type'] === 'collection') {
                 $part = $this->collectionSelectPart(
                     $queryBuilder,
                     $alias,
