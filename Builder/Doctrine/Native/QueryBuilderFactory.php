@@ -155,7 +155,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         // Order by
         if ($inOrderBy) {
             foreach ($inOrderBy as $sort => $order) {
-                $queryBuilder->addOrderBy($sort, $order);
+                $queryBuilder->addOrderBy($alias . '.' . $sort, $order);
             }
         }
 

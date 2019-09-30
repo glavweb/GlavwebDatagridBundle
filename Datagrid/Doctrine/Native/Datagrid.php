@@ -52,18 +52,24 @@ class Datagrid extends AbstractDatagrid
     private $parameters;
 
     /**
+     * @var \Doctrine\ORM\Mapping\ClassMetadata
+     */
+    private $classMetadata;
+
+    /**
      * @param DatagridContext $context
      */
     public function __construct(DatagridContext $context)
     {
-        $this->queryBuilder = $context->getQueryBuilder();
-        $this->dataSchema   = $context->getDataSchema();
-        $this->filterStack  = $context->getFilterStack();
-        $this->orderings    = $context->getOrderings();
-        $this->firstResult  = $context->getFirstResult();
-        $this->maxResults   = $context->getMaxResults();
-        $this->alias        = $context->getAlias();
-        $this->parameters   = $context->getParameters();
+        $this->queryBuilder  = $context->getQueryBuilder();
+        $this->dataSchema    = $context->getDataSchema();
+        $this->filterStack   = $context->getFilterStack();
+        $this->orderings     = $context->getOrderings();
+        $this->firstResult   = $context->getFirstResult();
+        $this->maxResults    = $context->getMaxResults();
+        $this->alias         = $context->getAlias();
+        $this->parameters    = $context->getParameters();
+        $this->classMetadata = $context->getClassMetadata();
     }
 
     /**
@@ -245,19 +251,19 @@ class Datagrid extends AbstractDatagrid
             }
 
             $sortAlias = $alias;
-            $sortFieldName = $fieldName;
+            $sortColumnName = $this->classMetadata->getColumnName($fieldName);
 
             // If the field name have a dot
             $fieldNameParts = explode('.', $fieldName);
             if (count($fieldNameParts) > 1) {
-                $sortFieldName = array_pop($fieldNameParts);
+                $sortColumnName = array_pop($fieldNameParts);
 
                 foreach ($fieldNameParts as $fieldPart) {
                     $sortAlias = JoinMap::makeAlias($sortAlias, $fieldPart);
                 }
             }
 
-            $queryBuilder->addOrderBy($sortAlias . '.' . $sortFieldName, $order);
+            $queryBuilder->addOrderBy($sortAlias . '.' . $sortColumnName, $order);
         }
     }
 }
