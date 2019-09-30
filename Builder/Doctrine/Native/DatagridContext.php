@@ -13,6 +13,7 @@ namespace Glavweb\DatagridBundle\Builder\Doctrine\Native;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DatagridBundle\Filter\FilterStack;
 
@@ -75,6 +76,11 @@ class DatagridContext
     private $parameters;
 
     /**
+     * @var \Doctrine\ORM\Mapping\ClassMetadata
+     */
+    private $classMetadata;
+
+    /**
      * DatagridContext constructor.
      *
      * @param string $class
@@ -99,18 +105,18 @@ class DatagridContext
         int $maxResults = null,
         string $alias = 't',
         array $parameters = []
-    )
-    {
-        $this->class        = $class;
-        $this->entityManger = $entityManger;
-        $this->queryBuilder = $queryBuilder;
-        $this->dataSchema   = $dataSchema;
-        $this->filterStack  = $filterStack;
-        $this->orderings    = $orderings;
-        $this->firstResult  = $firstResult;
-        $this->maxResults   = $maxResults;
-        $this->alias        = $alias;
-        $this->parameters   = $parameters;
+    ) {
+        $this->class         = $class;
+        $this->entityManger  = $entityManger;
+        $this->queryBuilder  = $queryBuilder;
+        $this->dataSchema    = $dataSchema;
+        $this->filterStack   = $filterStack;
+        $this->orderings     = $orderings;
+        $this->firstResult   = $firstResult;
+        $this->maxResults    = $maxResults;
+        $this->alias         = $alias;
+        $this->parameters    = $parameters;
+        $this->classMetadata = $entityManger->getClassMetadata($class);
     }
 
     /**
@@ -191,5 +197,13 @@ class DatagridContext
     public function getParameters(): array
     {
         return $this->parameters;
+    }
+
+    /**
+     * @return \Doctrine\ORM\Mapping\ClassMetadata
+     */
+    public function getClassMetadata(): ClassMetadata
+    {
+        return $this->classMetadata;
     }
 }
