@@ -267,7 +267,13 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
 
         $conditions = [];
         $joins      = [];
-        $orderBy    = isset($propertyAssociationMapping['orderBy']) ? $propertyAssociationMapping['orderBy'] : [];
+
+        if (isset($propertyConfig['orderBy'])) {
+            $orderBy = $propertyConfig['orderBy'];
+
+        } else {
+            $orderBy = isset($propertyAssociationMapping['orderBy']) ? $propertyAssociationMapping['orderBy'] : [];
+        }
 
         // Many-To-Many
         if ($propertyAssociationMapping['type'] === ClassMetadataInfo::MANY_TO_MANY) {
