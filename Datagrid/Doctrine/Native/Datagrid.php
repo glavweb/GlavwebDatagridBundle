@@ -185,6 +185,9 @@ class Datagrid extends AbstractDatagrid
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->select('COUNT(*) as count');
 
+        // Apply filter
+        $this->applyFilter($queryBuilder);
+
         $result = $queryBuilder->execute()->fetch();
 
         return (int)$result['count'];
@@ -205,29 +208,7 @@ class Datagrid extends AbstractDatagrid
             $queryBuilder->setMaxResults($maxResults);
         }
 
-        // Apply filter
-        $parameters = $this->clearParameters($this->parameters);
-        foreach ($parameters as $key => $parameter) {
-            if (!$parameter || !is_scalar($parameter)) {
-                continue;
-            }
-
-            $jsonDecoded = json_decode($parameter);
-
-            if (json_last_error() == JSON_ERROR_NONE) {
-                $parameters[$key] = $jsonDecoded;
-            }
-        }
-
-        foreach ($parameters as $name => $value) {
-            $filter = $this->filterStack->getByParam($name);
-
-            if (!$filter) {
-                continue;
-            }
-
-            $filter->filter($queryBuilder, $alias, $value);
-        }
+        $this->applyFilter($queryBuilder);
 
         // Apply query selects
         $querySelects = $this->dataSchema->getQuerySelects();
@@ -264,6 +245,36 @@ class Datagrid extends AbstractDatagrid
             }
 
             $queryBuilder->addOrderBy($sortAlias . '.' . $sortColumnName, $order);
+        }
+    }
+
+    /**
+     * @param QueryBuilder $queryBuilder
+     */
+    private function applyFilter(QueryBuilder $queryBuilder): void
+    {
+        $alias      = $this->getAlias();
+        $parameters = $this->clearParameters($this->parameters);
+        foreach ($parameters as $key => $parameter) {
+            if (!$parameter || !is_scalar($parameter)) {
+                continue;
+            }
+
+            $jsonDecoded = json_decode($parameter);
+
+            if (json_last_error() == JSON_ERROR_NONE) {
+                $parameters[$key] = $jsonDecoded;
+            }
+        }
+
+        foreach ($parameters as $name => $value) {
+            $filter = $this->filterStack->getByParam($name);
+
+            if (!$filter) {
+                continue;
+            }
+
+            $filter->filter($queryBuilder, $alias, $value);
         }
     }
 }
