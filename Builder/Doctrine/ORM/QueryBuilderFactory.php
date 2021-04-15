@@ -158,7 +158,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
                     $joinAlias = str_replace('.', '_', $join);
 
                     // Join fields
-                    $joinFields = DataSchema::getDatabaseFields($propertyConfig['properties']);
+                    $joinFields = DataSchema::getDatabaseFields($propertyConfig);
 
                     $conditionType = isset($propertyConfig['conditionType']) ? $propertyConfig['conditionType'] : Join::WITH;
                     $conditions    = isset($propertyConfig['conditions']) ? $propertyConfig['conditions'] : [];
