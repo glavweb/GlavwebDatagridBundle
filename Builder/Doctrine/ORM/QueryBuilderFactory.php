@@ -13,13 +13,14 @@ namespace Glavweb\DatagridBundle\Builder\Doctrine\ORM;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 use Glavweb\DatagridBundle\Builder\Doctrine\AbstractQueryBuilderFactory;
-use Glavweb\DatagridBundle\JoinMap\Doctrine\ORM\JoinBuilder;
-use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
-use Doctrine\ORM\Query\Expr\Join;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\ORM\JoinBuilder;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
+use Glavweb\DataSchemaBundle\Service\DataSchemaService;
 
 /**
  * Class QueryBuilderFactory
@@ -35,16 +36,23 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
     private $joinBuilder;
 
     /**
+     * @var DataSchemaService
+     */
+    private $dataSchemaService;
+
+    /**
      * QueryBuilderFactory constructor.
      *
-     * @param Registry $doctrine
-     * @param JoinBuilder $joinBuilder
+     * @param Registry          $doctrine
+     * @param JoinBuilder       $joinBuilder
+     * @param DataSchemaService $dataSchemaService
      */
-    public function __construct(Registry $doctrine, JoinBuilder $joinBuilder)
+    public function __construct(Registry $doctrine, JoinBuilder $joinBuilder, DataSchemaService $dataSchemaService)
     {
         parent::__construct($doctrine);
 
         $this->joinBuilder = $joinBuilder;
+        $this->dataSchemaService = $dataSchemaService;
     }
 
     /**
@@ -147,8 +155,9 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         if (isset($config['properties'])) {
             $properties = $config['properties'];
             foreach ($properties as $key => $propertyConfig) {
-                if (isset($propertyConfig['properties'])) {
-                    $joinType = isset($propertyConfig['join']) && $propertyConfig['join'] != 'none' ? $propertyConfig['join'] : false;
+                if (isset($propertyConfig['properties']) && !empty($propertyConfig['properties'])) {
+                    $joinType = isset($propertyConfig['join']) && $propertyConfig['join'] !== JoinMap::JOIN_TYPE_NONE ?
+                        $propertyConfig['join'] : false;
 
                     if (!$joinType) {
                         continue;
@@ -158,10 +167,10 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
                     $joinAlias = str_replace('.', '_', $join);
 
                     // Join fields
-                    $joinFields = DataSchema::getDatabaseFields($propertyConfig);
+                    $joinFields = $this->dataSchemaService->getDatabaseFields($propertyConfig);
 
-                    $conditionType = isset($propertyConfig['conditionType']) ? $propertyConfig['conditionType'] : Join::WITH;
-                    $conditions    = isset($propertyConfig['conditions']) ? $propertyConfig['conditions'] : [];
+                    $conditionType = $propertyConfig['conditionType'] ?? Join::WITH;
+                    $conditions    = $propertyConfig['conditions'] ?? [];
 
                     $preparedConditions = [];
                     foreach ($conditions as $condition) {

@@ -24,8 +24,9 @@ class JoinMap
     /**
      * Constants of join types
      */
-    const JOIN_TYPE_LEFT = 'left';
+    const JOIN_TYPE_LEFT  = 'left';
     const JOIN_TYPE_INNER = 'inner';
+    const JOIN_TYPE_NONE  = 'none';
 
     /**
      * @var string

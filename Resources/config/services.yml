@@ -31,7 +31,7 @@ services:
 
     glavweb_datagrid.orm_query_builder_factory:
         class:  Glavweb\DatagridBundle\Builder\Doctrine\ORM\QueryBuilderFactory
-        arguments: ["@doctrine", "@glavweb_datagrid.orm_join_builder"]
+        arguments: ["@doctrine", "@glavweb_datagrid.orm_join_builder", "@glavweb_data_schema.service"]
 
     glavweb_datagrid.native_join_builder:
         class:  Glavweb\DatagridBundle\JoinMap\Doctrine\Native\JoinBuilder
