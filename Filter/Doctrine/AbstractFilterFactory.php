@@ -14,9 +14,8 @@ namespace Glavweb\DatagridBundle\Filter\Doctrine;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
 /**
@@ -68,14 +67,15 @@ abstract class AbstractFilterFactory
      */
     public function createForEntity($entityClass, $alias, $name, $type = null, $options = [])
     {
-        /** @var ClassMetadata $classMetadata */
-        $classMetadata = $this->doctrine->getManager()->getClassMetadata($entityClass);
+        /** @var EntityManager $em */
+        $em = $this->doctrine->getManager();
+        $classMetadata = $em->getClassMetadata($entityClass);
 
         $options = $this->fixOptions($options);
         [$fieldName, $classMetadata, $joinMap] = $this->parse($classMetadata, $alias, $name, $options);
 
         if (!$type) {
-            $guessType = $this->filterTypeGuesser->guessType($fieldName, $classMetadata, $options);
+            $guessType = $this->filterTypeGuesser->guessType($em, $fieldName, $classMetadata, $options);
 
             $options = array_merge($guessType->getOptions(), $options);
             $type    = $guessType->getType();
