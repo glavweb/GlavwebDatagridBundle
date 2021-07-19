@@ -1,0 +1,22 @@
+schema:
+    class: App\Entity\Article
+    db_driver: orm
+    query:
+        selects:
+            allEvents: 'SELECT COUNT(e1) FROM App\Entity\Event e1'
+            articleEvents: '
+                SELECT COUNT(e2)
+                FROM App\Entity\Event e2
+                LEFT JOIN e2.articles a
+                WHERE a.id = t.id
+            '
+
+    properties:
+        id: { hidden: true }
+        name: { decode: upper }
+        slug: { hidden: true }
+        publishAt: { hidden: true }
+        allEvents: { source: allEvents }
+        articleEvents: { source: articleEvents, hidden: true }
+        slugWithYear: { source: id, decode: concat_slug_with_year }
+        hasEvents: { source: articleEvents, decode: has_events }

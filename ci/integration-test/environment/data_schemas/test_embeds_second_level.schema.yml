@@ -1,0 +1,34 @@
+schema:
+    class: App\Entity\Article
+    db_driver: orm
+    properties:
+        name:
+
+        events:
+            join: none
+            properties:
+                name:
+
+                # Test oneToOne
+                eventDetail:
+                    join: none
+                    properties:
+                        body:
+
+                # Test manyToOne
+                eventGroup:
+                    join: none
+                    properties:
+                        name:
+
+                # Test oneToMany
+                sessions:
+                    join: none
+                    properties:
+                        name:
+
+                # Test manyToMany
+                tags:
+                    join: left
+                    properties:
+                        name:

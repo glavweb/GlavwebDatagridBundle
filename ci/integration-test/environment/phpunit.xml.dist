@@ -18,8 +18,8 @@
     </php>
 
     <testsuites>
-        <testsuite name="GlavwebDatagridBundle Test Suite">
-            <directory>Tests</directory>
+        <testsuite name="Bundle Test Suite">
+            <directory>tests</directory>
         </testsuite>
     </testsuites>
 
@@ -32,11 +32,4 @@
     <listeners>
         <listener class="Symfony\Bridge\PhpUnit\SymfonyTestsListener" />
     </listeners>
-
-    <!-- Run `composer require symfony/panther` before enabling this extension -->
-    <!--
-    <extensions>
-        <extension class="Symfony\Component\Panther\ServerExtension" />
-    </extensions>
-    -->
 </phpunit>

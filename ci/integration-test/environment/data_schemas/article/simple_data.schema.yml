@@ -1,0 +1,7 @@
+schema:
+    class: App\Entity\Article
+    db_driver: orm
+    properties:
+        name:
+        slug:
+        body:

@@ -1,6 +1,0 @@
-schema:
-    class: Glavweb\DatagridBundle\Tests\Fixtures\Entity\Article
-    db_driver: orm
-    properties:
-        id:  # integer
-        name: # string

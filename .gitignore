@@ -1,5 +1,4 @@
 .idea/
+build/
 composer.lock
 vendor/*
-Tests/Fixtures/app/cache
-Tests/Fixtures/app/logs

@@ -1,0 +1,10 @@
+schema:
+    class: App\Entity\Event
+    db_driver: orm
+    properties:
+        name:
+
+        articles:
+            join: none
+            properties:
+                name:

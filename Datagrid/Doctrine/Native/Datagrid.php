@@ -97,7 +97,7 @@ class Datagrid extends AbstractDatagrid
         $this->fixQueryBuilder($queryBuilder, 1);
 
         $queryBuilderWrapper = new QueryBuilder($this->queryBuilder->getConnection());
-        $uniqueAlias = uniqid('row_');
+        $uniqueAlias = uniqid('row_', false);
         $queryBuilderWrapper->select('
             (
                 SELECT row_to_json(' . $uniqueAlias . ')
@@ -109,7 +109,7 @@ class Datagrid extends AbstractDatagrid
             $queryBuilderWrapper->setParameter($key, $value);
         }
 
-        $result = $queryBuilderWrapper->execute()->fetch();
+        $result = $queryBuilderWrapper->execute()->fetchAssociative();
 
         if (!isset($result['data']) || !$result['data']) {
             return '{}';
@@ -142,7 +142,7 @@ class Datagrid extends AbstractDatagrid
 
         $queryBuilderWrapper = new QueryBuilder($this->queryBuilder->getConnection());
 
-        $uniqueAlias = uniqid('row_');
+        $uniqueAlias = uniqid('row_', false);
         $queryBuilderWrapper->select('
             (
                 SELECT array_to_json(array_agg(row_to_json(' . $uniqueAlias . ')))
@@ -154,7 +154,7 @@ class Datagrid extends AbstractDatagrid
             $queryBuilderWrapper->setParameter($key, $value);
         }
 
-        $result = $queryBuilderWrapper->execute()->fetch();
+        $result = $queryBuilderWrapper->execute()->fetchAssociative();
 
         if (!$result['data']) {
             return '[]';
@@ -188,7 +188,7 @@ class Datagrid extends AbstractDatagrid
         // Apply filter
         $this->applyFilter($queryBuilder);
 
-        $result = $queryBuilder->execute()->fetch();
+        $result = $queryBuilder->execute()->fetchAssociative();
 
         return (int)$result['count'];
     }

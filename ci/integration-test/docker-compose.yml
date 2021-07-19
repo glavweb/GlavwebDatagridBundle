@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+    db:
+        image: postgres
+        environment:
+            POSTGRES_PASSWORD: password
+    php:
+        build: .
+        depends_on:
+            - db
+        volumes:
+            - ./../..:/usr/src/bundle
+            - ./../../build/test:/usr/src/build

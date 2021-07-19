@@ -1,0 +1,9 @@
+schema:
+    class: App\Entity\EventDetail
+    db_driver: orm
+    properties:
+        body:
+
+        event:
+            properties:
+                name:

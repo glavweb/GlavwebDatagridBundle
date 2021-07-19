@@ -239,7 +239,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             !empty($conditions) // If has conditions add FROM clause
         );
 
-        $uniqueAlias = uniqid('row_');
+        $uniqueAlias = uniqid('row_', false);
         $part = '
             (
                 SELECT row_to_json(' . $uniqueAlias . ')
@@ -260,7 +260,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
      */
     protected function collectionSelectPart(QueryBuilder $queryBuilder, string $alias, string $propertyName, array $propertyConfig, array $dataSchemaConfig): string
     {
-        $uniqueAlias = uniqid('row_');
+        $uniqueAlias = uniqid('row_', false);
         $propertyAlias = $alias . '_' . $propertyName;
         $classMetadata = $this->getClassMetadataByDataSchema($dataSchemaConfig, $propertyConfig['discriminator']);
         $propertyAssociationMapping = $classMetadata->getAssociationMapping($propertyName);

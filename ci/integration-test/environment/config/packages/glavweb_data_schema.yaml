@@ -1,0 +1,7 @@
+glavweb_data_schema:
+    default_hydrator_mode: DatagridHydrator
+    data_schema:
+        dir: "%kernel.project_dir%/data_schemas"
+
+    scope:
+        dir: "%kernel.project_dir%/scopes"
