@@ -131,6 +131,16 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             }
         }
 
+        if (!empty($dataSchemaConfig['conditions'])) {
+            $conditions = $dataSchemaConfig['conditions'];
+            foreach ($conditions as $condition) {
+                $preparedCondition = $this->placeholder->condition($condition, $alias);
+                if ($preparedCondition) {
+                    $queryBuilder->andWhere($preparedCondition);
+                }
+            }
+        }
+
         // Apply doctrine filters
         $classMetadata = $this->getClassMetadata($dataSchemaConfig['class']);
         foreach ($em->getFilters()->getEnabledFilters() as $filter) {
