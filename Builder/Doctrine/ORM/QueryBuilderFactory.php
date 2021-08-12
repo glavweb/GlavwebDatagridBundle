@@ -21,6 +21,7 @@ use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\ORM\JoinBuilder;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DataSchemaBundle\Service\DataSchemaService;
+use Glavweb\DataSchemaBundle\DataSchema\Placeholder;
 
 /**
  * Class QueryBuilderFactory
@@ -44,12 +45,13 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
      * QueryBuilderFactory constructor.
      *
      * @param Registry          $doctrine
+     * @param Placeholder       $placeholder
      * @param JoinBuilder       $joinBuilder
      * @param DataSchemaService $dataSchemaService
      */
-    public function __construct(Registry $doctrine, JoinBuilder $joinBuilder, DataSchemaService $dataSchemaService)
+    public function __construct(Registry $doctrine, Placeholder $placeholder, JoinBuilder $joinBuilder, DataSchemaService $dataSchemaService)
     {
-        parent::__construct($doctrine);
+        parent::__construct($doctrine, $placeholder);
 
         $this->joinBuilder = $joinBuilder;
         $this->dataSchemaService = $dataSchemaService;
@@ -75,7 +77,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         // Apply joins
         if (isset($dataSchemaConfig['conditions'])) {
             foreach ($dataSchemaConfig['conditions'] as $condition) {
-                $preparedCondition = $dataSchema->conditionPlaceholder($condition, $alias);
+                $preparedCondition = $this->placeholder->condition($condition, $alias);
                 if ($preparedCondition) {
                     $queryBuilder->andWhere($preparedCondition);
                 }

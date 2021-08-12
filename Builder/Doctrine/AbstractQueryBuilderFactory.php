@@ -19,6 +19,7 @@ use Doctrine\DBAL\Query\QueryBuilder as NativeQueryBuilder;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
+use Glavweb\DataSchemaBundle\DataSchema\Placeholder;
 
 /**
  * Class AbstractQueryBuilderFactory
@@ -34,6 +35,11 @@ abstract class AbstractQueryBuilderFactory
     protected $doctrine;
 
     /**
+     * @var Placeholder
+     */
+    protected $placeholder;
+
+    /**
      * @param array $parameters
      * @param string $alias
      * @param DataSchema $dataSchema
@@ -47,10 +53,12 @@ abstract class AbstractQueryBuilderFactory
      * QueryBuilderFactory constructor.
      *
      * @param Registry $doctrine
+     * @param Placeholder $placeholder
      */
-    public function __construct(Registry $doctrine)
+    public function __construct(Registry $doctrine, Placeholder $placeholder)
     {
         $this->doctrine = $doctrine;
+        $this->placeholder = $placeholder;
     }
 
     /**

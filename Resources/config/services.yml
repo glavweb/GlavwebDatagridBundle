@@ -27,11 +27,11 @@ services:
 
     glavweb_datagrid.native_query_builder_factory:
         class:  Glavweb\DatagridBundle\Builder\Doctrine\Native\QueryBuilderFactory
-        arguments: ["@doctrine"]
+        arguments: ["@doctrine", "@glavweb_data_schema.placeholder"]
 
     glavweb_datagrid.orm_query_builder_factory:
         class:  Glavweb\DatagridBundle\Builder\Doctrine\ORM\QueryBuilderFactory
-        arguments: ["@doctrine", "@glavweb_datagrid.orm_join_builder", "@glavweb_data_schema.service"]
+        arguments: ["@doctrine", "@glavweb_data_schema.placeholder", "@glavweb_datagrid.orm_join_builder", "@glavweb_data_schema.service"]
 
     glavweb_datagrid.native_join_builder:
         class:  Glavweb\DatagridBundle\JoinMap\Doctrine\Native\JoinBuilder
