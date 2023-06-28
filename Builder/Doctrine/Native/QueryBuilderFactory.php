@@ -81,13 +81,14 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         }
 
         $selectParts = [];
+
+        // Discriminator
+        if (isset($dataSchemaConfig['discriminatorColumnName'])) {
+            $selectParts[] = $alias . '.' . $dataSchemaConfig['discriminatorColumnName'];
+        }
+
         foreach ($properties as $propertyName => $property) {
             $part = null;
-
-            // Discriminator
-            if (isset($dataSchemaConfig['discriminatorColumnName'])) {
-                $part = $alias . '.' . $dataSchemaConfig['discriminatorColumnName'];
-            }
 
             // Field
             if (isset($property['field_db_name']) && $property['from_db']) {
