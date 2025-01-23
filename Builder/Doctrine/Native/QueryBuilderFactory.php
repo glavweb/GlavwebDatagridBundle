@@ -81,6 +81,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         }
 
         $selectParts = [];
+        $selects = $dataSchemaConfig['query']['selects'] ?? [];
 
         // Discriminator
         if (isset($dataSchemaConfig['discriminatorColumnName'])) {
@@ -92,7 +93,12 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
 
             // Field
             if (isset($property['field_db_name']) && $property['from_db']) {
-                $part = $this->filedSelectPart($alias, $propertyName, $property);
+                $part = $this->fieldSelectPart($alias, $propertyName, $property);
+            }
+
+            // Select
+            if ($selects && $property['source'] && key_exists($property['source'], $selects)) {
+                $part = $this->fieldSourceSelectPart($property['source'], $selects[$property['source']]);
             }
 
             // Entity
@@ -134,8 +140,12 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
 
         if (!empty($dataSchemaConfig['conditions'])) {
             $conditions = $dataSchemaConfig['conditions'];
-            foreach ($conditions as $condition) {
-                $preparedCondition = $this->placeholder->condition($condition, $alias);
+            foreach ($conditions as $conditionConfig) {
+                if (!$conditionConfig['enabled']) {
+                    continue;
+                }
+
+                $preparedCondition = $this->placeholder->condition($conditionConfig['condition'], $alias);
                 if ($preparedCondition) {
                     $queryBuilder->andWhere($preparedCondition);
                 }
@@ -179,7 +189,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
      * @param array $property
      * @return string
      */
-    private function filedSelectPart(string $alias, string $propertyName, array $property): string
+    private function fieldSelectPart(string $alias, string $propertyName, array $property): string
     {
         $part = $alias . '.' . $property['field_db_name'];
 
@@ -188,6 +198,16 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         }
 
         return $part;
+    }
+
+    /**
+     * @param string $propertyName
+     * @param string $select
+     * @return string
+     */
+    private function fieldSourceSelectPart(string $propertyName, string $select): string
+    {
+       return "($select) as \"$propertyName\"";
     }
 
     /**
@@ -279,7 +299,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         $conditions = [];
         $joins      = [];
 
-        if (isset($propertyConfig['orderBy'])) {
+        if (!empty($propertyConfig['orderBy'])) {
             $orderBy = $propertyConfig['orderBy'];
 
         } else {

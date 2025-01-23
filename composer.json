@@ -19,7 +19,7 @@
         "symfony/yaml": "^4.0|^5.0|^6.0|^7.0",
         "doctrine/orm": "^2.3|^3.3",
         "doctrine/doctrine-bundle": "^2.0",
-        "glavweb/data-schema-bundle": "^2.0",
+        "glavweb/data-schema-bundle": "^2.6.1",
         "ext-json": "*"
     },
     "require-dev": {
