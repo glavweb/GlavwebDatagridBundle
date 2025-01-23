@@ -210,13 +210,6 @@ class Datagrid extends AbstractDatagrid
 
         $this->applyFilter($queryBuilder);
 
-        // Apply query selects
-        $querySelects = $this->dataSchema->getQuerySelects();
-        foreach ($querySelects as $propertyName => $querySelect) {
-            if ($this->dataSchema->hasProperty($propertyName)) {
-                $queryBuilder->addSelect(sprintf('(%s) as "%s"', $querySelect, $propertyName));
-            }
-        }
 
         // Apply orderings
         $orderings = $this->getOrderings();

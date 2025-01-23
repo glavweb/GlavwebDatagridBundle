@@ -75,9 +75,13 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         $queryBuilder = $repository->createQueryBuilder($alias);
 
         // Apply joins
-        if (isset($dataSchemaConfig['conditions'])) {
-            foreach ($dataSchemaConfig['conditions'] as $condition) {
-                $preparedCondition = $this->placeholder->condition($condition, $alias);
+        if (!empty($dataSchemaConfig['conditions'])) {
+            foreach ($dataSchemaConfig['conditions'] as $conditionConfig) {
+                if (!$conditionConfig['enabled']) {
+                    continue;
+                }
+
+                $preparedCondition = $this->placeholder->condition($conditionConfig['condition'], $alias);
                 if ($preparedCondition) {
                     $queryBuilder->andWhere($preparedCondition);
                 }
@@ -175,12 +179,14 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
                     $conditions    = $propertyConfig['conditions'] ?? [];
 
                     $preparedConditions = [];
-                    foreach ($conditions as $condition) {
-                        if ($condition) {
-                            $preparedCondition = $dataSchema->conditionPlaceholder($condition, $joinAlias);
-                            if ($preparedCondition) {
-                                $preparedConditions[] = '(' . $preparedCondition . ')';
-                            }
+                    foreach ($conditions as $conditionConfig) {
+                        if (!$conditionConfig['enabled']) {
+                            continue;
+                        }
+
+                        $preparedCondition = $dataSchema->conditionPlaceholder($conditionConfig['condition'], $joinAlias);
+                        if ($preparedCondition) {
+                            $preparedConditions[] = '(' . $preparedCondition . ')';
                         }
                     }
                     $condition = implode('AND', $preparedConditions);

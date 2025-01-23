@@ -111,13 +111,16 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
      * @param DataSchemaFactory $dataSchemaFactory
      * @param AbstractQueryBuilderFactory $queryBuilderFactory
      */
-    public function __construct(Registry $doctrine, AbstractFilterFactory $filterFactory, DataSchemaFactory $dataSchemaFactory, AbstractQueryBuilderFactory $queryBuilderFactory)
+    public function __construct(Registry                    $doctrine,
+                                AbstractFilterFactory       $filterFactory,
+                                DataSchemaFactory           $dataSchemaFactory,
+                                AbstractQueryBuilderFactory $queryBuilderFactory)
     {
-        $this->doctrine            = $doctrine;
-        $this->filterFactory       = $filterFactory;
-        $this->dataSchemaFactory   = $dataSchemaFactory;
+        $this->doctrine = $doctrine;
+        $this->filterFactory = $filterFactory;
+        $this->dataSchemaFactory = $dataSchemaFactory;
         $this->queryBuilderFactory = $queryBuilderFactory;
-        $this->filterStack         = new FilterStack();
+        $this->filterStack = new FilterStack();
     }
 
     /**
@@ -292,7 +295,7 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     public function addFilter($filterName, $type = null, $options = [])
     {
         $entityClass = $this->getEntityClassName();
-        $alias       = $this->getAlias();
+        $alias = $this->getAlias();
 
         $filter = $this->filterFactory->createForEntity($entityClass, $alias, $filterName, $type, $options);
         $this->fixFilter($filter);
@@ -328,6 +331,43 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     {
         $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile);
         $this->dataSchema = $dataSchema;
+
+        return $this;
+    }
+
+    /**
+     * @param string $propertyPath
+     * @param string $conditionName
+     * @return self
+     */
+    public function enablePropertyCondition(string $propertyPath, string $conditionName): self
+    {
+        $this->dataSchema->enablePropertyCondition($propertyPath, $conditionName);
+
+        return $this;
+    }
+
+    /**
+     * @param string $propertyPath
+     * @param string $conditionName
+     * @return self
+     */
+    public function disablePropertyCondition(string $propertyPath, string $conditionName): self
+    {
+        $this->dataSchema->disablePropertyCondition($propertyPath, $conditionName);
+
+        return $this;
+    }
+
+    /**
+     * @param string $propertyPath
+     * @param string $orderByPropertyName
+     * @param string $order
+     * @return $this
+     */
+    public function setPropertyOrderBy(string $propertyPath, string $orderByPropertyName, string $order): self
+    {
+        $this->dataSchema->setPropertyOrderBy($propertyPath, $orderByPropertyName, $order);
 
         return $this;
     }
