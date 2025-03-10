@@ -25,6 +25,8 @@ use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
  */
 class NativeDatagridFactory implements DatagridFactoryInterface
 {
+    public const QUERY_LANGUAGE = 'SQL';
+
     /**
      * @var Registry
      */
@@ -72,7 +74,8 @@ class NativeDatagridFactory implements DatagridFactoryInterface
             $this->doctrine,
             $this->filterFactory,
             $this->dataSchemaFactory,
-            $this->queryBuilderFactory
+            $this->queryBuilderFactory,
+            self::QUERY_LANGUAGE
         );
 
         $builder->setDataSchema($dataSchemaFile, $scopeFile);

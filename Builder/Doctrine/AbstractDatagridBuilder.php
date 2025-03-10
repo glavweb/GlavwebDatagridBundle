@@ -96,6 +96,11 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     protected $dataSchema;
 
     /**
+     * @var string
+     */
+    private $queryLanguage;
+
+    /**
      * @param array $parameters
      * @param \Closure $callback
      * @return DatagridInterface
@@ -114,13 +119,15 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     public function __construct(Registry                    $doctrine,
                                 AbstractFilterFactory       $filterFactory,
                                 DataSchemaFactory           $dataSchemaFactory,
-                                AbstractQueryBuilderFactory $queryBuilderFactory)
+                                AbstractQueryBuilderFactory $queryBuilderFactory,
+                                string                      $queryLanguage)
     {
         $this->doctrine = $doctrine;
         $this->filterFactory = $filterFactory;
         $this->dataSchemaFactory = $dataSchemaFactory;
         $this->queryBuilderFactory = $queryBuilderFactory;
         $this->filterStack = new FilterStack();
+        $this->queryLanguage = $queryLanguage;
     }
 
     /**
@@ -329,7 +336,7 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
      */
     public function setDataSchema($dataSchemaFile, $scopeFile = null)
     {
-        $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile);
+        $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile, $this->queryLanguage);
         $this->dataSchema = $dataSchema;
 
         return $this;

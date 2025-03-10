@@ -25,6 +25,8 @@ use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
  */
 class ORMDatagridFactory implements DatagridFactoryInterface
 {
+    public const QUERY_LANGUAGE = 'DQL';
+
     /**
      * @var Registry
      */
@@ -72,7 +74,8 @@ class ORMDatagridFactory implements DatagridFactoryInterface
             $this->doctrine,
             $this->filterFactory,
             $this->dataSchemaFactory,
-            $this->queryBuilderFactory
+            $this->queryBuilderFactory,
+            self::QUERY_LANGUAGE
         );
 
         $builder->setDataSchema($dataSchemaFile, $scopeFile);
