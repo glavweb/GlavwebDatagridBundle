@@ -232,12 +232,13 @@ class Datagrid extends AbstractDatagrid
             }
 
             $sortAlias = $alias;
-            $sortColumnName = $this->classMetadata->getColumnName($fieldName);
+            $propertyConfig = $this->dataSchema->getPropertyConfiguration($fieldName);
+            $sortColumnName = $propertyConfig['field_db_name'];
 
             // If the field name have a dot
             $fieldNameParts = explode('.', $fieldName);
             if (count($fieldNameParts) > 1) {
-                $sortColumnName = array_pop($fieldNameParts);
+                array_pop($fieldNameParts);
 
                 foreach ($fieldNameParts as $fieldPart) {
                     $sortAlias = JoinMap::makeAlias($sortAlias, $fieldPart);
