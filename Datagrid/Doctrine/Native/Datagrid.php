@@ -106,7 +106,7 @@ class Datagrid extends AbstractDatagrid
         ');
 
         foreach ($queryBuilder->getParameters() as $key => $value) {
-            $queryBuilderWrapper->setParameter($key, $value);
+            $queryBuilderWrapper->setParameter($key, $value, $queryBuilder->getParameterType($key));
         }
 
         $result = $queryBuilderWrapper->execute()->fetch();
@@ -151,7 +151,7 @@ class Datagrid extends AbstractDatagrid
         ');
 
         foreach ($queryBuilder->getParameters() as $key => $value) {
-            $queryBuilderWrapper->setParameter($key, $value);
+            $queryBuilderWrapper->setParameter($key, $value, $queryBuilder->getParameterType($key));
         }
 
         $result = $queryBuilderWrapper->execute()->fetch();
