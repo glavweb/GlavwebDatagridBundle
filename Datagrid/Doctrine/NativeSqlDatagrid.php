@@ -47,7 +47,10 @@ class NativeSqlDatagrid extends AbstractDatagrid
     {
         $this->query       = $query;
         $this->queryCount  = clone $query;
-        $this->queryCount->setParameters($query->getParameters());
+
+        foreach ($query->getParameters() as $key => $parameter) {
+            $this->queryCount->setParameter($key, $parameter->getValue(), $parameter->getType());
+        }
 
         $this->dataSchema  = $context->getDataSchema();
         $this->orderings   = $context->transformOrderingForNativeSql($context->getOrderings());
