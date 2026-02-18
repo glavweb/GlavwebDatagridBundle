@@ -15,12 +15,12 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Glavweb\DatagridBundle\Builder\DatagridBuilderInterface;
 use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
 use Glavweb\DatagridBundle\Exception\BuildException;
-use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
-use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
 use Glavweb\DatagridBundle\Filter\Doctrine\AbstractFilterFactory;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
 use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
 
 /**
  * Class AbstractDatagridBuilder
@@ -331,12 +331,24 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
 
     /**
      * @param string $dataSchemaFile
-     * @param string $scopeFile
+     * @param null $scopeFile
+     * @param null $propertyPath
      * @return $this
      */
-    public function setDataSchema($dataSchemaFile, $scopeFile = null)
+    public function setDataSchema($dataSchemaFile, $scopeFile = null, $propertyPath = null)
     {
         $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile, $this->queryLanguage);
+
+        if ($propertyPath) {
+            $config = $dataSchema->getPropertyConfiguration($propertyPath);
+            if (!$config) {
+                throw new \InvalidArgumentException("Config for property \"{$propertyPath}\" does not exist.");
+            }
+
+            $dataSchema->setConfiguration($config);
+            $dataSchema->setScopeConfig($dataSchema->getPropertyScopeConfiguration($propertyPath));
+        }
+
         $this->dataSchema = $dataSchema;
 
         return $this;
