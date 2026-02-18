@@ -64,9 +64,10 @@ class NativeDatagridFactory implements DatagridFactoryInterface
     /**
      * @param string $dataSchemaFile
      * @param string|null $scopeFile
+     * @param string|null $propertyPath
      * @return AbstractDatagridBuilder
      */
-    public function createBuilder(string $dataSchemaFile, string $scopeFile = null): AbstractDatagridBuilder
+    public function createBuilder(string $dataSchemaFile, string $scopeFile = null, string $propertyPath = null): AbstractDatagridBuilder
     {
         $builder = new DatagridBuilder(
             $this->doctrine,
@@ -75,7 +76,7 @@ class NativeDatagridFactory implements DatagridFactoryInterface
             $this->queryBuilderFactory
         );
 
-        $builder->setDataSchema($dataSchemaFile, $scopeFile);
+        $builder->setDataSchema($dataSchemaFile, $scopeFile, $propertyPath);
 
         return $builder;
     }
