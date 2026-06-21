@@ -1,0 +1,14 @@
+imports:
+  - {resource: list.yml}
+
+scope:
+  events:
+    name:
+    eventDetail:
+      body:
+    eventGroup:
+      name:
+    sessions:
+      name:
+    tags:
+      name:

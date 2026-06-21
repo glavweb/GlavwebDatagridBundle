@@ -12,61 +12,46 @@
 namespace Glavweb\DatagridBundle\Filter\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Mapping\MappingException;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
 /**
- * Class AbstractFilterFactory
+ * Class AbstractFilterFactory.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 abstract class AbstractFilterFactory
 {
-    /**
-     * @var Registry
-     */
-    protected $doctrine;
+    protected FilterTypeGuesser $filterTypeGuesser;
 
-    /**
-     * @var FilterTypeGuesser
-     */
-    protected $filterTypeGuesser;
-
-    /**
-     * @return array
-     */
     abstract protected function getTypes(): array;
 
-    /**
-     * @return JoinBuilderInterface
-     */
     abstract protected function getJoinBuilder(): JoinBuilderInterface;
 
     /**
      * DoctrineDatagridBuilder constructor.
-     *
-     * @param Registry $doctrine
      */
-    public function __construct(Registry $doctrine)
+    public function __construct(protected Registry $doctrine)
     {
-        $this->doctrine          = $doctrine;
         $this->filterTypeGuesser = new FilterTypeGuesser();
     }
 
     /**
-     * @param $entityClass
-     * @param $alias
-     * @param $name
-     * @param null $type
-     * @param array $options
-     * @return FilterInterface
+     * @throws Exception
+     * @throws MappingException
      */
-    public function createForEntity($entityClass, $alias, $name, $type = null, $options = [])
-    {
+    public function createForEntity(
+        string $entityClass,
+        string $alias,
+        string $name,
+        ?string $type = null,
+        array $options = [],
+    ): FilterInterface {
         /** @var EntityManager $em */
         $em = $this->doctrine->getManager();
         $classMetadata = $em->getClassMetadata($entityClass);
@@ -78,33 +63,24 @@ abstract class AbstractFilterFactory
             $guessType = $this->filterTypeGuesser->guessType($em, $fieldName, $classMetadata, $options);
 
             $options = array_merge($guessType->getOptions(), $options);
-            $type    = $guessType->getType();
+            $type = $guessType->getType();
         }
 
         return $this->createByType($type, $name, $options, $fieldName, $classMetadata, $joinMap);
     }
 
-    /**
-     * @param string $type
-     * @param string $name
-     * @param array $options
-     * @param string $fieldName
-     * @param ClassMetadata $classMetadata
-     * @param JoinMap|null $joinMap
-     * @return FilterInterface
-     */
     protected function createByType(
         string $type,
         string $name,
         array $options,
         string $fieldName,
         ClassMetadata $classMetadata,
-        JoinMap $joinMap = null
+        ?JoinMap $joinMap = null,
     ): FilterInterface {
         $types = $this->getTypes();
 
         if (!isset($types[$type])) {
-            throw new \RuntimeException(sprintf('Type of filter "%s" is not defined.', $type));
+            throw new \RuntimeException(\sprintf('Type of filter "%s" is not defined.', $type));
         }
 
         $class = $types[$type];
@@ -113,12 +89,9 @@ abstract class AbstractFilterFactory
     }
 
     /**
-     * @param ClassMetadata $classMetadata
-     * @param string $fieldName
-     * @return mixed
-     * @throws \Doctrine\ORM\Mapping\MappingException
+     * @throws MappingException
      */
-    protected function getAssociationType(ClassMetadata $classMetadata, $fieldName)
+    protected function getAssociationType(ClassMetadata $classMetadata, string $fieldName): mixed
     {
         $type = null;
         if ($classMetadata->hasAssociation($fieldName)) {
@@ -130,11 +103,11 @@ abstract class AbstractFilterFactory
     }
 
     /**
-     * @param array $options
-     * @return array
-     * @throws \Doctrine\ORM\Mapping\MappingException
+     * @param array<string, mixed> $options
+     *
+     * @throws MappingException
      */
-    private function fixOptions(array $options = [])
+    private function fixOptions(array $options = []): array
     {
         if (!isset($options['has_select'])) {
             $options['has_select'] = true;
@@ -144,33 +117,32 @@ abstract class AbstractFilterFactory
     }
 
     /**
-     * @param ClassMetadata $inClassMetadata
-     * @param string $alias
-     * @param string $filterName
-     * @param array $options
-     * @return array
-     * @throws \Doctrine\ORM\Mapping\MappingException
+     * @param array<string, mixed> $options
+     *
+     * @return array<int, string|ClassMetadata|JoinMap|null>
+     *
+     * @throws MappingException
      */
-    private function parse(ClassMetadata $inClassMetadata, $alias, $filterName, array $options = [])
+    private function parse(ClassMetadata $inClassMetadata, string $alias, string $filterName, array $options = []): array
     {
-        $fieldName     = $filterName;
+        $fieldName = $filterName;
         $classMetadata = $inClassMetadata;
-        $joinMap       = null;
+        $joinMap = null;
 
         /** @var EntityManager $em */
         $em = $this->doctrine->getManager();
 
         $joinPath = $alias;
         if (strpos($filterName, '.') > 0) {
-            $filterElements    = explode('.', $filterName);
-            $lastFilterElement = $filterElements[count($filterElements) - 1];
+            $filterElements = explode('.', $filterName);
+            $lastFilterElement = $filterElements[\count($filterElements) - 1];
 
-            $joinMap           = new JoinMap($alias, $inClassMetadata);
-            $joinFieldName     = null;
+            $joinMap = new JoinMap($alias, $inClassMetadata);
+            $joinFieldName = null;
             $joinClassMetadata = $inClassMetadata;
             foreach ($filterElements as $joinFieldName) {
                 if ($joinClassMetadata->hasAssociation($joinFieldName)) {
-                    $isLastElement = $joinFieldName == $lastFilterElement;
+                    $isLastElement = $joinFieldName === $lastFilterElement;
                     if (!$isLastElement) {
                         $joinMap->join($joinPath, $joinFieldName, $options['has_select']);
 
@@ -178,16 +150,15 @@ abstract class AbstractFilterFactory
                         $joinClassName = $joinAssociationMapping['targetEntity'];
 
                         $joinClassMetadata = $em->getClassMetadata($joinClassName);
-                        $joinPath .= '.' . $joinFieldName;
+                        $joinPath .= '.'.$joinFieldName;
                     }
-
                 } else {
                     break;
                 }
             }
 
             $classMetadata = $joinClassMetadata;
-            $fieldName     = $joinFieldName;
+            $fieldName = $joinFieldName;
         }
 
         return [$fieldName, $classMetadata, $joinMap];

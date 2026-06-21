@@ -12,6 +12,7 @@
 namespace Glavweb\DatagridBundle\Builder\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use Doctrine\ORM\Mapping\MappingException;
 use Glavweb\DatagridBundle\Builder\DatagridBuilderInterface;
 use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
 use Glavweb\DatagridBundle\Exception\BuildException;
@@ -21,121 +22,65 @@ use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
+use Glavweb\DataSchemaBundle\Exception\DataSchema\InvalidConfigurationException;
 
 /**
- * Class AbstractDatagridBuilder
+ * Class AbstractDatagridBuilder.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
 {
-    /**
-     * @var Registry
-     */
-    protected $doctrine;
+    protected FilterStack $filterStack;
 
     /**
-     * @var AbstractFilterFactory
+     * @var mixed[]
      */
-    protected $filterFactory;
+    protected array $orderings = [];
+
+    protected ?int $firstResult = null;
+
+    protected ?int $maxResults = null;
 
     /**
-     * @var DataSchemaFactory
+     * @var mixed[]
      */
-    protected $dataSchemaFactory;
+    protected array $operators = [];
+
+    protected string $alias = 't';
+
+    protected ?string $entityClassName = null;
+
+    protected ?JoinMap $joinMap = null;
+
+    protected ?DataSchema $dataSchema = null;
 
     /**
-     * @var AbstractQueryBuilderFactory
-     */
-    protected $queryBuilderFactory;
-
-    /**
-     * @var FilterStack
-     */
-    protected $filterStack;
-
-    /**
-     * @var array
-     */
-    protected $orderings;
-
-    /**
-     * @var int
-     */
-    protected $firstResult;
-
-    /**
-     * @var int
-     */
-    protected $maxResults;
-
-    /**
-     * @var array
-     */
-    protected $operators = [];
-
-    /**
-     * @var string
-     */
-    protected $alias = 't';
-
-    /**
-     * @var string
-     */
-    protected $entityClassName;
-
-    /**
-     * @var JoinMap
-     */
-    protected $joinMap;
-
-    /**
-     * @var DataSchema
-     */
-    protected $dataSchema;
-
-    /**
-     * @param array $parameters
-     * @param \Closure $callback
-     * @return DatagridInterface
      * @throws BuildException
      */
-    abstract public function build(array $parameters = [], $callback = null);
+    abstract public function build(array $parameters = [], ?\Closure $callback = null): DatagridInterface;
 
     /**
      * DoctrineDatagridBuilder constructor.
-     *
-     * @param Registry $doctrine
-     * @param AbstractFilterFactory $filterFactory
-     * @param DataSchemaFactory $dataSchemaFactory
-     * @param AbstractQueryBuilderFactory $queryBuilderFactory
      */
-    public function __construct(Registry                    $doctrine,
-                                AbstractFilterFactory       $filterFactory,
-                                DataSchemaFactory           $dataSchemaFactory,
-                                AbstractQueryBuilderFactory $queryBuilderFactory)
-    {
-        $this->doctrine = $doctrine;
-        $this->filterFactory = $filterFactory;
-        $this->dataSchemaFactory = $dataSchemaFactory;
-        $this->queryBuilderFactory = $queryBuilderFactory;
+    public function __construct(
+        protected Registry $doctrine,
+        protected AbstractFilterFactory $filterFactory,
+        protected DataSchemaFactory $dataSchemaFactory,
+        protected AbstractQueryBuilderFactory $queryBuilderFactory,
+    ) {
         $this->filterStack = new FilterStack();
     }
 
-    /**
-     * @return FilterStack
-     */
-    public function getFilterStack()
+    public function getFilterStack(): FilterStack
     {
         return $this->filterStack;
     }
 
     /**
-     * @param array $orderings
      * @return $this
      */
-    public function setOrderings($orderings)
+    public function setOrderings(array $orderings): static
     {
         $this->orderings = $orderings;
 
@@ -143,58 +88,47 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
-    public function getOrderings()
+    public function getOrderings(): array
     {
         return $this->orderings;
     }
 
     /**
-     * @param int $firstResult
-     *
      * @return $this
      */
-    public function setFirstResult($firstResult)
+    public function setFirstResult(int $firstResult): static
     {
         $this->firstResult = $firstResult;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getFirstResult()
+    public function getFirstResult(): ?int
     {
         return $this->firstResult;
     }
 
     /**
-     * @param int $maxResults
-     *
      * @return $this
      */
-    public function setMaxResults($maxResults)
+    public function setMaxResults(int $maxResults): static
     {
         $this->maxResults = $maxResults;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getMaxResults()
+    public function getMaxResults(): ?int
     {
         return $this->maxResults;
     }
 
     /**
-     * @param array $operators
      * @return $this
      */
-    public function setOperators(array $operators)
+    public function setOperators(array $operators): static
     {
         $this->operators = $operators;
 
@@ -202,35 +136,29 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
-    public function getOperators()
+    public function getOperators(): array
     {
         return $this->operators;
     }
 
     /**
-     * @param string $alias
-     *
      * @return $this
      */
-    public function setAlias($alias)
+    public function setAlias(string $alias): static
     {
         $this->alias = $alias;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getAlias()
+    public function getAlias(): string
     {
         return $this->alias;
     }
 
     /**
-     * @return null|string
      * @throws BuildException
      */
     public function getEntityClassName(): ?string
@@ -241,22 +169,19 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
             }
 
             $configuration = $this->dataSchema->getConfiguration();
-            $this->entityClassName = isset($configuration['class']) ? $configuration['class'] : null;
+            $this->entityClassName = $configuration['class'] ?? null;
         }
 
         return $this->entityClassName;
     }
 
     /**
-     * @param JoinMap $joinMap
-     *
      * @return $this
      */
-    public function setJoinMap(JoinMap $joinMap)
+    public function setJoinMap(JoinMap $joinMap): static
     {
-        if ($this->joinMap) {
+        if ($this->joinMap instanceof JoinMap) {
             $this->joinMap->merge($joinMap);
-
         } else {
             $this->joinMap = $joinMap;
         }
@@ -264,10 +189,7 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
         return $this;
     }
 
-    /**
-     * @return JoinMap|null
-     */
-    public function getJoinMap()
+    public function getJoinMap(): ?JoinMap
     {
         return $this->joinMap;
     }
@@ -277,22 +199,21 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
      *
      * @return $this
      */
-    public function setFilters(array $filters = [])
+    public function setFilters(array $filters = []): static
     {
-        foreach ($filters as $filterName => $filterValue) {
-            $this->addFilter($filterName, $filterValue);
+        foreach ($filters as $filter) {
+            $this->fixFilter($filter);
+
+            $this->filterStack->add($filter);
         }
 
         return $this;
     }
 
     /**
-     * @param string $filterName
-     * @param string $type
-     * @param array $options
      * @return $this
      */
-    public function addFilter($filterName, $type = null, $options = [])
+    public function addFilter(string $filterName, ?string $type = null, array $options = []): static
     {
         $entityClass = $this->getEntityClassName();
         $alias = $this->getAlias();
@@ -305,11 +226,7 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
         return $this;
     }
 
-    /**
-     * @param string $filterName
-     * @return FilterInterface
-     */
-    public function getFilter($filterName)
+    public function getFilter(string $filterName): FilterInterface
     {
         return $this->filterStack->get($filterName);
     }
@@ -317,18 +234,18 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     /**
      * @return FilterInterface[]
      */
-    public function getFilters()
+    public function getFilters(): array
     {
         return $this->filterStack->all();
     }
 
     /**
-     * @param string $dataSchemaFile
-     * @param null $scopeFile
-     * @param null $propertyPath
      * @return $this
+     *
+     * @throws MappingException
+     * @throws InvalidConfigurationException
      */
-    public function setDataSchema($dataSchemaFile, $scopeFile = null, $propertyPath = null)
+    public function setDataSchema(string $dataSchemaFile, ?string $scopeFile = null, ?string $propertyPath = null): static
     {
         $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile);
 
@@ -347,11 +264,6 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
         return $this;
     }
 
-    /**
-     * @param string $propertyPath
-     * @param string $conditionName
-     * @return self
-     */
     public function enablePropertyCondition(string $propertyPath, string $conditionName): self
     {
         $this->dataSchema->enablePropertyCondition($propertyPath, $conditionName);
@@ -359,11 +271,6 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
         return $this;
     }
 
-    /**
-     * @param string $propertyPath
-     * @param string $conditionName
-     * @return self
-     */
     public function disablePropertyCondition(string $propertyPath, string $conditionName): self
     {
         $this->dataSchema->disablePropertyCondition($propertyPath, $conditionName);
@@ -372,9 +279,6 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
     }
 
     /**
-     * @param string $propertyPath
-     * @param string $orderByPropertyName
-     * @param string $order
      * @return $this
      */
     public function setPropertyOrderBy(string $propertyPath, string $orderByPropertyName, string $order): self
@@ -384,10 +288,7 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
         return $this;
     }
 
-    /**
-     * @param FilterInterface $filter
-     */
-    private function fixFilter(FilterInterface $filter)
+    private function fixFilter(FilterInterface $filter): void
     {
         $paramName = $filter->getParamName();
         if (isset($this->operators[$paramName])) {

@@ -12,44 +12,31 @@
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * EventGroup
+ * EventGroup.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
- *
- * @ORM\Table(name="event_groups")
- * @ORM\Entity
  */
+#[ORM\Table(name: 'event_groups')]
+#[ORM\Entity]
 class EventGroup
 {
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Column(name: 'id', type: 'integer')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private int $id;
+
+    #[ORM\Column(name: 'name', type: 'string')]
+    private string $name;
+
+    #[ORM\OneToMany(targetEntity: Event::class, mappedBy: 'eventGroup')]
+    private Collection $events;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string")
-     */
-    private $name;
-
-    /**
-     * @var ArrayCollection
-     *
-     * @ORM\OneToMany(targetEntity="Event", mappedBy="eventGroup")
-     */
-    private $events;
-
-    /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -57,23 +44,17 @@ class EventGroup
     }
 
     /**
-     * Get id
-     *
-     * @return integer
+     * Get id.
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return EventGroup
+     * Set name.
      */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -81,23 +62,17 @@ class EventGroup
     }
 
     /**
-     * Get name
-     *
-     * @return string
+     * Get name.
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
-     * Add event
-     *
-     * @param Event $event
-     *
-     * @return EventGroup
+     * Add event.
      */
-    public function addEvent(Event $event)
+    public function addEvent(Event $event): static
     {
         $this->events[] = $event;
 
@@ -105,21 +80,17 @@ class EventGroup
     }
 
     /**
-     * Remove event
-     *
-     * @param Event $event
+     * Remove event.
      */
-    public function removeEvent(Event $event)
+    public function removeEvent(Event $event): void
     {
         $this->events->removeElement($event);
     }
 
     /**
-     * Get events
-     *
-     * @return ArrayCollection
+     * Get events.
      */
-    public function getEvents()
+    public function getEvents(): ArrayCollection
     {
         return $this->events;
     }

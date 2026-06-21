@@ -14,41 +14,30 @@ namespace Glavweb\DatagridBundle\Filter\Doctrine\ORM;
 use Doctrine\ORM\QueryBuilder;
 
 /**
- * Class NumberFilter
+ * Class NumberFilter.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class NumberFilter extends AbstractFilter
 {
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param $fieldName
-     * @param mixed $value
-     */
-    protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
+    protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value): void
     {
-        $field = $alias . '.' . $fieldName;
+        $field = $alias.'.'.$fieldName;
 
-        if (is_array($value) && $this->existsOperatorsInValues($value)) {
+        if (\is_array($value) && $this->existsOperatorsInValues($value)) {
             foreach ($value as $item) {
-                list($operator, $value) = $this->getOperatorAndValue($item);
+                [$operator, $value] = $this->getOperatorAndValue($item);
 
                 $this->executeCondition($queryBuilder, $operator, $field, $value);
             }
-
         } else {
-            list($operator, $value) = $this->getOperatorAndValue($value);
+            [$operator, $value] = $this->getOperatorAndValue($value);
 
             $this->executeCondition($queryBuilder, $operator, $field, $value);
         }
     }
 
-    /**
-     * @return array
-     */
-    protected function getAllowOperators()
+    protected function getAllowOperators(): array
     {
         return [
             self::EQ,
@@ -60,16 +49,14 @@ class NumberFilter extends AbstractFilter
             self::IN,
             self::NIN,
             self::CONTAINS,
-            self::NOT_CONTAINS
+            self::NOT_CONTAINS,
         ];
     }
 
     /**
-     * Default operator. Use if operator can't defined.
-     *
-     * @return string
+     * Default operator. Use if operator can't be defined.
      */
-    protected function getDefaultOperator()
+    protected function getDefaultOperator(): string
     {
         return self::CONTAINS;
     }

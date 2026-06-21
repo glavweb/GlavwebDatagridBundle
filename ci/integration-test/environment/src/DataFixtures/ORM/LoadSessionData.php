@@ -11,24 +11,20 @@
 
 namespace App\DataFixtures\ORM;
 
+use App\Entity\Event;
+use App\Entity\Session;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
-use App\Entity\Event;
-use App\Entity\Session;
 
 /**
- * Class LoadSessionData
+ * Class LoadSessionData.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
  */
 class LoadSessionData extends Fixture implements OrderedFixtureInterface
 {
-    /**
-     * @param ObjectManager $manager
-     */
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $data = [
             ['name' => 'Session 1', 'event' => 'event-1', 'reference' => 'session-1'],
@@ -49,8 +45,7 @@ class LoadSessionData extends Fixture implements OrderedFixtureInterface
         ];
 
         foreach ($data as $item) {
-            /** @var Event $event */
-            $event = $this->getReference($item['event']);
+            $event = $this->getReference($item['event'], Event::class);
 
             $session = new Session();
             $session->setName($item['name']);
@@ -65,10 +60,8 @@ class LoadSessionData extends Fixture implements OrderedFixtureInterface
 
     /**
      * Set loading order.
-     *
-     * @return int
      */
-    public function getOrder()
+    public function getOrder(): int
     {
         return 3;
     }

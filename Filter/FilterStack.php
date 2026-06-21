@@ -12,9 +12,8 @@
 namespace Glavweb\DatagridBundle\Filter;
 
 /**
- * Class FilterStack
+ * Class FilterStack.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class FilterStack
@@ -22,42 +21,30 @@ class FilterStack
     /**
      * @var FilterInterface[]
      */
-    private $filters = [];
+    private array $filters = [];
+
+    private array $filterNamesByParams = [];
 
     /**
-     * @var array
-     */
-    private $filterNamesByParams = [];
-
-    /**
-     * @param FilterInterface $filter
      * @return $this
      */
-    public function add(FilterInterface $filter)
+    public function add(FilterInterface $filter): static
     {
         $filterName = $filter->getName();
-        $paramName  = $filter->getParamName();
+        $paramName = $filter->getParamName();
 
-        $this->filters[$filterName]            = $filter;
+        $this->filters[$filterName] = $filter;
         $this->filterNamesByParams[$paramName] = $filterName;
 
         return $this;
     }
 
-    /**
-     * @param string $filterName
-     * @return FilterInterface
-     */
-    public function get($filterName)
+    public function get(string $filterName): FilterInterface
     {
         return $this->filters[$filterName];
     }
 
-    /**
-     * @param string $name
-     * @return FilterInterface|null
-     */
-    public function getByParam($name)
+    public function getByParam(string $name): ?FilterInterface
     {
         if (!isset($this->filterNamesByParams[$name])) {
             return null;
@@ -71,7 +58,7 @@ class FilterStack
     /**
      * @return FilterInterface[]
      */
-    public function all()
+    public function all(): array
     {
         return $this->filters;
     }

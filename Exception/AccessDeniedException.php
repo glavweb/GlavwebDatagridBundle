@@ -12,10 +12,10 @@
 namespace Glavweb\DatagridBundle\Exception;
 
 /**
- * Class AccessDeniedException
+ * Class AccessDeniedException.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class AccessDeniedException extends Exception
-{}
+{
+}

@@ -1,8 +1,6 @@
-version: "3.7"
-
 services:
     db:
-        image: postgres
+        image: postgres:16
         environment:
             POSTGRES_PASSWORD: password
     php:
@@ -12,3 +10,4 @@ services:
         volumes:
             - ./../..:/usr/src/bundle
             - ./../../build/test:/usr/src/build
+            - ./../../build/.composer-cache:/root/.composer/cache

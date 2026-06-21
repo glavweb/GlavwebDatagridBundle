@@ -14,57 +14,37 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Session
+ * Session.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
- *
- * @ORM\Table(name="event_sessions")
- * @ORM\Entity
  */
+#[ORM\Table(name: 'event_sessions')]
+#[ORM\Entity]
 class Session
 {
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer", options={"comment": "ID"})
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Column(name: 'id', type: 'integer', options: ['comment' => 'ID'])]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private int $id;
+
+    #[ORM\Column(name: 'name', type: 'string')]
+    private string $name;
+
+    #[ORM\ManyToOne(targetEntity: Event::class, inversedBy: 'sessions')]
+    private Event $event;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string")
+     * Get id.
      */
-    private $name;
-
-    /**
-     * @var Event
-     *
-     * @ORM\ManyToOne(targetEntity="Event", inversedBy="sessions")
-     */
-    private $event;
-
-    /**
-     * Get id
-     *
-     * @return integer
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return Session
+     * Set name.
      */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -72,23 +52,17 @@ class Session
     }
 
     /**
-     * Get name
-     *
-     * @return string
+     * Get name.
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
-     * Set event
-     *
-     * @param Event $event
-     *
-     * @return Session
+     * Set event.
      */
-    public function setEvent(Event $event = null)
+    public function setEvent(?Event $event = null): static
     {
         $this->event = $event;
 
@@ -96,11 +70,9 @@ class Session
     }
 
     /**
-     * Get event
-     *
-     * @return Event
+     * Get event.
      */
-    public function getEvent()
+    public function getEvent(): Event
     {
         return $this->event;
     }

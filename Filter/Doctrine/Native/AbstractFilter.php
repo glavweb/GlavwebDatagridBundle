@@ -11,90 +11,66 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine\Native;
 
-use Doctrine\DBAL\Query\QueryBuilder;
-use Glavweb\DatagridBundle\Filter\FilterInterface;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 use Glavweb\DatagridBundle\Filter\Doctrine\AbstractFilter as BaseFilter;
+use Glavweb\DatagridBundle\Filter\FilterInterface;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
 /**
- * Class Filter
+ * Class Filter.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 abstract class AbstractFilter extends BaseFilter implements FilterInterface
 {
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param string $fieldName
-     * @param mixed $value
-     * @return
-     */
-    protected abstract function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value);
+    abstract protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value);
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param mixed $value
-     */
-    public function filter($queryBuilder, $alias, $value)
+    public function filter(mixed $queryBuilder, string $alias, string $value): void
     {
-        if ($this->joinMap) {
+        if ($this->joinMap instanceof JoinMap) {
             $alias = $this->joinBuilder->apply($queryBuilder, $this->joinMap);
         }
 
         $this->doFilter($queryBuilder, $alias, $this->fieldName, $value);
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param $operator
-     * @param $field
-     * @param $value
-     */
-    protected function executeCondition(QueryBuilder $queryBuilder, $operator, $field, $value)
+    protected function executeCondition(QueryBuilder $queryBuilder, $operator, string $field, $value): void
     {
         $parameterName = self::makeParamName($field);
         $expr = $queryBuilder->expr();
 
         if ($operator == self::CONTAINS) {
-            $value = mb_strtolower($value, 'UTF-8');
+            $value = mb_strtolower((string) $value, 'UTF-8');
 
             if ($value === '') {
                 return;
             }
 
             if (is_numeric($value)) {
-                $queryBuilder->andWhere($expr->like('CAST(' . $field . ' AS TEXT)', ':' . $parameterName));
-
+                $queryBuilder->andWhere($expr->like('CAST('.$field.' AS TEXT)', ':'.$parameterName));
             } else {
-                $queryBuilder->andWhere($expr->like('LOWER(' . $field . ')', ':' . $parameterName));
+                $queryBuilder->andWhere($expr->like('LOWER('.$field.')', ':'.$parameterName));
             }
 
-            $queryBuilder->setParameter($parameterName, "%$value%");
-
+            $queryBuilder->setParameter($parameterName, "%{$value}%");
         } elseif ($operator == self::NOT_CONTAINS) {
-            $value = mb_strtolower($value, 'UTF-8');
+            $value = mb_strtolower((string) $value, 'UTF-8');
 
             if (is_numeric($value)) {
-                $queryBuilder->andWhere($expr->notLike('CAST(' . $field . ' AS TEXT)', ':' . $parameterName));
-
+                $queryBuilder->andWhere($expr->notLike('CAST('.$field.' AS TEXT)', ':'.$parameterName));
             } else {
-                $queryBuilder->andWhere($expr->notLike('LOWER(' . $field . ')', ':' . $parameterName));
+                $queryBuilder->andWhere($expr->notLike('LOWER('.$field.')', ':'.$parameterName));
             }
 
-            $queryBuilder->setParameter($parameterName, "%$value%");
-
+            $queryBuilder->setParameter($parameterName, "%{$value}%");
         } elseif ($operator == self::IN) {
-            $queryBuilder->andWhere($expr->in($field, ':' . $parameterName));
+            $queryBuilder->andWhere($expr->in($field, ':'.$parameterName));
             $queryBuilder->setParameter($parameterName, $value);
-
         } elseif ($operator == self::NIN) {
-            $queryBuilder->andWhere($expr->notIn($field, ':' . $parameterName));
+            $queryBuilder->andWhere($expr->notIn($field, ':'.$parameterName));
             $queryBuilder->setParameter($parameterName, $value);
-
         } else {
-            $queryBuilder->andWhere($expr->comparison($field, $operator, ':' . $parameterName));
+            $queryBuilder->andWhere($expr->comparison($field, $operator, ':'.$parameterName));
             $queryBuilder->setParameter($parameterName, $value);
         }
     }

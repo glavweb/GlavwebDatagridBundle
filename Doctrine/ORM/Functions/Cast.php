@@ -11,56 +11,50 @@
 
 namespace Glavweb\DatagridBundle\Doctrine\ORM\Functions;
 
+use Doctrine\ORM\Query\AST\ASTException;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
-use Doctrine\ORM\Query\Lexer;
+use Doctrine\ORM\Query\AST\Node;
 use Doctrine\ORM\Query\Parser;
+use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\SqlWalker;
+use Doctrine\ORM\Query\TokenType;
 
 /**
- * Class Cast
+ * Class Cast.
  *
  * Created by https://stackoverflow.com/a/46096965/5670350
- *
- * @package Glavweb\DatagridBundle
  */
 class Cast extends FunctionNode
 {
-    /**
-     * @var \Doctrine\ORM\Query\AST\PathExpression
-     */
-    protected $first;
+    protected Node|string $first;
+
+    protected string $second;
 
     /**
-     * @var string
+     * @throws ASTException
      */
-    protected $second;
-
-    /**
-     * @param SqlWalker $sqlWalker
-     *
-     * @return string
-     */
-    public function getSql(SqlWalker $sqlWalker)
+    public function getSql(SqlWalker $sqlWalker): string
     {
-        return sprintf("CAST(%s AS %s)",
+        return \sprintf(
+            'CAST(%s AS %s)',
             $this->first->dispatch($sqlWalker),
             $this->second
         );
     }
 
     /**
-     * @param Parser $parser
-     *
-     * @return void
+     * @throws QueryException
      */
-    public function parse(Parser $parser)
+    public function parse(Parser $parser): void
     {
-        $parser->match(Lexer::T_IDENTIFIER);
-        $parser->match(Lexer::T_OPEN_PARENTHESIS);
+        $parser->match(TokenType::T_IDENTIFIER);
+        $parser->match(TokenType::T_OPEN_PARENTHESIS);
+
         $this->first = $parser->ArithmeticPrimary();
-        $parser->match(Lexer::T_AS);
-        $parser->match(Lexer::T_IDENTIFIER);
-        $this->second = $parser->getLexer()->token['value'];
-        $parser->match(Lexer::T_CLOSE_PARENTHESIS);
+        $parser->match(TokenType::T_AS);
+        $parser->match(TokenType::T_IDENTIFIER);
+
+        $this->second = $parser->getLexer()->token?->value;
+        $parser->match(TokenType::T_CLOSE_PARENTHESIS);
     }
 }

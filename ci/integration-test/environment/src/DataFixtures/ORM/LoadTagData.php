@@ -11,23 +11,19 @@
 
 namespace App\DataFixtures\ORM;
 
+use App\Entity\Tag;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
-use App\Entity\Tag;
 
 /**
- * Class LoadTagData
+ * Class LoadTagData.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
  */
 class LoadTagData extends Fixture implements OrderedFixtureInterface
 {
-    /**
-     * @param ObjectManager $manager
-     */
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $data = [
             ['name' => 'Tag 1', 'reference' => 'tag-1'],
@@ -50,12 +46,9 @@ class LoadTagData extends Fixture implements OrderedFixtureInterface
 
     /**
      * Set loading order.
-     *
-     * @return int
      */
-    public function getOrder()
+    public function getOrder(): int
     {
         return 1;
     }
-
 }

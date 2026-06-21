@@ -19,55 +19,24 @@ use Glavweb\DatagridBundle\Filter\Doctrine\ORM\FilterFactory;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
 
 /**
- * Class ORMDatagridFactory
+ * Class ORMDatagridFactory.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class ORMDatagridFactory implements DatagridFactoryInterface
 {
     /**
-     * @var Registry
-     */
-    private $doctrine;
-
-    /**
-     * @var FilterFactory
-     */
-    private $filterFactory;
-
-    /**
-     * @var DataSchemaFactory
-     */
-    private $dataSchemaFactory;
-
-    /**
-     * @var QueryBuilderFactory
-     */
-    private $queryBuilderFactory;
-
-    /**
      * DatagridFactory constructor.
-     *
-     * @param Registry $doctrine
-     * @param DataSchemaFactory $dataSchemaFactory
-     * @param FilterFactory $filterFactory
-     * @param QueryBuilderFactory $queryBuilderFactory
      */
-    public function __construct(Registry $doctrine, DataSchemaFactory $dataSchemaFactory, FilterFactory $filterFactory, QueryBuilderFactory $queryBuilderFactory)
-    {
-        $this->doctrine = $doctrine;
-        $this->filterFactory = $filterFactory;
-        $this->dataSchemaFactory = $dataSchemaFactory;
-        $this->queryBuilderFactory = $queryBuilderFactory;
+    public function __construct(
+        private readonly Registry $doctrine,
+        private readonly DataSchemaFactory $dataSchemaFactory,
+        private readonly FilterFactory $filterFactory,
+        private readonly QueryBuilderFactory $queryBuilderFactory,
+    ) {
     }
 
-    /**
-     * @param string $dataSchemaFile
-     * @param string|null $scopeFile
-     * @param string|null $propertyPath
-     * @return AbstractDatagridBuilder
-     */
-    public function createBuilder(string $dataSchemaFile, string $scopeFile = null, string $propertyPath = null): AbstractDatagridBuilder
+    public function createBuilder(string $dataSchemaFile, ?string $scopeFile = null, ?string $propertyPath = null): AbstractDatagridBuilder
     {
         $builder = new DatagridBuilder(
             $this->doctrine,

@@ -16,117 +16,83 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Glavweb\DatagridBundle\Builder\Doctrine\ORM\DatagridContext;
 use Glavweb\DatagridBundle\Datagrid\Doctrine\AbstractDatagrid;
+use Glavweb\DatagridBundle\Filter\FilterInterface;
 use Glavweb\DatagridBundle\Filter\FilterStack;
-use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 
 /**
- * Class Datagrid
+ * Class Datagrid.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class Datagrid extends AbstractDatagrid
 {
-    /**
-     * @var QueryBuilder
-     */
-    private $queryBuilder;
+    private readonly QueryBuilder $queryBuilder;
+
+    private readonly DataSchema $dataSchema;
+
+    private readonly string $alias;
 
     /**
-     * @var DataSchema
+     * @var mixed[]
      */
-    private $dataSchema;
+    private array $queryHints = [];
+
+    private ?Paginator $paginator = null;
+
+    private readonly FilterStack $filterStack;
 
     /**
-     * @var string
+     * @var mixed[]
      */
-    private $alias;
+    private readonly array $parameters;
 
-    /**
-     * @var array
-     */
-    private $queryHints = [];
-
-    /**
-     * @var Paginator
-     */
-    private $paginator;
-
-    /**
-     * @var FilterStack
-     */
-    private $filterStack;
-
-    /**
-     * @var array
-     */
-    private $parameters;
-
-    /**
-     * @param DatagridContext $context
-     */
     public function __construct(DatagridContext $context)
     {
         $this->queryBuilder = $context->getQueryBuilder();
-        $this->dataSchema   = $context->getDataSchema();
-        $this->filterStack  = $context->getFilterStack();
-        $this->orderings    = $context->getOrderings();
-        $this->firstResult  = $context->getFirstResult();
-        $this->maxResults   = $context->getMaxResults();
-        $this->alias        = $context->getAlias();
-        $this->parameters   = $context->getParameters();
+        $this->dataSchema = $context->getDataSchema();
+        $this->filterStack = $context->getFilterStack();
+        $this->orderings = $context->getOrderings();
+        $this->firstResult = $context->getFirstResult();
+        $this->maxResults = $context->getMaxResults();
+        $this->alias = $context->getAlias();
+        $this->parameters = $context->getParameters();
 
         if ($this->dataSchema->getHydrationMode() !== null) {
             $this->setHydrationMode($this->dataSchema->getHydrationMode());
         }
     }
 
-    /**
-     * @return QueryBuilder
-     */
-    public function getQueryBuilder()
+    public function getQueryBuilder(): QueryBuilder
     {
         return $this->queryBuilder;
     }
 
-    /**
-     * @return string
-     */
-    public function getAlias()
+    public function getAlias(): string
     {
         return $this->alias;
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
-    public function getQueryHints()
+    public function getQueryHints(): array
     {
         return $this->queryHints;
     }
 
-    /**
-     * @param array $queryHints
-     */
-    public function setQueryHints($queryHints)
+    public function setQueryHints(array $queryHints): void
     {
         $this->queryHints = $queryHints;
     }
 
-    /**
-     * @param string $name
-     * @param mixed $value
-     */
-    public function setQueryHint($name, $value)
+    public function setQueryHint(string $name, mixed $value): void
     {
         $this->queryHints[$name] = $value;
     }
 
-    /**
-     * @return array
-     */
-    public function getItem()
+    public function getItem(): array
     {
         $query = $this->createQuery(null);
 
@@ -141,10 +107,7 @@ class Datagrid extends AbstractDatagrid
         return $result;
     }
 
-    /**
-     * @return array
-     */
-    public function getList()
+    public function getList(): array
     {
         $paginator = $this->getPaginator();
 
@@ -160,20 +123,14 @@ class Datagrid extends AbstractDatagrid
         return $result;
     }
 
-    /**
-     * @return int
-     */
-    public function getTotal()
+    public function getTotal(): int
     {
         $paginator = $this->getPaginator();
 
-        return (int)$paginator->count();
+        return $paginator->count();
     }
 
-    /**
-     * @param Query $query
-     */
-    protected function setHintsToQuery(Query $query)
+    protected function setHintsToQuery(Query $query): void
     {
         $queryHints = $this->getQueryHints();
         foreach ($queryHints as $hintName => $hintValue) {
@@ -181,12 +138,9 @@ class Datagrid extends AbstractDatagrid
         }
     }
 
-    /**
-     * @return Paginator
-     */
-    protected function getPaginator()
+    protected function getPaginator(): ?Paginator
     {
-        if (!$this->paginator) {
+        if (!$this->paginator instanceof Paginator) {
             $query = $this->createQuery($this->getMaxResults());
 
             $this->paginator = new Paginator($query);
@@ -195,15 +149,11 @@ class Datagrid extends AbstractDatagrid
         return $this->paginator;
     }
 
-    /**
-     * @param int|null $maxResults
-     * @return Query
-     */
-    private function createQuery(?int $maxResults)
+    private function createQuery(?int $maxResults): Query
     {
         $queryBuilder = $this->getQueryBuilder();
-        $alias        = $this->getAlias();
-        $firstResult  = $this->getFirstResult();
+        $alias = $this->getAlias();
+        $firstResult = $this->getFirstResult();
 
         if ($maxResults) {
             $queryBuilder->setMaxResults($maxResults);
@@ -215,13 +165,17 @@ class Datagrid extends AbstractDatagrid
         // Apply filter
         $parameters = $this->clearParameters($this->parameters);
         foreach ($parameters as $key => $parameter) {
-            if (!$parameter || !is_scalar($parameter)) {
+            if (!$parameter) {
+                continue;
+            }
+
+            if (!\is_scalar($parameter)) {
                 continue;
             }
 
             $jsonDecoded = json_decode($parameter);
 
-            if (json_last_error() == JSON_ERROR_NONE) {
+            if (json_last_error() === \JSON_ERROR_NONE) {
                 $parameters[$key] = $jsonDecoded;
             }
         }
@@ -229,7 +183,7 @@ class Datagrid extends AbstractDatagrid
         foreach ($parameters as $name => $value) {
             $filter = $this->filterStack->getByParam($name);
 
-            if (!$filter) {
+            if (!$filter instanceof FilterInterface) {
                 continue;
             }
 
@@ -240,7 +194,7 @@ class Datagrid extends AbstractDatagrid
         $querySelects = $this->dataSchema->getQuerySelects();
         foreach ($querySelects as $propertyName => $querySelect) {
             if ($this->dataSchema->hasProperty($propertyName)) {
-                $queryBuilder->addSelect(sprintf('(%s) as %s', $querySelect, $propertyName));
+                $queryBuilder->addSelect(\sprintf('(%s) as %s', $querySelect, $propertyName));
             }
         }
 
@@ -261,8 +215,8 @@ class Datagrid extends AbstractDatagrid
             $sortFieldName = $fieldName;
 
             // If the field name have a dot
-            $fieldNameParts = explode('.', $fieldName);
-            if (count($fieldNameParts) > 1) {
+            $fieldNameParts = explode('.', (string) $fieldName);
+            if (\count($fieldNameParts) > 1) {
                 $sortFieldName = array_pop($fieldNameParts);
 
                 foreach ($fieldNameParts as $fieldPart) {
@@ -270,11 +224,9 @@ class Datagrid extends AbstractDatagrid
                 }
             }
 
-            $queryBuilder->addOrderBy($sortAlias . '.' . $sortFieldName, $order);
+            $queryBuilder->addOrderBy($sortAlias.'.'.$sortFieldName, $order);
         }
 
-        $query = $queryBuilder->getQuery();
-
-        return $query;
+        return $queryBuilder->getQuery();
     }
 }

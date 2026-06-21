@@ -11,91 +11,69 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine\Native;
 
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use Doctrine\DBAL\Query\QueryBuilder;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Class ModelFilter
+ * Class ModelFilter.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class ModelFilter extends AbstractFilter
 {
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param string $fieldName
-     * @param mixed $value
-     */
-    protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
+    protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value): void
     {
         [$operator, $value] = $this->getOperatorAndValue($value, [
             self::NOT_CONTAINS => self::NEQ,
         ]);
 
-        $this->executeCondition($queryBuilder, $operator, $alias . '.' . $fieldName, $value);
+        $this->executeCondition($queryBuilder, $operator, $alias.'.'.$fieldName, $value);
     }
 
     /**
-     * @param QueryBuilder $queryBuilder
      * @param string $operator
      * @param string $field
-     * @param mixed $value
      */
-    protected function executeCondition(QueryBuilder $queryBuilder, $operator, $field, $value)
+    #[\Override]
+    protected function executeCondition(QueryBuilder $queryBuilder, $operator, $field, $value): void
     {
         $parameterName = self::makeParamName($field);
         $expr = $queryBuilder->expr();
 
         if ($operator == self::IN) {
-            $queryBuilder->andWhere($expr->in($field, ':' . $parameterName));
-
+            $queryBuilder->andWhere($expr->in($field, ':'.$parameterName));
         } elseif ($operator == self::NIN) {
-            $queryBuilder->andWhere($expr->notIn($field, ':' . $parameterName));
-
+            $queryBuilder->andWhere($expr->notIn($field, ':'.$parameterName));
         } elseif ($operator == self::EQ) {
-            $queryBuilder->andWhere($expr->eq($field, ':' . $parameterName));
-
+            $queryBuilder->andWhere($expr->eq($field, ':'.$parameterName));
         } elseif ($operator == self::NEQ) {
-            $queryBuilder->andWhere($expr->neq($field, ':' . $parameterName));
+            $queryBuilder->andWhere($expr->neq($field, ':'.$parameterName));
         }
 
         $queryBuilder->setParameter($parameterName, $value);
     }
 
-    /**
-     * @param string $fieldName
-     * @return mixed
-     */
-    protected function getAssociationType($fieldName)
+    protected function getAssociationType(string $fieldName): mixed
     {
         $associationMapping = $this->classMetadata->getAssociationMapping($fieldName);
-        $type = $associationMapping['type'];
 
-        return $type;
+        return $associationMapping['type'];
     }
 
-    /**
-     * @return array
-     */
-    protected function getAllowOperators()
+    protected function getAllowOperators(): array
     {
         return [
             self::EQ,
             self::NEQ,
             self::IN,
             self::NIN,
-            self::NOT_CONTAINS
+            self::NOT_CONTAINS,
         ];
     }
 
     /**
-     * Default operator. Use if operator can't defined.
-     *
-     * @return string
+     * Default operator. Use if operator can't be defined.
      */
-    protected function getDefaultOperator()
+    protected function getDefaultOperator(): string
     {
         return self::EQ;
     }

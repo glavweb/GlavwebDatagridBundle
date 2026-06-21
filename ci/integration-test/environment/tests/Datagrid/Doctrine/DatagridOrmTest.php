@@ -14,33 +14,28 @@ namespace App\Tests\Datagrid\Doctrine;
 use Glavweb\DatagridBundle\Factory\DatagridFactoryInterface;
 
 /**
- * Class DatagridOrmTest
+ * Class DatagridOrmTest.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class DatagridOrmTest extends DatagridNativeTest
 {
-    /**
-     * @return DatagridFactoryInterface
-     */
+    #[\Override]
     protected function getDatagridFactory(): DatagridFactoryInterface
     {
         /** @var DatagridFactoryInterface $factory */
-        $factory = self::$container->get('glavweb_datagrid.orm_factory');
+        $factory = $this->getContainer()->get('glavweb_datagrid.orm_factory');
 
         return $factory;
     }
 
-    /**
-     * @return array
-     */
-    public function dataTestDecodeWithQuerySelects()
+    #[\Override]
+    public static function dataTestDecodeWithQuerySelects(): array
     {
         return [
             [
-                'dataSchemaFile' => 'test_decode_with_query_selects_orm.schema.yml'
-            ]
+                'dataSchemaFile' => 'test_decode_with_query_selects_orm.schema.yml',
+            ],
         ];
     }
 }

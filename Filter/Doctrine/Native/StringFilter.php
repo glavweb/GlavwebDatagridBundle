@@ -11,44 +11,33 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine\Native;
 
-use Doctrine\DBAL\Query\QueryBuilder;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Class StringFilter
+ * Class StringFilter.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class StringFilter extends AbstractFilter
 {
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param string $fieldName
-     * @param mixed $value
-     */
-    protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
+    protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value): void
     {
-        $field = $alias . '.' . $this->getColumnName($fieldName);
+        $field = $alias.'.'.$this->getColumnName($fieldName);
 
-        if (is_array($value) && $this->existsOperatorsInValues($value)) {
+        if (\is_array($value) && $this->existsOperatorsInValues($value)) {
             foreach ($value as $item) {
-                list($operator, $value) = $this->getOperatorAndValue($item);
+                [$operator, $value] = $this->getOperatorAndValue($item);
 
                 $this->executeCondition($queryBuilder, $operator, $field, $value);
             }
-
         } else {
-            list($operator, $value) = $this->getOperatorAndValue($value);
+            [$operator, $value] = $this->getOperatorAndValue($value);
 
             $this->executeCondition($queryBuilder, $operator, $field, $value);
         }
     }
 
-    /**
-     * @return array
-     */
-    protected function getAllowOperators()
+    protected function getAllowOperators(): array
     {
         return [
             self::EQ,
@@ -56,16 +45,14 @@ class StringFilter extends AbstractFilter
             self::IN,
             self::NIN,
             self::CONTAINS,
-            self::NOT_CONTAINS
+            self::NOT_CONTAINS,
         ];
     }
 
     /**
-     * Default operator. Use if operator can't defined.
-     *
-     * @return string
+     * Default operator. Use if operator can't be defined.
      */
-    protected function getDefaultOperator()
+    protected function getDefaultOperator(): string
     {
         return self::CONTAINS;
     }

@@ -41,3 +41,8 @@ services:
         class:  Glavweb\DatagridBundle\JoinMap\Doctrine\ORM\JoinBuilder
         arguments: ["@doctrine"]
 
+    Glavweb\DatagridBundle\Factory\NativeDatagridFactory:
+        alias: glavweb_datagrid.native_factory
+
+    Glavweb\DatagridBundle\Factory\ORMDatagridFactory:
+        alias: glavweb_datagrid.orm_factory

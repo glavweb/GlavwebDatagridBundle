@@ -11,46 +11,34 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine\Native;
 
-use Doctrine\DBAL\Query\QueryBuilder;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Class CallbackFilter
+ * Class CallbackFilter.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class CallbackFilter extends AbstractFilter
 {
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param $fieldName
-     * @param mixed $value
-     */
-    protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
+    protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value): void
     {
         $callback = $this->getOption('callback');
-        if (!is_callable($callback)) {
-            throw new \RuntimeException(sprintf('Please provide a valid callback option "filter" for field "%s"', $this->getName()));
+        if (!\is_callable($callback)) {
+            throw new \RuntimeException(\sprintf('Please provide a valid callback option "filter" for field "%s"', $this->getName()));
         }
 
-        call_user_func($callback, $queryBuilder, $alias, $this->getColumnName($fieldName), $value, $fieldName);
+        \call_user_func($callback, $queryBuilder, $alias, $this->getColumnName($fieldName), $value, $fieldName);
     }
 
-    /**
-     * @return array
-     */
-    protected function getAllowOperators()
+    protected function getAllowOperators(): array
     {
         return [];
     }
 
     /**
-     * Default operator. Use if operator can't defined.
-     *
-     * @return string
+     * Default operator. Use if operator can't be defined.
      */
-    protected function getDefaultOperator()
+    protected function getDefaultOperator(): ?string
     {
         return null;
     }

@@ -11,28 +11,25 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine;
 
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Glavweb\DatagridBundle\Filter\TypeGuess;
 
 /**
- * Class FilterTypeGuesser
+ * Class FilterTypeGuesser.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class FilterTypeGuesser
 {
     /**
-     * @param EntityManager $entityManager
-     * @param               $propertyName
-     * @param ClassMetadata $metadata
-     * @param array         $options
-     * @return TypeGuess
-     * @throws \Doctrine\DBAL\Exception
+     * @param array<string, mixed> $options
+     *
+     * @throws Exception
      */
-    public function guessType(EntityManager $entityManager, $propertyName, ClassMetadata $metadata, array $options = [])
+    public function guessType(EntityManager $entityManager, $propertyName, ClassMetadata $metadata, array $options = []): TypeGuess
     {
         if (!isset($metadata->fieldMappings[$propertyName]['fieldName'])) {
             $found = false;
@@ -47,9 +44,7 @@ class FilterTypeGuesser
             }
 
             if (!$found) {
-                throw new \RuntimeException(
-                    sprintf('Field name "%s" not found in class "%s".', $propertyName, $metadata->getName())
-                );
+                throw new \RuntimeException(\sprintf('Field name "%s" not found in class "%s".', $propertyName, $metadata->getName()));
             }
         }
 

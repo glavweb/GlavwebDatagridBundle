@@ -11,23 +11,19 @@
 
 namespace App\DataFixtures\ORM;
 
+use App\Entity\EventDetail;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
-use App\Entity\EventDetail;
 
 /**
- * Class LoadEventDetailData
+ * Class LoadEventDetailData.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
  */
 class LoadEventDetailData extends Fixture implements OrderedFixtureInterface
 {
-    /**
-     * @param ObjectManager $manager
-     */
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $data = [
             ['body' => 'Body for event detail 1', 'reference' => 'event-detail-1'],
@@ -48,10 +44,8 @@ class LoadEventDetailData extends Fixture implements OrderedFixtureInterface
 
     /**
      * Set loading order.
-     *
-     * @return int
      */
-    public function getOrder()
+    public function getOrder(): int
     {
         return 1;
     }

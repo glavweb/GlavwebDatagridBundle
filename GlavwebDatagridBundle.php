@@ -14,10 +14,10 @@ namespace Glavweb\DatagridBundle;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
- * Class GlavwebDatagridBundle
+ * Class GlavwebDatagridBundle.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class GlavwebDatagridBundle extends Bundle
-{}
+{
+}

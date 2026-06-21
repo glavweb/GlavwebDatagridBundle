@@ -15,101 +15,65 @@ use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
 
 /**
- * Interface DatagridBuilderInterface
+ * Interface DatagridBuilderInterface.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 interface DatagridBuilderInterface
 {
     /**
-     * @param array $orderings
      * @return $this
      */
-    public function setOrderings($orderings);
+    public function setOrderings(array $orderings): static;
+
+    public function getOrderings(): array;
 
     /**
-     * @return array
-     */
-    public function getOrderings();
-
-    /**
-     * @param int $firstResult
-     *
      * @return $this
      */
-    public function setFirstResult($firstResult);
+    public function setFirstResult(int $firstResult): static;
+
+    public function getFirstResult(): ?int;
 
     /**
-     * @return int
-     */
-    public function getFirstResult();
-
-    /**
-     * @param int $maxResults
-     *
      * @return $this
      */
-    public function setMaxResults($maxResults);
+    public function setMaxResults(int $maxResults): static;
+
+    public function getMaxResults(): ?int;
 
     /**
-     * @return int
-     */
-    public function getMaxResults();
-
-    /**
-     * @param array $operators
      * @return $this
      */
-    public function setOperators(array $operators);
+    public function setOperators(array $operators): static;
+
+    public function getOperators(): array;
 
     /**
-     * @return array
-     */
-    public function getOperators();
-
-    /**
-     * @param string $alias
-     *
      * @return $this
      */
-    public function setAlias($alias);
+    public function setAlias(string $alias): static;
 
-    /**
-     * @return string
-     */
-    public function getAlias();
+    public function getAlias(): string;
 
     /**
      * @param FilterInterface[] $filters
      *
      * @return $this
      */
-    public function setFilters(array $filters = []);
+    public function setFilters(array $filters = []): static;
 
     /**
      * @return FilterInterface[]
      */
-    public function getFilters();
+    public function getFilters(): array;
+
+    public function getFilter(string $filterName): FilterInterface;
 
     /**
-     * @param string $filterName
-     * @return FilterInterface
-     */
-    public function getFilter($filterName);
-
-    /**
-     * @param string $filterName
-     * @param string $type
-     * @param array $options
      * @return $this
      */
-    public function addFilter($filterName, $type = null, $options = []);
+    public function addFilter(string $filterName, ?string $type = null, array $options = []): static;
 
-    /**
-     * @param array $parameters
-     * @param \Closure $callback
-     * @return DatagridInterface
-     */
-    public function build(array $parameters = [], $callback = null);
+    public function build(array $parameters = [], ?\Closure $callback = null): DatagridInterface;
 }

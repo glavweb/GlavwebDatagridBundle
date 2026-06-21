@@ -1,0 +1,7 @@
+imports:
+  - {resource: list.yml}
+
+scope:
+  allEvents:
+  slugWithYear:
+  hasEvents:

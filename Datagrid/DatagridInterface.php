@@ -12,40 +12,21 @@
 namespace Glavweb\DatagridBundle\Datagrid;
 
 /**
- * Interface DatagridInterface
+ * Interface DatagridInterface.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 interface DatagridInterface
 {
-    /**
-     * @return array
-     */
-    public function getOrderings();
+    public function getOrderings(): array;
 
-    /**
-     * @return int
-     */
-    public function getFirstResult();
+    public function getFirstResult(): ?int;
 
-    /**
-     * @return int
-     */
-    public function getMaxResults();
+    public function getMaxResults(): ?int;
 
-    /**
-     * @return array
-     */
-    public function getItem();
+    public function getItem(): array;
 
-    /**
-     * @return array
-     */
-    public function getList();
+    public function getList(): array;
 
-    /**
-     * @return int
-     */
-    public function getTotal();
+    public function getTotal(): int;
 }

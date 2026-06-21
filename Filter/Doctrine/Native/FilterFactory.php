@@ -12,54 +12,38 @@
 namespace Glavweb\DatagridBundle\Filter\Doctrine\Native;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use Glavweb\DatagridBundle\Filter\Doctrine\AbstractFilterFactory;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\Native\JoinBuilder;
-use Glavweb\DatagridBundle\Filter\Doctrine\AbstractFilterFactory;
 
 /**
- * Class FilterFactory
- * @package Glavweb\DatagridBundle
+ * Class FilterFactory.
+ *
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class FilterFactory extends AbstractFilterFactory
 {
     /**
-     * @var JoinBuilder
-     */
-    private $joinBuilder;
-
-    /**
      * FilterFactory constructor.
-     *
-     * @param Registry $doctrine
-     * @param JoinBuilder $joinBuilder
      */
-    public function __construct(Registry $doctrine, JoinBuilder $joinBuilder)
+    public function __construct(Registry $doctrine, private readonly JoinBuilder $joinBuilder)
     {
         parent::__construct($doctrine);
-
-        $this->joinBuilder = $joinBuilder;
     }
 
-    /**
-     * @return array
-     */
     protected function getTypes(): array
     {
         return [
-            'string'   => 'Glavweb\DatagridBundle\Filter\Doctrine\Native\StringFilter',
-            'number'   => 'Glavweb\DatagridBundle\Filter\Doctrine\Native\NumberFilter',
-            'boolean'  => 'Glavweb\DatagridBundle\Filter\Doctrine\Native\BooleanFilter',
-            'datetime' => 'Glavweb\DatagridBundle\Filter\Doctrine\Native\DateTimeFilter',
-            'enum'     => 'Glavweb\DatagridBundle\Filter\Doctrine\Native\EnumFilter',
-            'model'    => 'Glavweb\DatagridBundle\Filter\Doctrine\Native\ModelFilter',
-            'callback' => 'Glavweb\DatagridBundle\Filter\Doctrine\Native\CallbackFilter',
+            'string' => StringFilter::class,
+            'number' => NumberFilter::class,
+            'boolean' => BooleanFilter::class,
+            'datetime' => DateTimeFilter::class,
+            'enum' => EnumFilter::class,
+            'model' => ModelFilter::class,
+            'callback' => CallbackFilter::class,
         ];
     }
 
-    /**
-     * @return JoinBuilderInterface
-     */
     protected function getJoinBuilder(): JoinBuilderInterface
     {
         return $this->joinBuilder;

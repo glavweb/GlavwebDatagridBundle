@@ -15,109 +15,81 @@ use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\Expr\Join;
 
 /**
- * Class JoinMap
- * @package Glavweb\DatagridBundle
+ * Class JoinMap.
+ *
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class JoinMap
 {
     /**
-     * Constants of join types
+     * Constants of join types.
      */
-    const JOIN_TYPE_LEFT  = 'left';
-    const JOIN_TYPE_INNER = 'inner';
-    const JOIN_TYPE_NONE  = 'none';
+    public const string JOIN_TYPE_LEFT = 'left';
+
+    public const string JOIN_TYPE_INNER = 'inner';
+
+    public const string JOIN_TYPE_NONE = 'none';
 
     /**
-     * @var string
+     * @var mixed[]
      */
-    private $alias;
-
-    /**
-     * @var ClassMetadata
-     */
-    private $classMetadata;
-
-    /**
-     * @var array
-     */
-    private $joinMap = [];
+    private array $joinMap = [];
 
     /**
      * JoinMap constructor.
-     *
-     * @param string $alias
-     * @param ClassMetadata $classMetadata
      */
-    public function __construct($alias, ClassMetadata $classMetadata)
+    public function __construct(private readonly string $alias, private readonly ClassMetadata $classMetadata)
     {
-        $this->alias = $alias;
-        $this->classMetadata = $classMetadata;
+        $this->joinMap[$this->alias] = [];
+    }
 
-        $this->joinMap[$alias] = [];
+    public static function makeAlias(string $path, string $field): string
+    {
+        return str_replace('.', '_', $path).'_'.$field;
     }
 
     /**
-     * @param string $path
-     * @param string $field
-     * @return string
-     */
-    public static function makeAlias($path, $field)
-    {
-        return str_replace('.', '_', $path) . '_' . $field;
-    }
-
-    /**
-     * @param string $path
-     * @param string $field
-     * @param bool $hasSelect
-     * @param array $selectFields
-     * @param string $joinType
-     * @param string $conditionType
-     * @param string $condition
      * @return $this
      */
-    public function join($path, $field, $hasSelect = true, array $selectFields = [], $joinType = 'left', $conditionType = Join::WITH, $condition = null)
-    {
+    public function join(
+        string $path,
+        string $field,
+        bool $hasSelect = true,
+        array $selectFields = [],
+        string $joinType = 'left',
+        string $conditionType = Join::WITH,
+        ?string $condition = null,
+    ): static {
         $this->joinMap[$path][] = [
-            'field'         => $field,
-            'hasSelect'     => $hasSelect,
-            'selectFields'  => $selectFields,
-            'joinType'      => $joinType,
+            'field' => $field,
+            'hasSelect' => $hasSelect,
+            'selectFields' => $selectFields,
+            'joinType' => $joinType,
             'conditionType' => $conditionType,
-            'condition'     => $condition
+            'condition' => $condition,
         ];
 
         return $this;
     }
 
-    /**
-     * @param JoinMap $joinMap
-     */
-    public function merge(JoinMap $joinMap)
+    public function merge(self $joinMap): void
     {
-        $this->joinMap = array_merge_recursive($this->joinMap, $joinMap);
+        $this->joinMap = array_merge_recursive($this->joinMap, $joinMap->getJoinMap());
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
-    public function getJoinMap()
+    public function getJoinMap(): array
     {
         return $this->joinMap;
     }
 
-    /**
-     * @return string
-     */
     public function getAlias(): string
     {
         return $this->alias;
     }
 
-    /**
-     * @return ClassMetadata
-     */
     public function getClassMetadata(): ClassMetadata
     {
         return $this->classMetadata;

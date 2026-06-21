@@ -15,97 +15,63 @@ use Doctrine\ORM\AbstractQuery;
 use Glavweb\DatagridBundle\Datagrid\DatagridInterface;
 
 /**
- * Class AbstractDatagrid
+ * Class AbstractDatagrid.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 abstract class AbstractDatagrid implements DatagridInterface
 {
     /**
-     * @var array
+     * @var mixed[]
      */
-    protected $orderings;
+    protected array $orderings;
+
+    protected ?int $firstResult = null;
+
+    protected ?int $maxResults = null;
+
+    protected string|int $hydrationMode = AbstractQuery::HYDRATE_ARRAY;
+
+    abstract public function getList(): array;
+
+    abstract public function getTotal(): int;
 
     /**
-     * @var int
+     * @return mixed[]
      */
-    protected $firstResult;
-
-    /**
-     * @var int
-     */
-    protected $maxResults;
-
-    /**
-     * @var int|string
-     */
-    protected $hydrationMode = AbstractQuery::HYDRATE_ARRAY;
-
-    /**
-     * @return array
-     */
-    abstract public function getList();
-
-    /**
-     * @return mixed
-     */
-    abstract public function getTotal();
-
-    /**
-     * @return array
-     */
-    public function getOrderings()
+    public function getOrderings(): array
     {
         return $this->orderings;
     }
 
-    /**
-     * @return int
-     */
-    public function getFirstResult()
+    public function getFirstResult(): ?int
     {
         return $this->firstResult;
     }
 
-    /**
-     * @return int
-     */
-    public function getMaxResults()
+    public function getMaxResults(): ?int
     {
         return $this->maxResults;
     }
 
-    /**
-     * @return int|string
-     */
-    public function getHydrationMode()
+    public function getHydrationMode(): int|string
     {
         return $this->hydrationMode;
     }
 
-    /**
-     * @param int|string $hydrationMode
-     */
-    public function setHydrationMode($hydrationMode)
+    public function setHydrationMode(int|string $hydrationMode): void
     {
         $this->hydrationMode = $hydrationMode;
     }
 
-    /**
-     * @param $parameters
-     * @return array
-     */
-    protected function clearParameters(array $parameters)
+    protected function clearParameters(array $parameters): array
     {
-        $parameters = array_filter($parameters, function ($value) {
-            if (is_array($value) && empty($value)) {
+        return array_filter($parameters, static function ($value): bool {
+            if ($value === []) {
                 return false;
             }
 
             return $value !== null;
         });
-
-        return $parameters;
     }
 }

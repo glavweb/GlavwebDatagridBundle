@@ -1,0 +1,10 @@
+scope:
+  name:
+  eventDetail:
+    body:
+  eventGroup:
+    name:
+  sessions:
+    name:
+  tags:
+    name:

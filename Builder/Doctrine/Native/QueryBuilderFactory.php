@@ -12,34 +12,28 @@
 namespace Glavweb\DatagridBundle\Builder\Doctrine\Native;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Query\QueryBuilder;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Glavweb\DatagridBundle\Builder\Doctrine\AbstractQueryBuilderFactory;
-use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 
 /**
- * Class QueryBuilderFactory
+ * Class QueryBuilderFactory.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class QueryBuilderFactory extends AbstractQueryBuilderFactory
 {
-    /**
-     * @param array $parameters
-     * @param string $alias
-     * @param DataSchema $dataSchema
-     * @param FilterStack $filterStack
-     * @param JoinMap|null $joinMap
-     * @return QueryBuilder
-     */
-    public function create(array $parameters, string $alias, DataSchema $dataSchema, FilterStack $filterStack, JoinMap $joinMap = null)
-    {
-        /** @var QueryBuilder $queryBuilder */
-        $queryBuilder = $this->createQueryBuilderBySchema(
+    public function create(
+        array $parameters,
+        string $alias,
+        DataSchema $dataSchema,
+        FilterStack $filterStack,
+        ?JoinMap $joinMap = null,
+    ): QueryBuilder {
+        return $this->createQueryBuilderBySchema(
             $dataSchema->getConfiguration(),
             $alias,
             [],
@@ -47,18 +41,10 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             [],
             true
         );
-
-        return $queryBuilder;
     }
 
     /**
-     * @param array $dataSchemaConfig
-     * @param string $alias
-     * @param array $inConditions
-     * @param array $inJoins
-     * @param array $inOrderBy
-     * @param bool $hasFrom
-     * @return QueryBuilder
+     * @param array<string, mixed> $dataSchemaConfig
      */
     private function createQueryBuilderBySchema(
         array $dataSchemaConfig,
@@ -66,7 +52,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
         array $inConditions = [],
         array $inJoins = [],
         array $inOrderBy = [],
-        bool $hasFrom = true
+        bool $hasFrom = true,
     ): QueryBuilder {
         /** @var EntityManager $em */
         /** @var Connection $connection */
@@ -85,7 +71,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
 
         // Discriminator
         if (isset($dataSchemaConfig['discriminatorColumnName'])) {
-            $selectParts[] = $alias . '.' . $dataSchemaConfig['discriminatorColumnName'];
+            $selectParts[] = $alias.'.'.$dataSchemaConfig['discriminatorColumnName'];
         }
 
         foreach ($properties as $propertyName => $property) {
@@ -97,7 +83,7 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             }
 
             // Select
-            if ($selects && $property['source'] && key_exists($property['source'], $selects)) {
+            if ($selects && $property['source'] && \array_key_exists($property['source'], $selects)) {
                 $part = $this->fieldSourceSelectPart($property['source'], $selects[$property['source']]);
             }
 
@@ -128,14 +114,12 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             }
         }
 
-        if (!empty($selectParts)) {
+        if ($selectParts !== []) {
             $queryBuilder->select(implode(',', $selectParts));
         }
 
-        if ($inConditions) {
-            foreach ($inConditions as $condition) {
-                $queryBuilder->andWhere($condition);
-            }
+        foreach ($inConditions as $condition) {
+            $queryBuilder->andWhere($condition);
         }
 
         if (!empty($dataSchemaConfig['conditions'])) {
@@ -162,101 +146,87 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             }
         }
 
-        if ($inJoins) {
-            foreach ($inJoins as $join) {
-                $queryBuilder->leftJoin(
-                    $join['fromAlias'],
-                    $join['joinTable'],
-                    $join['joinAlias'],
-                    $join['joinCondition']
-                );
-            }
+        foreach ($inJoins as $join) {
+            $queryBuilder->leftJoin(
+                $join['fromAlias'],
+                $join['joinTable'],
+                $join['joinAlias'],
+                $join['joinCondition']
+            );
         }
 
         // Order by
-        if ($inOrderBy) {
-            foreach ($inOrderBy as $sort => $order) {
-                $queryBuilder->addOrderBy($alias . '.' . $sort, $order);
-            }
+        foreach ($inOrderBy as $sort => $order) {
+            $queryBuilder->addOrderBy($alias.'.'.$sort, $order);
         }
 
         return $queryBuilder;
     }
 
     /**
-     * @param string $alias
-     * @param string $propertyName
-     * @param array $property
-     * @return string
+     * @param array<string, mixed> $property
      */
     private function fieldSelectPart(string $alias, string $propertyName, array $property): string
     {
-        $part = $alias . '.' . $property['field_db_name'];
+        $part = $alias.'.'.$property['field_db_name'];
 
         if ($property['field_db_name'] !== $propertyName) {
-            $part .= ' as "' . $propertyName . '"';
+            $part .= ' as "'.$propertyName.'"';
         }
 
         return $part;
     }
 
-    /**
-     * @param string $propertyName
-     * @param string $select
-     * @return string
-     */
     private function fieldSourceSelectPart(string $propertyName, string $select): string
     {
-       return "($select) as \"$propertyName\"";
+        return "({$select}) as \"{$propertyName}\"";
     }
 
     /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param string $propertyName
-     * @param array $propertyConfig
-     * @param array $dataSchemaConfig
-     * @return string
+     * @param array<string, mixed> $propertyConfig
+     * @param array<string, mixed> $dataSchemaConfig
      */
-    protected function entitySelectPart(QueryBuilder $queryBuilder, string $alias, string $propertyName, array $propertyConfig, array $dataSchemaConfig): string
-    {
+    protected function entitySelectPart(
+        QueryBuilder $queryBuilder,
+        string $alias,
+        string $propertyName,
+        array $propertyConfig,
+        array $dataSchemaConfig,
+    ): string {
         $classMetadata = $this->getClassMetadataByDataSchema($dataSchemaConfig, $propertyConfig['discriminator']);
         $propertyAssociationMapping = $classMetadata->getAssociationMapping($propertyName);
-        $propertyAlias = $alias . '_' . $propertyName;
+        $propertyAlias = $alias.'_'.$propertyName;
 
         // Get $condition for WHERE or JOIN clause
         if ($propertyAssociationMapping['isOwningSide']) {
             $sourceToTargetKeyColumns = $propertyAssociationMapping['sourceToTargetKeyColumns'];
 
             $condition = $queryBuilder->expr()->eq(
-                $propertyAlias . '.' . current($sourceToTargetKeyColumns),
-                $alias . '.' . key($sourceToTargetKeyColumns)
+                $propertyAlias.'.'.current($sourceToTargetKeyColumns),
+                $alias.'.'.key($sourceToTargetKeyColumns)
             );
-
         } else {
             $targetEntityClassMetadata = $this->getClassMetadata($propertyAssociationMapping['targetEntity']);
             $targetEntityAssociationMapping = $targetEntityClassMetadata->getAssociationMapping($propertyAssociationMapping['mappedBy']);
             $sourceToTargetKeyColumns = $targetEntityAssociationMapping['sourceToTargetKeyColumns'];
 
             $condition = $queryBuilder->expr()->eq(
-                $propertyAlias . '.' . key($sourceToTargetKeyColumns),
-                $alias . '.' . current($sourceToTargetKeyColumns)
+                $propertyAlias.'.'.key($sourceToTargetKeyColumns),
+                $alias.'.'.current($sourceToTargetKeyColumns)
             );
         }
 
         $conditions = [];
 
         // If has "From" clause add join to parent without conditions
-        if (!empty($queryBuilder->getQueryPart('from'))) {
+        if ($queryBuilder->hasFrom()) {
             $propertyClassMetadata = $this->getClassMetadata($propertyConfig['class']);
 
             $tableName = $propertyAssociationMapping['isOwningSide'] ?
                 $propertyClassMetadata->getTableName() :
-                $this->getClassMetadata($propertyAssociationMapping['targetEntity'])->getTableName()
-            ;
+                $this->getClassMetadata($propertyAssociationMapping['targetEntity'])->getTableName();
 
             $queryBuilder->leftJoin($alias, $tableName, $propertyAlias, $condition);
-
         } else {
             $conditions[] = $condition;
         }
@@ -267,103 +237,103 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             $conditions,
             [],
             [],
-            !empty($conditions) // If has conditions add FROM clause
+            $conditions !== [] // If has conditions add FROM clause
         );
 
         $uniqueAlias = uniqid('row_', false);
-        $part = '
-            (
-                SELECT row_to_json(' . $uniqueAlias . ')
-                FROM (' . $subSqlQueryBuilder->getSQL() . ') as ' . $uniqueAlias . '
-            ) as "' . $propertyName . '"
-        ';
 
-        return $part;
+        return '
+            (
+                SELECT row_to_json('.$uniqueAlias.')
+                FROM ('.$subSqlQueryBuilder->getSQL().') as '.$uniqueAlias.'
+            ) as "'.$propertyName.'"
+        ';
     }
 
     /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param string $propertyName
-     * @param array $propertyConfig
-     * @param array $dataSchemaConfig
-     * @return string
+     * @param array<string, mixed> $propertyConfig
+     * @param array<string, mixed> $dataSchemaConfig
      */
-    protected function collectionSelectPart(QueryBuilder $queryBuilder, string $alias, string $propertyName, array $propertyConfig, array $dataSchemaConfig): string
-    {
+    protected function collectionSelectPart(
+        QueryBuilder $queryBuilder,
+        string $alias,
+        string $propertyName,
+        array $propertyConfig,
+        array $dataSchemaConfig,
+    ): string {
         $uniqueAlias = uniqid('row_', false);
-        $propertyAlias = $alias . '_' . $propertyName;
+        $propertyAlias = $alias.'_'.$propertyName;
         $classMetadata = $this->getClassMetadataByDataSchema($dataSchemaConfig, $propertyConfig['discriminator']);
         $propertyAssociationMapping = $classMetadata->getAssociationMapping($propertyName);
 
         $conditions = [];
-        $joins      = [];
+        $joins = [];
 
         if (!empty($propertyConfig['orderBy'])) {
             $orderBy = $propertyConfig['orderBy'];
-
         } else {
-            $orderBy = isset($propertyAssociationMapping['orderBy']) ? $propertyAssociationMapping['orderBy'] : [];
+            $orderBy = $propertyAssociationMapping['orderBy'] ?? [];
         }
 
         // Many-To-Many
-        if ($propertyAssociationMapping['type'] === ClassMetadataInfo::MANY_TO_MANY) {
+        if ($propertyAssociationMapping['type'] === ClassMetadata::MANY_TO_MANY) {
             // Owning Side
             if ($propertyAssociationMapping['isOwningSide']) {
                 $joinTable = $propertyAssociationMapping['joinTable'];
                 $relationToSourceKeyColumns = $propertyAssociationMapping['relationToSourceKeyColumns'];
                 $relationToTargetKeyColumns = $propertyAssociationMapping['relationToTargetKeyColumns'];
-                $propertyJoinAlias = $propertyAlias . '_join';
+                $propertyJoinAlias = $propertyAlias.'_join';
 
                 $joins[] = [
                     'fromAlias' => $propertyAlias,
                     'joinTable' => $joinTable['name'],
                     'joinAlias' => $propertyJoinAlias,
                     'joinCondition' => $queryBuilder->expr()->eq(
-                        $propertyJoinAlias . '.' . key($relationToTargetKeyColumns),
-                        $propertyAlias . '.' . current($relationToTargetKeyColumns)
-                    )
+                        $propertyJoinAlias.'.'.key($relationToTargetKeyColumns),
+                        $propertyAlias.'.'.current($relationToTargetKeyColumns)
+                    ),
                 ];
 
                 $conditions[] = $queryBuilder->expr()->eq(
-                    $propertyJoinAlias . '.' . key($relationToSourceKeyColumns),
-                    $alias . '.' . current($relationToSourceKeyColumns)
+                    $propertyJoinAlias.'.'.key($relationToSourceKeyColumns),
+                    $alias.'.'.current($relationToSourceKeyColumns)
                 );
-                
             } else {
                 $targetEntityClassMetadata = $this->getClassMetadata($propertyAssociationMapping['targetEntity']);
-                $targetEntityAssociationMapping = $targetEntityClassMetadata->getAssociationMapping($propertyAssociationMapping['mappedBy']);
+                $targetEntityAssociationMapping = $targetEntityClassMetadata->getAssociationMapping(
+                    $propertyAssociationMapping['mappedBy']
+                );
 
                 $joinTable = $targetEntityAssociationMapping['joinTable'];
                 $relationToSourceKeyColumns = $targetEntityAssociationMapping['relationToSourceKeyColumns'];
                 $relationToTargetKeyColumns = $targetEntityAssociationMapping['relationToTargetKeyColumns'];
-                $propertyJoinAlias = $propertyAlias . '_join';
+                $propertyJoinAlias = $propertyAlias.'_join';
 
                 $joins[] = [
                     'fromAlias' => $propertyAlias,
                     'joinTable' => $joinTable['name'],
                     'joinAlias' => $propertyJoinAlias,
                     'joinCondition' => $queryBuilder->expr()->eq(
-                        $propertyJoinAlias . '.' . key($relationToSourceKeyColumns),
-                        $propertyAlias . '.' . current($relationToTargetKeyColumns)
-                    )
+                        $propertyJoinAlias.'.'.key($relationToSourceKeyColumns),
+                        $propertyAlias.'.'.current($relationToTargetKeyColumns)
+                    ),
                 ];
 
                 $conditions[] = $queryBuilder->expr()->eq(
-                    $propertyJoinAlias . '.' . key($relationToTargetKeyColumns),
-                    $alias . '.' . current($relationToSourceKeyColumns)
+                    $propertyJoinAlias.'.'.key($relationToTargetKeyColumns),
+                    $alias.'.'.current($relationToSourceKeyColumns)
                 );
             }
 
         // One-To-Many
-        } elseif ($propertyAssociationMapping['type'] === ClassMetadataInfo::ONE_TO_MANY) {
+        } elseif ($propertyAssociationMapping['type'] === ClassMetadata::ONE_TO_MANY) {
             $targetEntityClassMetadata = $this->getClassMetadata($propertyAssociationMapping['targetEntity']);
             $targetEntityAssociationMapping = $targetEntityClassMetadata->getAssociationMapping($propertyAssociationMapping['mappedBy']);
             $sourceToTargetKeyColumns = $targetEntityAssociationMapping['sourceToTargetKeyColumns'];
 
             $conditions[] = $queryBuilder->expr()->eq(
-                $propertyAlias . '.' . key($sourceToTargetKeyColumns),
-                $alias . '.' . current($sourceToTargetKeyColumns)
+                $propertyAlias.'.'.key($sourceToTargetKeyColumns),
+                $alias.'.'.current($sourceToTargetKeyColumns)
             );
         }
 
@@ -376,13 +346,11 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
             true
         );
 
-        $part = '
+        return '
             (
-                SELECT array_to_json(array_agg(row_to_json(' . $uniqueAlias . ')))
-                FROM (' . $subSqlQueryBuilder->getSQL() . ') as ' . $uniqueAlias . '
-            ) as "' . $propertyName . '"                      
+                SELECT array_to_json(array_agg(row_to_json('.$uniqueAlias.')))
+                FROM ('.$subSqlQueryBuilder->getSQL().') as '.$uniqueAlias.'
+            ) as "'.$propertyName.'"                      
         ';
-
-        return $part;
     }
 }

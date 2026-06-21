@@ -12,79 +12,46 @@
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Article
+ * Article.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
- *
- * @ORM\Table(name="articles")
- * @ORM\Entity
  */
+#[ORM\Table(name: 'articles')]
+#[ORM\Entity]
 class Article
 {
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Column(name: 'id', type: 'integer')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private int $id;
+
+    #[ORM\Column(name: 'name', type: 'string')]
+    private string $name;
+
+    #[ORM\Column(name: 'slug', type: 'string')]
+    private string $slug;
+
+    #[ORM\Column(name: 'body', type: 'text')]
+    private string $body;
+
+    #[ORM\Column(name: 'count_events', type: 'integer')]
+    private int $countEvents;
+
+    #[ORM\Column(name: 'is_publish', type: 'boolean')]
+    private bool $publish;
+
+    #[ORM\Column(name: 'publish_at', type: 'datetime')]
+    private \DateTime $publishAt;
+
+    #[ORM\ManyToMany(targetEntity: Event::class, inversedBy: 'articles')]
+    private Collection $events;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string")
-     */
-    private $name;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="slug", type="string")
-     */
-    private $slug;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="body", type="text")
-     */
-    private $body;
-
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="count_events", type="integer")
-     */
-    private $countEvents;
-
-    /**
-     * @var boolean
-     *
-     * @ORM\Column(name="is_publish", type="boolean")
-     */
-    private $publish;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="publish_at", type="datetime")
-     */
-    private $publishAt;
-
-    /**
-     * @var ArrayCollection
-     *
-     * @ORM\ManyToMany(targetEntity="Event", inversedBy="articles")
-     */
-    private $events;
-
-    /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -92,23 +59,17 @@ class Article
     }
 
     /**
-     * Get id
-     *
-     * @return integer
+     * Get id.
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return Article
+     * Set name.
      */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -116,23 +77,17 @@ class Article
     }
 
     /**
-     * Get name
-     *
-     * @return string
+     * Get name.
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
-     * Set slug
-     *
-     * @param string $slug
-     *
-     * @return Article
+     * Set slug.
      */
-    public function setSlug($slug)
+    public function setSlug(string $slug): static
     {
         $this->slug = $slug;
 
@@ -140,23 +95,17 @@ class Article
     }
 
     /**
-     * Get slug
-     *
-     * @return string
+     * Get slug.
      */
-    public function getSlug()
+    public function getSlug(): string
     {
         return $this->slug;
     }
 
     /**
-     * Set body
-     *
-     * @param string $body
-     *
-     * @return Article
+     * Set body.
      */
-    public function setBody($body)
+    public function setBody(string $body): static
     {
         $this->body = $body;
 
@@ -164,79 +113,51 @@ class Article
     }
 
     /**
-     * Get body
-     *
-     * @return string
+     * Get body.
      */
-    public function getBody()
+    public function getBody(): string
     {
         return $this->body;
     }
 
-    /**
-     * @param int $countEvents
-     */
-    public function setCountEvents($countEvents)
+    public function setCountEvents(int $countEvents): void
     {
         $this->countEvents = $countEvents;
     }
 
-    /**
-     * @return int
-     */
-    public function getCountEvents()
+    public function getCountEvents(): int
     {
         return $this->countEvents;
     }
 
-    /**
-     * @param boolean $publish
-     *
-     * @return Article
-     */
-    public function setPublish($publish)
+    public function setPublish(bool $publish): static
     {
         $this->publish = $publish;
 
         return $this;
     }
 
-    /**
-     * @return boolean
-     */
-    public function isPublish()
+    public function isPublish(): bool
     {
         return $this->publish;
     }
 
-    /**
-     * @param \DateTime $publishAt
-     *
-     * @return Article
-     */
-    public function setPublishAt($publishAt)
+    public function setPublishAt(\DateTime $publishAt): static
     {
         $this->publishAt = $publishAt;
 
         return $this;
     }
 
-    /**
-     * @return \DateTime
-     */
-    public function getPublishAt()
+    public function getPublishAt(): \DateTime
     {
         return $this->publishAt;
     }
 
     /**
-     * Add event
-     *
-     * @param Event $event
-     *
-     * @return Article
+     * Add event.
      */
-    public function addEvent(Event $event)
+    public function addEvent(Event $event): static
     {
         $this->events[] = $event;
 
@@ -244,21 +165,17 @@ class Article
     }
 
     /**
-     * Remove event
-     *
-     * @param Event $event
+     * Remove event.
      */
-    public function removeEvent(Event $event)
+    public function removeEvent(Event $event): void
     {
         $this->events->removeElement($event);
     }
 
     /**
-     * Get events
-     *
-     * @return ArrayCollection
+     * Get events.
      */
-    public function getEvents()
+    public function getEvents(): ArrayCollection
     {
         return $this->events;
     }

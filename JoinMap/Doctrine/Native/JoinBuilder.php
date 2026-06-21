@@ -12,43 +12,35 @@
 namespace Glavweb\DatagridBundle\JoinMap\Doctrine\Native;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Mapping\MappingException;
+use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder as NativeQueryBuilder;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
 /**
- * Class JoinBuilder
+ * Class JoinBuilder.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class JoinBuilder implements JoinBuilderInterface
 {
     /**
-     * @var Registry
-     */
-    private $doctrine;
-
-    /**
      * JoinBuilder constructor.
-     *
-     * @param Registry $doctrine
      */
-    public function __construct(Registry $doctrine)
+    public function __construct(private readonly Registry $doctrine)
     {
-        $this->doctrine = $doctrine;
     }
 
     /**
      * Apply joins and get last alias.
      *
-     * @param QueryBuilder $queryBuilder
-     * @param JoinMap $joinMap
-     * @return null|string
+     * @throws MappingException
      */
-    public function apply($queryBuilder, JoinMap $joinMap): ?string
+    public function apply(NativeQueryBuilder|ORMQueryBuilder $queryBuilder, JoinMap $joinMap): ?string
     {
         $alias = null;
 
@@ -59,16 +51,15 @@ class JoinBuilder implements JoinBuilderInterface
         $alias = $rootAlias;
         foreach ($joinMap->getJoinMap() as $path => $fields) {
             foreach ($fields as $fieldData) {
-                $field    = $fieldData['field'];
+                $field = $fieldData['field'];
                 $joinType = $fieldData['joinType'];
-                $joinAlias = $alias . '_' . $field;
+                $joinAlias = $alias.'_'.$field;
 
-                if (!in_array($joinAlias, $executedAliases)) {
+                if (!\in_array($joinAlias, $executedAliases)) {
                     if ($path == $rootAlias) {
                         $classMetadata = $rootClassMetadata;
-
                     } else {
-                        $pathWithoutRootAlias = substr($path, strlen($rootAlias) + 1);
+                        $pathWithoutRootAlias = substr((string) $path, \strlen($rootAlias) + 1);
                         $classMetadata = $this->getClassMetadataByPath($pathWithoutRootAlias, $rootClassMetadata);
                     }
 
@@ -85,7 +76,7 @@ class JoinBuilder implements JoinBuilderInterface
                         if ($associationMapping['isOwningSide']) {
                             $joinTable = $associationMapping['joinTable'];
                             $joinTableName = $joinTable['name'];
-                            $joinTableAlias = $alias . '_' . $joinTable['name'];
+                            $joinTableAlias = $alias.'_'.$joinTable['name'];
 
                             $relationToSourceKeyColumns = $associationMapping['relationToSourceKeyColumns'];
 
@@ -93,7 +84,7 @@ class JoinBuilder implements JoinBuilderInterface
                                 $alias,
                                 $joinTableName,
                                 $joinTableAlias,
-                                $joinTableAlias . '.' . key($relationToSourceKeyColumns) . ' = ' . $alias . '.' . current($relationToSourceKeyColumns)
+                                $joinTableAlias.'.'.key($relationToSourceKeyColumns).' = '.$alias.'.'.current($relationToSourceKeyColumns)
                             );
 
                             $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
@@ -104,9 +95,10 @@ class JoinBuilder implements JoinBuilderInterface
                                 $alias,
                                 $fieldTableName,
                                 $joinAlias,
-                                $joinAlias . '.' . current($relationToTargetKeyColumns) . ' = ' . $joinTableAlias . '.' . key($relationToTargetKeyColumns)
+                                $joinAlias.'.'.current($relationToTargetKeyColumns).' = '.$joinTableAlias.'.'.key(
+                                    $relationToTargetKeyColumns
+                                )
                             );
-
                         } else {
                             $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
                             $fieldAssociationMapping = $fieldClassMetadata->getAssociationMapping($associationMapping['mappedBy']);
@@ -114,7 +106,7 @@ class JoinBuilder implements JoinBuilderInterface
 
                             $joinTable = $fieldAssociationMapping['joinTable'];
                             $joinTableName = $joinTable['name'];
-                            $joinTableAlias = $alias . '_' . $joinTable['name'];
+                            $joinTableAlias = $alias.'_'.$joinTable['name'];
                             $relationToSourceKeyColumns = $fieldAssociationMapping['relationToSourceKeyColumns'];
                             $relationToTargetKeyColumns = $fieldAssociationMapping['relationToTargetKeyColumns'];
 
@@ -122,17 +114,18 @@ class JoinBuilder implements JoinBuilderInterface
                                 $alias,
                                 $joinTableName,
                                 $joinTableAlias,
-                                $joinTableAlias . '.' . key($relationToTargetKeyColumns) . ' = ' . $alias . '.' . current($relationToTargetKeyColumns)
+                                $joinTableAlias.'.'.key($relationToTargetKeyColumns).' = '.$alias.'.'.current($relationToTargetKeyColumns)
                             );
 
                             $queryBuilder->$joinMethod(
                                 $alias,
                                 $fieldTableName,
                                 $joinAlias,
-                                $joinAlias . '.' . current($relationToSourceKeyColumns) . ' = ' . $joinTableAlias . '.' . key($relationToSourceKeyColumns)
+                                $joinAlias.'.'.current($relationToSourceKeyColumns).' = '.$joinTableAlias.'.'.key(
+                                    $relationToSourceKeyColumns
+                                )
                             );
                         }
-
                     } elseif ($associationMapping['type'] === ClassMetadata::ONE_TO_MANY) {
                         $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
                         $fieldAssociationMapping = $fieldClassMetadata->getAssociationMapping($associationMapping['mappedBy']);
@@ -143,9 +136,8 @@ class JoinBuilder implements JoinBuilderInterface
                             $alias,
                             $fieldTableName,
                             $joinAlias,
-                            $joinAlias . '.' . key($sourceToTargetKeyColumns) . ' = ' . $alias . '.' . current($sourceToTargetKeyColumns)
+                            $joinAlias.'.'.key($sourceToTargetKeyColumns).' = '.$alias.'.'.current($sourceToTargetKeyColumns)
                         );
-
                     } elseif ($associationMapping['type'] === ClassMetadata::MANY_TO_ONE) {
                         $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
                         $fieldTableName = $fieldClassMetadata->getTableName();
@@ -155,9 +147,8 @@ class JoinBuilder implements JoinBuilderInterface
                             $alias,
                             $fieldTableName,
                             $joinAlias,
-                            $joinAlias . '.' . current($sourceToTargetKeyColumns) . ' = ' . $alias . '.' . key($sourceToTargetKeyColumns)
+                            $joinAlias.'.'.current($sourceToTargetKeyColumns).' = '.$alias.'.'.key($sourceToTargetKeyColumns)
                         );
-
                     } elseif ($associationMapping['type'] === ClassMetadata::ONE_TO_ONE) {
                         if ($associationMapping['isOwningSide']) {
                             $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
@@ -168,9 +159,8 @@ class JoinBuilder implements JoinBuilderInterface
                                 $alias,
                                 $fieldTableName,
                                 $joinAlias,
-                                $alias . '.' . key($sourceToTargetKeyColumns) . ' = ' . $joinAlias . '.' . current($sourceToTargetKeyColumns)
+                                $alias.'.'.key($sourceToTargetKeyColumns).' = '.$joinAlias.'.'.current($sourceToTargetKeyColumns)
                             );
-
                         } else {
                             $fieldClassMetadata = $this->getClassMetadata($associationMapping['targetEntity']);
                             $fieldTableName = $fieldClassMetadata->getTableName();
@@ -181,7 +171,7 @@ class JoinBuilder implements JoinBuilderInterface
                                 $alias,
                                 $fieldTableName,
                                 $joinAlias,
-                                $alias . '.' . current($sourceToTargetKeyColumns) . ' = ' . $joinAlias . '.' . key($sourceToTargetKeyColumns)
+                                $alias.'.'.current($sourceToTargetKeyColumns).' = '.$joinAlias.'.'.key($sourceToTargetKeyColumns)
                             );
                         }
                     }
@@ -194,11 +184,6 @@ class JoinBuilder implements JoinBuilderInterface
         return $alias;
     }
 
-    /**
-     * @param string $path
-     * @param ClassMetadata $rootClassMetadata
-     * @return ClassMetadata
-     */
     protected function getClassMetadataByPath(string $path, ClassMetadata $rootClassMetadata): ClassMetadata
     {
         $parts = explode('.', $path);
@@ -211,17 +196,13 @@ class JoinBuilder implements JoinBuilderInterface
         $fieldAssociationMapping = $rootClassMetadata->getAssociationMapping($fieldName);
         $fieldClassMetadata = $this->getClassMetadata($fieldAssociationMapping['targetEntity']);
 
-        if (!empty($parts)) {
+        if ($parts !== []) {
             return $this->getClassMetadataByPath(implode('.', $parts), $fieldClassMetadata);
         }
 
         return $fieldClassMetadata;
     }
 
-    /**
-     * @param string $className
-     * @return ClassMetadata
-     */
     private function getClassMetadata(string $className): ClassMetadata
     {
         /** @var EntityManager $em */
@@ -230,30 +211,8 @@ class JoinBuilder implements JoinBuilderInterface
         return $em->getClassMetadata($className);
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @return array
-     */
     private function executedAliases(QueryBuilder $queryBuilder): array
     {
-        $aliases = [];
-        $fromParts = $queryBuilder->getQueryPart('from');
-        $joinParts = $queryBuilder->getQueryPart('join');
-
-        foreach ($fromParts as $fromPart) {
-            $aliases[] = $fromPart['alias'];
-        }
-
-        foreach ($joinParts as $alias => $joinPart) {
-            $aliases[] = $alias;
-
-            foreach ($joinPart as $join) {
-                $aliases[] = $join['joinAlias'];
-            }
-        }
-
-        $aliases = array_unique($aliases);
-
-        return $aliases;
+        return array_unique([$queryBuilder->getFromAliases(), $queryBuilder->getJoinAliases()]);
     }
 }

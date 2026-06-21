@@ -12,60 +12,40 @@
 namespace Glavweb\DatagridBundle\Datagrid\Doctrine;
 
 use Doctrine\ORM\NativeQuery;
-use Doctrine\ORM\Query;
+use Doctrine\ORM\Query\ResultSetMapping;
 use Glavweb\DatagridBundle\Builder\Doctrine\ORM\DatagridContext;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 
 /**
- * Class NativeSqlDatagrid
+ * Class NativeSqlDatagrid.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class NativeSqlDatagrid extends AbstractDatagrid
 {
-    /**
-     * @var NativeQuery
-     */
-    protected $query;
+    private readonly DataSchema $dataSchema;
 
-    /**
-     * @var DataSchema
-     */
-    private $dataSchema;
+    protected NativeQuery $queryCount;
 
-    /**
-     * @var NativeQuery
-     */
-    protected $queryCount;
-
-    /**
-     * @param NativeQuery     $query
-     * @param DatagridContext $context
-     */
-    public function __construct(NativeQuery $query, DatagridContext $context)
+    public function __construct(protected NativeQuery $query, DatagridContext $context)
     {
-        $this->query       = $query;
-        $this->queryCount  = clone $query;
+        $this->queryCount = clone $this->query;
 
-        foreach ($query->getParameters() as $key => $parameter) {
+        foreach ($this->query->getParameters() as $key => $parameter) {
             $this->queryCount->setParameter($key, $parameter->getValue(), $parameter->getType());
         }
 
-        $this->dataSchema  = $context->getDataSchema();
-        $this->orderings   = $context->transformOrderingForNativeSql($context->getOrderings());
+        $this->dataSchema = $context->getDataSchema();
+        $this->orderings = $context->transformOrderingForNativeSql($context->getOrderings());
         $this->firstResult = $context->getFirstResult();
-        $this->maxResults  = $context->getMaxResults();
+        $this->maxResults = $context->getMaxResults();
 
         if ($this->dataSchema->getHydrationMode() !== null) {
             $this->setHydrationMode($this->dataSchema->getHydrationMode());
         }
     }
 
-    /**
-     * @return array
-     */
-    public function getItem()
+    public function getItem(): array
     {
         $query = $this->createQuery();
 
@@ -77,10 +57,7 @@ class NativeSqlDatagrid extends AbstractDatagrid
         return $result;
     }
 
-    /**
-     * @return array
-     */
-    public function getList()
+    public function getList(): array
     {
         $query = $this->createQuery();
 
@@ -92,28 +69,24 @@ class NativeSqlDatagrid extends AbstractDatagrid
         return $result;
     }
 
-    /**
-     * @return int
-     */
-    public function getTotal()
+    public function getTotal(): int
     {
         $query = $this->queryCount;
 
         $sql = $query->getSQL();
         $sql = preg_replace('/SELECT .*? FROM/', 'SELECT COUNT(*) as count FROM', $sql, 1);
+
         $query->setSQL($sql);
 
-        $rsm = new Query\ResultSetMapping();
+        $rsm = new ResultSetMapping();
         $rsm->addScalarResult('count', 'count');
+
         $query->setResultSetMapping($rsm);
 
-        return (int)$query->getSingleScalarResult();
+        return (int) $query->getSingleScalarResult();
     }
 
-    /**
-     * @return NativeQuery
-     */
-    private function createQuery()
+    private function createQuery(): NativeQuery
     {
         $query = $this->query;
         $sql = $query->getSQL();
@@ -122,23 +95,24 @@ class NativeSqlDatagrid extends AbstractDatagrid
         if ($orderings) {
             $orderParts = [];
             foreach ($orderings as $fieldName => $sort) {
-                $orderParts[] = $fieldName . ' ' . $sort;
+                $orderParts[] = $fieldName.' '.$sort;
             }
 
-            $sql .= ' ORDER BY ' . implode(',', $orderParts);
+            $sql .= ' ORDER BY '.implode(',', $orderParts);
         }
 
         $limit = $this->getMaxResults();
         if ($limit) {
-            $sql .= ' LIMIT ' . $limit;
+            $sql .= ' LIMIT '.$limit;
         }
 
         $offset = $this->getFirstResult();
         if ($offset) {
-            $sql .= ' OFFSET ' . $offset;
+            $sql .= ' OFFSET '.$offset;
         }
 
         $query->setSQL($sql);
+
         return $query;
     }
 }

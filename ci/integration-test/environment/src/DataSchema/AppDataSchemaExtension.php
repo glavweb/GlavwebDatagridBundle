@@ -6,42 +6,33 @@ use App\Entity\Article;
 use Glavweb\DataSchemaBundle\DataTransformer\DataTransformerInterface;
 use Glavweb\DataSchemaBundle\DataTransformer\SimpleDataTransformer;
 use Glavweb\DataSchemaBundle\DataTransformer\TransformEvent;
-use Glavweb\DataSchemaBundle\Extension\ExtensionInterface;
+use Glavweb\DataSchemaBundle\Extension\AbstractExtension;
 
 /**
- * Class AppDataSchemaExtension
+ * Class AppDataSchemaExtension.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
-class AppDataSchemaExtension implements ExtensionInterface
+class AppDataSchemaExtension extends AbstractExtension
 {
     /**
      * @return DataTransformerInterface[]
      */
-    public function getDataTransformers()
+    #[\Override]
+    public function getDataTransformers(): array
     {
         return [
-            'upper' => new SimpleDataTransformer([$this, 'transformUpper']),
-            'concat_slug_with_year' => new SimpleDataTransformer([$this, 'transformConcatSlugWithYear']),
-            'has_events' => new SimpleDataTransformer([$this, 'transformHasEvents']),
+            'upper' => new SimpleDataTransformer($this->transformUpper(...)),
+            'concat_slug_with_year' => new SimpleDataTransformer($this->transformConcatSlugWithYear(...)),
+            'has_events' => new SimpleDataTransformer($this->transformHasEvents(...)),
         ];
     }
 
-    /**
-     * @param $value
-     * @param TransformEvent $event
-     * @return string
-     */
     public function transformUpper($value, TransformEvent $event): string
     {
-        return strtoupper($value);
+        return strtoupper((string) $value);
     }
 
-    /**
-     * @param $value
-     * @param TransformEvent $event
-     * @return string
-     */
     public function transformConcatSlugWithYear($value, TransformEvent $event): string
     {
         if ($event->getClassName() !== Article::class) {
@@ -49,16 +40,11 @@ class AppDataSchemaExtension implements ExtensionInterface
         }
 
         $data = $event->getData();
-        $publishAt = !$data['publishAt'] instanceof \DateTime ? (new \DateTime($data['publishAt'])) : $data['publishAt'];
+        $publishAt = $data['publishAt'] instanceof \DateTime ? ($data['publishAt']) : new \DateTime($data['publishAt']);
 
-        return $data['slug'] . '_' . $publishAt->format('Y');
+        return $data['slug'].'_'.$publishAt->format('Y');
     }
 
-    /**
-     * @param $articleEvents
-     * @param TransformEvent $event
-     * @return bool
-     */
     public function transformHasEvents($articleEvents, TransformEvent $event): bool
     {
         if ($event->getClassName() !== Article::class) {
@@ -67,4 +53,4 @@ class AppDataSchemaExtension implements ExtensionInterface
 
         return $articleEvents > 0;
     }
- }
+}

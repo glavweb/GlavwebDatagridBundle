@@ -14,17 +14,11 @@ namespace Glavweb\DatagridBundle\Factory;
 use Glavweb\DatagridBundle\Builder\Doctrine\AbstractDatagridBuilder;
 
 /**
- * Class DatagridFactoryInterface
+ * Class DatagridFactoryInterface.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 interface DatagridFactoryInterface
 {
-    /**
-     * @param string $dataSchemaFile
-     * @param string|null $scopeFile
-     * @param string|null $propertyPath
-     * @return AbstractDatagridBuilder
-     */
-    public function createBuilder(string $dataSchemaFile, string $scopeFile = null, string $propertyPath = null): AbstractDatagridBuilder;
+    public function createBuilder(string $dataSchemaFile, ?string $scopeFile = null, ?string $propertyPath = null): AbstractDatagridBuilder;
 }

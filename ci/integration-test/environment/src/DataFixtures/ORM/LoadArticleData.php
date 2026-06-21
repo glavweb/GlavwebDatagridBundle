@@ -18,48 +18,44 @@ use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
 /**
- * Class LoadArticleData
+ * Class LoadArticleData.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
  */
 class LoadArticleData extends Fixture implements OrderedFixtureInterface
 {
-    /**
-     * @param ObjectManager $manager
-     */
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $data = [
             [
-                'name'        => 'Article 1',
-                'slug'        => 'article-1',
-                'body'        => 'Article about Katy',
+                'name' => 'Article 1',
+                'slug' => 'article-1',
+                'body' => 'Article about Katy',
                 'countEvents' => 2,
-                'publish'     => true,
-                'publishAt'   => '2016-05-09 10:00',
-                'events'      => ['event-1', 'event-2'],
-                'reference'   => 'article-1'
+                'publish' => true,
+                'publishAt' => '2016-05-09 10:00',
+                'events' => ['event-1', 'event-2'],
+                'reference' => 'article-1',
             ],
             [
-                'name'        => 'Article 2',
-                'slug'        => 'article-2',
-                'body'        => 'Article about Mary',
+                'name' => 'Article 2',
+                'slug' => 'article-2',
+                'body' => 'Article about Mary',
                 'countEvents' => 1,
-                'publish'     => false,
-                'publishAt'   => '2016-05-10 11:00',
-                'events'      => ['event-3'],
-                'reference'   => 'article-2'
+                'publish' => false,
+                'publishAt' => '2016-05-10 11:00',
+                'events' => ['event-3'],
+                'reference' => 'article-2',
             ],
             [
-                'name'        => 'Article 3',
-                'slug'        => 'article-3',
-                'body'        => 'Article about Niki',
+                'name' => 'Article 3',
+                'slug' => 'article-3',
+                'body' => 'Article about Niki',
                 'countEvents' => 0,
-                'publish'     => false,
-                'publishAt'   => '2016-05-11 12:00',
-                'events'      => [],
-                'reference'   => 'article-3'
+                'publish' => false,
+                'publishAt' => '2016-05-11 12:00',
+                'events' => [],
+                'reference' => 'article-3',
             ],
         ];
 
@@ -72,9 +68,8 @@ class LoadArticleData extends Fixture implements OrderedFixtureInterface
             $article->setPublish($item['publish']);
             $article->setPublishAt(new \DateTime($item['publishAt']));
 
-            foreach ($item['events'] as $event) {
-                /** @var Event $event */
-                $event = $this->getReference($event);
+            foreach ($item['events'] as $eventName) {
+                $event = $this->getReference($eventName, Event::class);
                 $article->addEvent($event);
             }
 
@@ -86,7 +81,7 @@ class LoadArticleData extends Fixture implements OrderedFixtureInterface
         $manager->flush();
     }
 
-    public function getOrder()
+    public function getOrder(): int
     {
         return 3;
     }

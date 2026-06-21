@@ -15,76 +15,54 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\QueryBuilder;
-use Doctrine\DBAL\Query\QueryBuilder as NativeQueryBuilder;
-use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder as NativeQueryBuilder;
 use Glavweb\DatagridBundle\Filter\FilterStack;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DataSchemaBundle\DataSchema\Placeholder;
 
 /**
- * Class AbstractQueryBuilderFactory
+ * Class AbstractQueryBuilderFactory.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 abstract class AbstractQueryBuilderFactory
 {
-    /**
-     * @var Registry
-     */
-    protected $doctrine;
-
-    /**
-     * @var Placeholder
-     */
-    protected $placeholder;
-
-    /**
-     * @param array $parameters
-     * @param string $alias
-     * @param DataSchema $dataSchema
-     * @param FilterStack $filterStack
-     * @param JoinMap|null $joinMap
-     * @return NativeQueryBuilder|QueryBuilder
-     */
-    abstract public function create(array $parameters, string $alias, DataSchema $dataSchema, FilterStack $filterStack, JoinMap $joinMap = null);
+    abstract public function create(
+        array $parameters,
+        string $alias,
+        DataSchema $dataSchema,
+        FilterStack $filterStack,
+        ?JoinMap $joinMap = null,
+    ): NativeQueryBuilder|QueryBuilder;
 
     /**
      * QueryBuilderFactory constructor.
-     *
-     * @param Registry $doctrine
-     * @param Placeholder $placeholder
      */
-    public function __construct(Registry $doctrine, Placeholder $placeholder)
+    public function __construct(protected Registry $doctrine, protected Placeholder $placeholder)
     {
-        $this->doctrine = $doctrine;
-        $this->placeholder = $placeholder;
     }
 
     /**
-     * @param array $config
-     * @param string|null $discriminator
-     * @return string
+     * @param array<string, mixed> $config
      */
-    protected function getClassNameByDataSchema(array $config, string $discriminator = null): string
+    protected function getClassNameByDataSchema(array $config, ?string $discriminator = null): string
     {
         $class = $config['class'];
 
         if ($discriminator && !isset($config['discriminatorMap'][$discriminator])) {
-            var_dump($config, $discriminator); echo __CLASS__ . ': ' . __LINE__; exit;
+            var_dump($config, $discriminator);
+            echo self::class.': '.__LINE__;
+            exit;
         }
 
         if ($discriminator && isset($config['discriminatorMap'][$discriminator])) {
-            $class = $config['discriminatorMap'][$discriminator];
+            return $config['discriminatorMap'][$discriminator];
         }
 
         return $class;
     }
 
-    /**
-     * @param string $class
-     * @return ClassMetadata
-     */
     protected function getClassMetadata(string $class): ClassMetadata
     {
         /** @var EntityManager $em */
@@ -93,12 +71,7 @@ abstract class AbstractQueryBuilderFactory
         return $em->getClassMetadata($class);
     }
 
-    /**
-     * @param array $config
-     * @param string|null $discriminator
-     * @return ClassMetadata
-     */
-    protected function getClassMetadataByDataSchema(array $config, string $discriminator = null): ClassMetadata
+    protected function getClassMetadataByDataSchema(array $config, ?string $discriminator = null): ClassMetadata
     {
         return $this->getClassMetadata(
             $this->getClassNameByDataSchema($config, $discriminator)

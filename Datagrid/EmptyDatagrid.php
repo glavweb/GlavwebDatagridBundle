@@ -12,57 +12,38 @@
 namespace Glavweb\DatagridBundle\Datagrid;
 
 /**
- * Class EmptyDatagrid
+ * Class EmptyDatagrid.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class EmptyDatagrid implements DatagridInterface
 {
-    /**
-     * @return array
-     */
-    public function getOrderings()
+    public function getOrderings(): array
     {
         return [];
     }
 
-    /**
-     * @return int
-     */
-    public function getFirstResult()
+    public function getFirstResult(): int
     {
         return 0;
     }
 
-    /**
-     * @return int|null
-     */
-    public function getMaxResults()
+    public function getMaxResults(): ?int
     {
         return null;
     }
 
-    /**
-     * @return array
-     */
-    public function getList()
+    public function getList(): array
     {
         return [];
     }
 
-    /**
-     * @return array
-     */
-    public function getItem()
+    public function getItem(): array
     {
         return [];
     }
 
-    /**
-     * @return int
-     */
-    public function getTotal()
+    public function getTotal(): int
     {
         return 0;
     }

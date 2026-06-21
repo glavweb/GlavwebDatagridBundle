@@ -12,10 +12,10 @@
 namespace Glavweb\DatagridBundle\Exception;
 
 /**
- * Class Exception
+ * Class Exception.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class Exception extends \Exception
-{}
+{
+}

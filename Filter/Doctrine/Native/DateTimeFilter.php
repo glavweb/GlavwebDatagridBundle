@@ -11,46 +11,35 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine\Native;
 
-use Doctrine\DBAL\Query\QueryBuilder;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Class DateTimeFilter
+ * Class DateTimeFilter.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class DateTimeFilter extends AbstractFilter
 {
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param string $alias
-     * @param $fieldName
-     * @param mixed $value
-     */
-    protected function doFilter(QueryBuilder $queryBuilder, $alias, $fieldName, $value)
+    protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value): void
     {
-        $executeCondition = function ($field, $inValue) use ($queryBuilder) {
+        $executeCondition = function (string $field, $inValue) use ($queryBuilder): void {
             [$operator, $value] = $this->getOperatorAndValue($inValue, $this->replaceOperators());
 
             $this->executeCondition($queryBuilder, $operator, $field, $value);
         };
 
-        $field = $alias . '.' . $this->getColumnName($fieldName);
+        $field = $alias.'.'.$this->getColumnName($fieldName);
 
-        if (is_array($value) && $this->existsOperatorsInValues($value)) {
+        if (\is_array($value) && $this->existsOperatorsInValues($value)) {
             foreach ($value as $item) {
                 $executeCondition($field, $item);
             }
-
         } else {
             $executeCondition($field, $value);
         }
     }
 
-    /**
-     * @return array
-     */
-    protected function getAllowOperators()
+    protected function getAllowOperators(): array
     {
         return [
             self::EQ,
@@ -62,27 +51,25 @@ class DateTimeFilter extends AbstractFilter
             self::IN,
             self::NIN,
             self::CONTAINS,
-            self::NOT_CONTAINS
+            self::NOT_CONTAINS,
         ];
     }
 
     /**
-     * @return array
+     * @return array<string, string>
      */
     protected function replaceOperators(): array
     {
         return [
             self::CONTAINS => self::EQ,
-            self::NOT_CONTAINS => self::NEQ
+            self::NOT_CONTAINS => self::NEQ,
         ];
     }
 
     /**
-     * Default operator. Use if operator can't defined.
-     *
-     * @return string
+     * Default operator. Use if operator can't be defined.
      */
-    protected function getDefaultOperator()
+    protected function getDefaultOperator(): string
     {
         return self::EQ;
     }

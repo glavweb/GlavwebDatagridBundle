@@ -1,12 +1,12 @@
 doctrine:
     dbal:
+        server_version: '16'
         url: "%env(resolve:DATABASE_URL)%"
         charset: UTF8
         mapping_types:
             enum: string
 
     orm:
-        auto_generate_proxy_classes: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         hydrators:
             DatagridHydrator: Glavweb\DataSchemaBundle\Hydrator\Doctrine\DatagridHydrator
@@ -15,7 +15,7 @@ doctrine:
         mappings:
             App:
                 is_bundle: false
-                type: annotation
+                type: attribute
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App

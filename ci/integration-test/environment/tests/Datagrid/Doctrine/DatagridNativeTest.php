@@ -13,14 +13,13 @@ namespace App\Tests\Datagrid\Doctrine;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
-use Glavweb\DatagridBundle\Builder\Doctrine\AbstractDatagridBuilder;
 use Glavweb\DatagridBundle\Factory\DatagridFactoryInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * Class DatagridNativeTest
+ * Class DatagridNativeTest.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class DatagridNativeTest extends KernelTestCase
@@ -30,45 +29,41 @@ class DatagridNativeTest extends KernelTestCase
         self::bootKernel();
     }
 
-    /**
-     * @return DatagridFactoryInterface
-     */
     protected function getDatagridFactory(): DatagridFactoryInterface
     {
         /** @var DatagridFactoryInterface $factory */
-        $factory = self::$container->get('glavweb_datagrid.native_factory');
+        $factory = $this->getContainer()->get('glavweb_datagrid.native_factory');
 
         return $factory;
     }
 
     /**
-     * Test datagrid data schema
+     * Test datagrid data schema.
      */
-    public function testDatagridDataSchema()
+    public function testDatagridDataSchema(): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
-            'article/simple_data.schema.yml'
+            'article/simple_data.schema.yml',
+            'article/view.yml'
         );
 
         $datagrid = $datagridBuilder->build();
         $list = $datagrid->getList();
 
-        $this->assertEquals(3, count($list));
+        $this->assertEquals(3, \count($list));
 
         $this->assertEquals([
             'name' => 'Article 1',
             'slug' => 'article-1',
-            'body' => 'Article about Katy'
+            'body' => 'Article about Katy',
         ], $list[0]);
     }
 
     /**
-     * Test datagrid scope
+     * Test datagrid scope.
      */
-    public function testDatagridScope()
+    public function testDatagridScope(): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
             'article/simple_data.schema.yml',
             'article/short.yml'
@@ -77,7 +72,7 @@ class DatagridNativeTest extends KernelTestCase
         $datagrid = $datagridBuilder->build();
         $list = $datagrid->getList();
 
-        $this->assertEquals(3, count($list));
+        $this->assertEquals(3, \count($list));
 
         $this->assertEquals([
             'name' => 'Article 1',
@@ -85,13 +80,13 @@ class DatagridNativeTest extends KernelTestCase
     }
 
     /**
-     * Test datagrid scope
+     * Test datagrid scope.
      */
-    public function testJoinFirstLevel()
+    public function testJoinFirstLevel(): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
-            'test_joins_first_level.schema.yml'
+            'test_joins_first_level.schema.yml',
+            'event/join_first_level.yml'
         );
 
         $datagrid = $datagridBuilder->build();
@@ -100,10 +95,10 @@ class DatagridNativeTest extends KernelTestCase
         $this->assertEquals([
             'name' => 'Event 1',
             'eventDetail' => [
-                'body' => 'Body for event detail 1'
+                'body' => 'Body for event detail 1',
             ],
             'eventGroup' => [
-                'name' => 'Event group 1'
+                'name' => 'Event group 1',
             ],
             'sessions' => [
                 ['name' => 'Session 1'],
@@ -111,19 +106,19 @@ class DatagridNativeTest extends KernelTestCase
             ],
             'tags' => [
                 ['name' => 'Tag 1'],
-                ['name' => 'Tag 2']
+                ['name' => 'Tag 2'],
             ],
         ], $list[0]);
     }
 
     /**
-     * Test datagrid scope
+     * Test datagrid scope.
      */
-    public function testJoinSecondLevel()
+    public function testJoinSecondLevel(): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
-            'test_joins_second_level.schema.yml'
+            'test_joins_second_level.schema.yml',
+            'article/join_second_level.yml'
         );
 
         $datagrid = $datagridBuilder->build();
@@ -135,10 +130,10 @@ class DatagridNativeTest extends KernelTestCase
                 [
                     'name' => 'Event 3',
                     'eventDetail' => [
-                        'body' => 'Body for event detail 3'
+                        'body' => 'Body for event detail 3',
                     ],
                     'eventGroup' => [
-                        'name' => 'Event group 2'
+                        'name' => 'Event group 2',
                     ],
                     'sessions' => [
                         ['name' => 'Session 8'],
@@ -152,24 +147,22 @@ class DatagridNativeTest extends KernelTestCase
                     ],
                     'tags' => [
                         ['name' => 'Tag 4'],
-                        ['name' => 'Tag 5']
+                        ['name' => 'Tag 5'],
                     ],
-                ]
-            ]
+                ],
+            ],
         ], $list[1]);
     }
 
     /**
-     * Test simple decode
-     *
-     * @dataProvider dataTestDecodeWithQuerySelects
-     * @param string $dataSchemaFile
+     * Test simple decode.
      */
-    public function testDecodeWithQuerySelects($dataSchemaFile)
+    #[DataProvider('dataTestDecodeWithQuerySelects')]
+    public function testDecodeWithQuerySelects(string $dataSchemaFile): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
-            $dataSchemaFile
+            $dataSchemaFile,
+            'article/query_selects.yml'
         );
 
         $datagrid = $datagridBuilder->build();
@@ -179,53 +172,45 @@ class DatagridNativeTest extends KernelTestCase
             'name' => 'ARTICLE 1',
             'allEvents' => 3,
             'slugWithYear' => 'article-1_2016',
-            'hasEvents' => true
+            'hasEvents' => true,
         ], $list[0]);
     }
 
     /**
-     * Test datagrid filters
+     * Test datagrid filters.
      *
-     * @dataProvider dataTestFilters
-     *
-     * @param string $filterName
-     * @param array  $cases
+     * @param array<int, array<array<int|string, array<string, string>|string>|int>> $cases
      */
-    public function testDatagridFilters($filterName, $cases)
+    #[DataProvider('dataTestFilters')]
+    public function testDatagridFilters(string $filterName, array $cases): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
-            'article/simple_data.schema.yml', 
+            'article/simple_data.schema.yml',
             'article/short.yml'
         );
 
         // Define filters
         $datagridBuilder
-            ->addFilter($filterName)
-        ;
+            ->addFilter($filterName);
 
         foreach ($cases as $key => $case) {
             $datagrid = $datagridBuilder->build($case['params']);
             $list = $datagrid->getList();
 
-            $message = sprintf('Filter name: %s, Case: %s', $filterName, $key);
-            $this->assertEquals($case['count'], count($list), $message);
+            $message = \sprintf('Filter name: %s, Case: %s', $filterName, $key);
+            $this->assertEquals($case['count'], \count($list), $message);
             $this->assertEquals($case['actual'], $list, $message);
         }
     }
 
     /**
-     * Test datagrid second filters
+     * Test datagrid second filters.
      *
-     * @dataProvider dataTestSecondFilters
-     *
-     * @param string $filterName
-     * @param string $paramName
-     * @param array  $cases
+     * @param array<int, array<array<int|string, array<string, string>|string>|int>> $cases
      */
-    public function testDatagridSecondFilters($filterName, $paramName, $cases)
+    #[DataProvider('dataTestSecondFilters')]
+    public function testDatagridSecondFilters(string $filterName, string $paramName, array $cases): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
             'event/simple_data.schema.yml',
             'event/short.yml'
@@ -234,32 +219,27 @@ class DatagridNativeTest extends KernelTestCase
         // Define filters
         $datagridBuilder
             ->addFilter($filterName, null, [
-                'param_name' => $paramName
-            ])
-        ;
+                'param_name' => $paramName,
+            ]);
 
         foreach ($cases as $key => $case) {
             $datagrid = $datagridBuilder->build($case['params']);
             $list = $datagrid->getList();
 
-            $message = sprintf('Filter name: %s, Case: %s', $filterName, $key);
-            $this->assertEquals($case['count'], count($list), $message);
+            $message = \sprintf('Filter name: %s, Case: %s', $filterName, $key);
+            $this->assertEquals($case['count'], \count($list), $message);
             $this->assertEquals($case['actual'], $list, $message);
         }
     }
 
     /**
-     * Test datagrid second filters
+     * Test datagrid second filters.
      *
-     * @dataProvider dataTestJoinedFilters
-     *
-     * @param string $filterName
-     * @param string $paramName
-     * @param array  $cases
+     * @param array<int, array<string, array<int|string, array<string, string>|string>|int>> $cases
      */
-    public function testDatagridJoinedFilters($filterName, $paramName, $cases)
+    #[DataProvider('dataTestJoinedFilters')]
+    public function testDatagridJoinedFilters(string $filterName, string $paramName, array $cases): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
             'event/simple_data.schema.yml',
             'event/short.yml'
@@ -268,27 +248,25 @@ class DatagridNativeTest extends KernelTestCase
         // Define filters
         $datagridBuilder
             ->addFilter($filterName, null, [
-                'param_name' => $paramName
+                'param_name' => $paramName,
             ])
-            ->setOrderings(['name' => 'desc'])
-        ;
+            ->setOrderings(['name' => 'desc']);
 
         foreach ($cases as $key => $case) {
             $datagrid = $datagridBuilder->build($case['params']);
             $list = $datagrid->getList();
 
-            $message = sprintf('Filter name: %s, Case: %s', $filterName, $key);
-            $this->assertEquals($case['count'], count($list), $message);
+            $message = \sprintf('Filter name: %s, Case: %s', $filterName, $key);
+            $this->assertEquals($case['count'], \count($list), $message);
             $this->assertEquals($case['actual'], $list, $message);
         }
     }
 
     /**
-     * Test datagrid filters
+     * Test datagrid filters.
      */
-    public function testDatagridOneToOneJoinedFilters()
+    public function testDatagridOneToOneJoinedFilters(): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
             'event_detail/simple_data.schema.yml',
             'event_detail/short.yml'
@@ -297,33 +275,28 @@ class DatagridNativeTest extends KernelTestCase
         // Define filters
         $datagridBuilder
             ->addFilter('event.name', null, [
-                'param_name' => 'eventName'
-            ])
-        ;
+                'param_name' => 'eventName',
+            ]);
 
         $datagrid = $datagridBuilder->build([
-            'eventName' => 'Event 1'
+            'eventName' => 'Event 1',
         ]);
 
         $list = $datagrid->getList();
 
         $this->assertEquals($list, [
-            ['body' => 'Body for event detail 1']
+            ['body' => 'Body for event detail 1'],
         ]);
     }
 
     /**
-     * Test datagrid model filters
+     * Test datagrid model filters.
      *
-     * @dataProvider dataTestModelFilters
-     *
-     * @param string $filterName
-     * @param string $paramName
-     * @param array  $cases
+     * @param array<int, array<string, array<int|string, array<string, string>|class-string<\Event>|string>|int>> $cases
      */
-    public function testDatagridModelFilters($filterName, $paramName, $cases)
+    #[DataProvider('dataTestModelFilters')]
+    public function testDatagridModelFilters(string $filterName, string $paramName, array $cases): void
     {
-        /** @var AbstractDatagridBuilder $datagridBuilder */
         $datagridBuilder = $this->getDatagridFactory()->createBuilder(
             'article/simple_data.schema.yml',
             'article/short.yml'
@@ -332,39 +305,38 @@ class DatagridNativeTest extends KernelTestCase
         // Define filters
         $datagridBuilder
             ->addFilter($filterName, null, [
-                'param_name' => $paramName
-            ])
-        ;
+                'param_name' => $paramName,
+            ]);
 
         foreach ($cases as $key => $case) {
             $entity = $this->getEntityByName($case['entity']['className'], $case['entity']['name']);
             $datagrid = $datagridBuilder->build([
-                $case['entity']['param'] => $entity->getId()
+                $case['entity']['param'] => $entity->getId(),
             ]);
             $list = $datagrid->getList();
 
-            $message = sprintf('Filter name: %s, Case: %s', $filterName, $key);
-            $this->assertEquals($case['count'], count($list), $message);
+            $message = \sprintf('Filter name: %s, Case: %s', $filterName, $key);
+            $this->assertEquals($case['count'], \count($list), $message);
             $this->assertEquals($case['actual'], $list, $message);
         }
     }
 
     /**
-     * @return array
+     * @return array<int, array<string, string>>
      */
-    public function dataTestDecodeWithQuerySelects()
+    public static function dataTestDecodeWithQuerySelects(): array
     {
         return [
             [
-                'dataSchemaFile' => 'test_decode_with_query_selects.schema.yml'
-            ]
+                'dataSchemaFile' => 'test_decode_with_query_selects.schema.yml',
+            ],
         ];
     }
 
     /**
-     * @return array
+     * @return array<mixed, array<string, string|array<int, array<string, int|string[]|array<string, string>[]>>>>
      */
-    public function dataTestFilters()
+    public static function dataTestFilters(): array
     {
         return [
             // String filter
@@ -373,41 +345,41 @@ class DatagridNativeTest extends KernelTestCase
                 'cases' => [
                     [
                         'params' => ['body' => 'Katy'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
                     [
                         'params' => ['body' => '=Article about Katy'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
                     [
                         'params' => ['body' => '!=Article about Katy'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Article 2'],
-                            ['name' => 'Article 3']
-                        ]
+                            ['name' => 'Article 3'],
+                        ],
                     ],
                     [
                         'params' => ['body' => 'Article'],
-                        'count'  => 3,
+                        'count' => 3,
                         'actual' => [
                             ['name' => 'Article 1'],
                             ['name' => 'Article 2'],
                             ['name' => 'Article 3'],
-                        ]
+                        ],
                     ],
                     [
                         'params' => ['body' => '!Article'],
-                        'count'  => 0,
-                        'actual' => []
+                        'count' => 0,
+                        'actual' => [],
                     ],
-                ]
+                ],
             ],
 
             // Number filter
@@ -416,35 +388,35 @@ class DatagridNativeTest extends KernelTestCase
                 'cases' => [
                     [
                         'params' => ['countEvents' => '2'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
                     [
                         'params' => ['countEvents' => '!1'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Article 1'],
-                            ['name' => 'Article 3']
-                        ]
+                            ['name' => 'Article 3'],
+                        ],
                     ],
                     [
                         'params' => ['countEvents' => '<2'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Article 2'],
-                            ['name' => 'Article 3']
-                        ]
+                            ['name' => 'Article 3'],
+                        ],
                     ],
                     [
                         'params' => ['countEvents' => '>1'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
-                ]
+                ],
             ],
 
             // Boolean filter
@@ -453,27 +425,27 @@ class DatagridNativeTest extends KernelTestCase
                 'cases' => [
                     [
                         'params' => ['publish' => '1'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
                     [
                         'params' => ['publish' => '0'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Article 2'],
-                            ['name' => 'Article 3']
-                        ]
+                            ['name' => 'Article 3'],
+                        ],
                     ],
                     [
                         'params' => ['publish' => '!0'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
-                ]
+                ],
             ],
 
             // DateTime filter
@@ -482,317 +454,312 @@ class DatagridNativeTest extends KernelTestCase
                 'cases' => [
                     [
                         'params' => ['publishAt' => '2016-05-09 10:00'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
                     [
                         'params' => ['publishAt' => '!2016-05-09 10:00'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Article 2'],
-                            ['name' => 'Article 3']
-                        ]
+                            ['name' => 'Article 3'],
+                        ],
                     ],
                     [
                         'params' => ['publishAt' => '>2016-05-09 10:00'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Article 2'],
-                            ['name' => 'Article 3']
-                        ]
+                            ['name' => 'Article 3'],
+                        ],
                     ],
                     [
                         'params' => ['publishAt' => '<2016-05-10'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
-                ]
+                ],
             ],
         ];
     }
 
     /**
-     * @return array
+     * @return array<mixed, array<string, string|array<int, array<string, int|string[]|array<string, string>[]>>>>
      */
-    public function dataTestSecondFilters()
+    public static function dataTestSecondFilters(): array
     {
         return [
             // String filter
             [
                 'filterName' => 'articles.body',
-                'paramName'  => 'articleBody',
+                'paramName' => 'articleBody',
                 'cases' => [
                     [
                         'params' => ['articleBody' => 'Mary'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Event 3']
-                        ]
+                            ['name' => 'Event 3'],
+                        ],
                     ],
                     [
                         'params' => ['articleBody' => '=Article about Mary'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Event 3']
-                        ]
+                            ['name' => 'Event 3'],
+                        ],
                     ],
                     [
                         'params' => ['articleBody' => '!=Article about Mary'],
-                        'count'  => 2,
-                        'actual' => [
-                            ['name' => 'Event 1'],
-                            ['name' => 'Event 2']
-                        ]
-                    ],
-                    [
-                        'params' => ['articleBody' => 'Article'],
-                        'count'  => 3,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Event 1'],
                             ['name' => 'Event 2'],
-                            ['name' => 'Event 3']
-                        ]
+                        ],
+                    ],
+                    [
+                        'params' => ['articleBody' => 'Article'],
+                        'count' => 3,
+                        'actual' => [
+                            ['name' => 'Event 1'],
+                            ['name' => 'Event 2'],
+                            ['name' => 'Event 3'],
+                        ],
                     ],
                     [
                         'params' => ['articleBody' => '!Article'],
-                        'count'  => 0,
-                        'actual' => []
+                        'count' => 0,
+                        'actual' => [],
                     ],
-                ]
+                ],
             ],
 
             // Number filter
             [
                 'filterName' => 'articles.countEvents',
-                'paramName'  => 'articleCountEvents',
+                'paramName' => 'articleCountEvents',
                 'cases' => [
                     [
                         'params' => ['articleCountEvents' => '1'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Event 3']
-                        ]
+                            ['name' => 'Event 3'],
+                        ],
                     ],
                     [
                         'params' => ['articleCountEvents' => '!1'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Event 1'],
-                            ['name' => 'Event 2']
-                        ]
+                            ['name' => 'Event 2'],
+                        ],
                     ],
                     [
                         'params' => ['articleCountEvents' => '>1'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Event 1'],
-                            ['name' => 'Event 2']
-                        ]
+                            ['name' => 'Event 2'],
+                        ],
                     ],
                     [
                         'params' => ['articleCountEvents' => '<2'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Event 3']
-                        ]
+                            ['name' => 'Event 3'],
+                        ],
                     ],
-                ]
+                ],
             ],
 
             // Boolean filter
             [
                 'filterName' => 'articles.publish',
-                'paramName'  => 'articlePublish',
+                'paramName' => 'articlePublish',
                 'cases' => [
                     [
                         'params' => ['articlePublish' => '1'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Event 1'],
-                            ['name' => 'Event 2']
-                        ]
+                            ['name' => 'Event 2'],
+                        ],
                     ],
                     [
                         'params' => ['articlePublish' => '0'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
                             ['name' => 'Event 3'],
-                        ]
+                        ],
                     ],
-                ]
+                ],
             ],
 
             // DateTime filter
             [
                 'filterName' => 'articles.publishAt',
-                'paramName'  => 'articlePublishAt',
+                'paramName' => 'articlePublishAt',
                 'cases' => [
                     [
                         'params' => ['articlePublishAt' => '2016-05-10 11:00'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Event 3']
-                        ]
+                            ['name' => 'Event 3'],
+                        ],
                     ],
                     [
                         'params' => ['articlePublishAt' => '!2016-05-10 11:00'],
-                        'count'  => 2,
-                        'actual' => [
-                            ['name' => 'Event 1'],
-                            ['name' => 'Event 2']
-                        ]
-                    ],
-                    [
-                        'params' => ['articlePublishAt' => '>2016-05-09 10:00'],
-                        'count'  => 1,
-                        'actual' => [
-                            ['name' => 'Event 3']
-                        ]
-                    ],
-                    [
-                        'params' => ['articlePublishAt' => '<2016-05-10 10:00'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Event 1'],
                             ['name' => 'Event 2'],
-                        ]
+                        ],
                     ],
-                ]
+                    [
+                        'params' => ['articlePublishAt' => '>2016-05-09 10:00'],
+                        'count' => 1,
+                        'actual' => [
+                            ['name' => 'Event 3'],
+                        ],
+                    ],
+                    [
+                        'params' => ['articlePublishAt' => '<2016-05-10 10:00'],
+                        'count' => 2,
+                        'actual' => [
+                            ['name' => 'Event 1'],
+                            ['name' => 'Event 2'],
+                        ],
+                    ],
+                ],
             ],
         ];
     }
 
     /**
-     * @return array
+     * @return array<mixed, array<string, string|array<int, array<string, int|array<int|string, string|array<string, string>>>>>>
      */
-    public function dataTestJoinedFilters()
+    public static function dataTestJoinedFilters(): array
     {
         return [
             // ManyToMany inversed side
             [
                 'filterName' => 'articles.name',
-                'paramName'  => 'articleName',
+                'paramName' => 'articleName',
                 'cases' => [
                     [
                         'params' => ['articleName' => '=Article 2'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Event 3']
-                        ]
+                            ['name' => 'Event 3'],
+                        ],
                     ],
-                ]
+                ],
             ],
 
             // OneToMany
             [
                 'filterName' => 'sessions.name',
-                'paramName'  => 'sessionName',
+                'paramName' => 'sessionName',
                 'cases' => [
                     [
                         'params' => ['sessionName' => '=Session 1'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Event 1']
-                        ]
+                            ['name' => 'Event 1'],
+                        ],
                     ],
-                ]
+                ],
             ],
 
             // ManyToOne
             [
                 'filterName' => 'eventGroup.name',
-                'paramName'  => 'eventGroupName',
+                'paramName' => 'eventGroupName',
                 'cases' => [
                     [
                         'params' => ['eventGroupName' => '=Event group 1'],
-                        'count'  => 2,
+                        'count' => 2,
                         'actual' => [
                             ['name' => 'Event 2'],
                             ['name' => 'Event 1'],
-                        ]
+                        ],
                     ],
-                ]
+                ],
             ],
 
             // OneToOne owning side
             [
                 'filterName' => 'eventDetail.body',
-                'paramName'  => 'eventDetailBody',
+                'paramName' => 'eventDetailBody',
                 'cases' => [
                     [
                         'params' => ['eventDetailBody' => '=Body for event detail 1'],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
                             ['name' => 'Event 1'],
-                        ]
+                        ],
                     ],
-                ]
+                ],
             ],
         ];
     }
 
     /**
-     * @return array
+     * @return array<mixed, array<string, string|array<int, array<string, int|array<int|string, string|array<string, string>>>>>>
      */
-    public function dataTestModelFilters()
+    public static function dataTestModelFilters(): array
     {
         return [
             [
                 'filterName' => 'events.id',
-                'paramName'  => 'events',
+                'paramName' => 'events',
                 'cases' => [
                     [
                         'entity' => [
                             'className' => 'Event',
-                            'name'      => 'Event 1',
-                            'param'     => 'events',
+                            'name' => 'Event 1',
+                            'param' => 'events',
                         ],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 1']
-                        ]
+                            ['name' => 'Article 1'],
+                        ],
                     ],
-                ]
+                ],
             ],
             [
                 'filterName' => 'events.tags.id',
-                'paramName'  => 'eventTag',
+                'paramName' => 'eventTag',
                 'cases' => [
                     [
                         'entity' => [
                             'className' => 'Tag',
-                            'name'      => 'Tag 4',
-                            'param'     => 'eventTag',
+                            'name' => 'Tag 4',
+                            'param' => 'eventTag',
                         ],
-                        'count'  => 1,
+                        'count' => 1,
                         'actual' => [
-                            ['name' => 'Article 2']
-                        ]
+                            ['name' => 'Article 2'],
+                        ],
                     ],
-                ]
+                ],
             ],
         ];
     }
 
-    /**
-     * @param $entityName
-     * @param string $name
-     * @return object
-     */
-    protected function getEntityByName($entityName, $name)
+    protected function getEntityByName(string $entityName, string $name): object
     {
         /** @var Registry $doctrine */
-        $doctrine = self::$container->get('doctrine');
+        $doctrine = $this->getContainer()->get('doctrine');
 
         /** @var EntityRepository $repository */
-        $repository = $doctrine->getRepository('App\Entity\\' . $entityName);
+        $repository = $doctrine->getRepository('App\Entity\\'.$entityName);
 
         return $repository->findOneBy([
-            'name' => $name
+            'name' => $name,
         ]);
     }
 }

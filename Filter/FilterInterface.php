@@ -12,43 +12,21 @@
 namespace Glavweb\DatagridBundle\Filter;
 
 /**
- * Interface FilterInterface
+ * Interface FilterInterface.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 interface FilterInterface
 {
-    /**
-     * @return mixed
-     */
-    public function getName();
+    public function getName(): mixed;
 
-    /**
-     * @return array
-     */
-    public function getOptions();
+    public function getOptions(): array;
 
-    /**
-     * @param array $options
-     */
-    public function setOptions($options);
+    public function setOptions(array $options);
 
-    /**
-     * @return string
-     */
-    public function getParamName();
+    public function getParamName(): string;
 
-    /**
-     * @param string $name
-     * @return mixed
-     */
-    public function getOption($name);
+    public function getOption(string $name): mixed;
 
-    /**
-     * @param mixed $queryBuilder
-     * @param string $alias
-     * @param string $value
-     */
-    public function filter($queryBuilder, $alias, $value);
+    public function filter(mixed $queryBuilder, string $alias, string $value);
 }

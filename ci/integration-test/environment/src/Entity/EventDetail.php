@@ -14,57 +14,37 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * EventDetail
+ * EventDetail.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
- *
- * @ORM\Table(name="event_details")
- * @ORM\Entity
  */
+#[ORM\Table(name: 'event_details')]
+#[ORM\Entity]
 class EventDetail
 {
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Column(name: 'id', type: 'integer')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private int $id;
+
+    #[ORM\Column(name: 'body', type: 'text')]
+    private string $body;
+
+    #[ORM\OneToOne(targetEntity: Event::class, mappedBy: 'eventDetail')]
+    private Event $event;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="body", type="text")
+     * Get id.
      */
-    private $body;
-
-    /**
-     * @var Event
-     *
-     * @ORM\OneToOne(targetEntity="Event", mappedBy="eventDetail")
-     */
-    private $event;
-
-    /**
-     * Get id
-     *
-     * @return integer
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * Set body
-     *
-     * @param string $body
-     *
-     * @return EventDetail
+     * Set body.
      */
-    public function setBody($body)
+    public function setBody(string $body): static
     {
         $this->body = $body;
 
@@ -72,23 +52,17 @@ class EventDetail
     }
 
     /**
-     * Get body
-     *
-     * @return string
+     * Get body.
      */
-    public function getBody()
+    public function getBody(): string
     {
         return $this->body;
     }
 
     /**
-     * Set event
-     *
-     * @param Event $event
-     *
-     * @return EventDetail
+     * Set event.
      */
-    public function setEvent(Event $event = null)
+    public function setEvent(?Event $event = null): static
     {
         $this->event = $event;
 
@@ -96,11 +70,9 @@ class EventDetail
     }
 
     /**
-     * Get event
-     *
-     * @return Event
+     * Get event.
      */
-    public function getEvent()
+    public function getEvent(): Event
     {
         return $this->event;
     }

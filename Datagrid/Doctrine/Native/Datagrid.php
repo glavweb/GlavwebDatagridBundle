@@ -11,105 +11,85 @@
 
 namespace Glavweb\DatagridBundle\Datagrid\Doctrine\Native;
 
-use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Exception;
+use Doctrine\ORM\EntityManager;
 use Glavweb\DatagridBundle\Builder\Doctrine\Native\DatagridContext;
 use Glavweb\DatagridBundle\Datagrid\Doctrine\AbstractDatagrid;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
+use Glavweb\DatagridBundle\Filter\FilterInterface;
 use Glavweb\DatagridBundle\Filter\FilterStack;
-use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
+use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 
 /**
- * Class Datagrid
+ * Class Datagrid.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class Datagrid extends AbstractDatagrid
 {
-    /**
-     * @var QueryBuilder
-     */
-    private $queryBuilder;
+    private readonly QueryBuilder $queryBuilder;
+
+    private readonly DataSchema $dataSchema;
+
+    private readonly string $alias;
+
+    private readonly FilterStack $filterStack;
 
     /**
-     * @var DataSchema
+     * @var mixed[]
      */
-    private $dataSchema;
+    private readonly array $parameters;
 
-    /**
-     * @var string
-     */
-    private $alias;
+    private readonly EntityManager $entityManager;
 
-    /**
-     * @var FilterStack
-     */
-    private $filterStack;
-
-    /**
-     * @var array
-     */
-    private $parameters;
-
-    /**
-     * @var \Doctrine\ORM\Mapping\ClassMetadata
-     */
-    private $classMetadata;
-
-    /**
-     * @param DatagridContext $context
-     */
     public function __construct(DatagridContext $context)
     {
-        $this->queryBuilder  = $context->getQueryBuilder();
-        $this->dataSchema    = $context->getDataSchema();
-        $this->filterStack   = $context->getFilterStack();
-        $this->orderings     = $context->getOrderings();
-        $this->firstResult   = $context->getFirstResult();
-        $this->maxResults    = $context->getMaxResults();
-        $this->alias         = $context->getAlias();
-        $this->parameters    = $context->getParameters();
-        $this->classMetadata = $context->getClassMetadata();
+        $this->queryBuilder = $context->getQueryBuilder();
+        $this->entityManager = $context->getEntityManger();
+        $this->dataSchema = $context->getDataSchema();
+        $this->filterStack = $context->getFilterStack();
+        $this->orderings = $context->getOrderings();
+        $this->firstResult = $context->getFirstResult();
+        $this->maxResults = $context->getMaxResults();
+        $this->alias = $context->getAlias();
+        $this->parameters = $context->getParameters();
     }
 
-    /**
-     * @return QueryBuilder
-     */
-    public function getQueryBuilder()
+    public function getQueryBuilder(): QueryBuilder
     {
         return $this->queryBuilder;
     }
 
-    /**
-     * @return string
-     */
-    public function getAlias()
+    public function getAlias(): string
     {
         return $this->alias;
     }
 
     /**
-     * @return string
+     * @throws Exception
      */
     public function getItemAsJson(): string
     {
         $queryBuilder = clone $this->getQueryBuilder();
         $this->fixQueryBuilder($queryBuilder, 1);
 
-        $queryBuilderWrapper = new QueryBuilder($this->queryBuilder->getConnection());
+        $queryBuilderWrapper = new QueryBuilder($this->entityManager->getConnection());
         $uniqueAlias = uniqid('row_', false);
-        $queryBuilderWrapper->select('
+        $queryBuilderWrapper->select(
+            '
             (
-                SELECT row_to_json(' . $uniqueAlias . ')
-                FROM (' . $queryBuilder->getSQL() . ') as ' . $uniqueAlias . '
+                SELECT row_to_json('.$uniqueAlias.')
+                FROM ('.$queryBuilder->getSQL().') as '.$uniqueAlias.'
             ) as "data"
-        ');
+        '
+        );
 
         foreach ($queryBuilder->getParameters() as $key => $value) {
             $queryBuilderWrapper->setParameter($key, $value, $queryBuilder->getParameterType($key));
         }
 
-        $result = $queryBuilderWrapper->execute()->fetchAssociative();
+        $result = $queryBuilderWrapper->fetchAssociative();
 
         if (!isset($result['data']) || !$result['data']) {
             return '{}';
@@ -118,9 +98,6 @@ class Datagrid extends AbstractDatagrid
         return $result['data'];
     }
 
-    /**
-     * @return array
-     */
     public function getItem(): array
     {
         $itemData = json_decode($this->getItemAsJson(), true);
@@ -133,28 +110,30 @@ class Datagrid extends AbstractDatagrid
     }
 
     /**
-     * @return string
+     * @throws Exception
      */
     public function getListAsJson(): string
     {
         $queryBuilder = clone $this->getQueryBuilder();
         $this->fixQueryBuilder($queryBuilder, $this->getMaxResults());
 
-        $queryBuilderWrapper = new QueryBuilder($this->queryBuilder->getConnection());
+        $queryBuilderWrapper = new QueryBuilder($this->entityManager->getConnection());
 
         $uniqueAlias = uniqid('row_', false);
-        $queryBuilderWrapper->select('
+        $queryBuilderWrapper->select(
+            '
             (
-                SELECT array_to_json(array_agg(row_to_json(' . $uniqueAlias . ')))
-                FROM (' . $queryBuilder->getSQL() . ') as ' . $uniqueAlias . '
+                SELECT array_to_json(array_agg(row_to_json('.$uniqueAlias.')))
+                FROM ('.$queryBuilder->getSQL().') as '.$uniqueAlias.'
             ) as "data"
-        ');
+        '
+        );
 
         foreach ($queryBuilder->getParameters() as $key => $value) {
             $queryBuilderWrapper->setParameter($key, $value, $queryBuilder->getParameterType($key));
         }
 
-        $result = $queryBuilderWrapper->execute()->fetchAssociative();
+        $result = $queryBuilderWrapper->fetchAssociative();
 
         if (!$result['data']) {
             return '[]';
@@ -163,9 +142,6 @@ class Datagrid extends AbstractDatagrid
         return $result['data'];
     }
 
-    /**
-     * @return array
-     */
     public function getList(): array
     {
         $listData = json_decode($this->getListAsJson(), true);
@@ -178,7 +154,7 @@ class Datagrid extends AbstractDatagrid
     }
 
     /**
-     * @return int
+     * @throws Exception
      */
     public function getTotal(): int
     {
@@ -188,18 +164,14 @@ class Datagrid extends AbstractDatagrid
         // Apply filter
         $this->applyFilter($queryBuilder);
 
-        $result = $queryBuilder->execute()->fetchAssociative();
+        $result = $queryBuilder->fetchAssociative();
 
-        return (int)$result['count'];
+        return (int) $result['count'];
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     * @param int|null $maxResults
-     */
-    private function fixQueryBuilder(QueryBuilder $queryBuilder, ?int $maxResults)
+    private function fixQueryBuilder(QueryBuilder $queryBuilder, ?int $maxResults): void
     {
-        $alias       = $this->getAlias();
+        $alias = $this->getAlias();
         $firstResult = $this->getFirstResult();
 
         $queryBuilder->setFirstResult($firstResult);
@@ -209,7 +181,6 @@ class Datagrid extends AbstractDatagrid
         }
 
         $this->applyFilter($queryBuilder);
-
 
         // Apply orderings
         $orderings = $this->getOrderings();
@@ -229,8 +200,8 @@ class Datagrid extends AbstractDatagrid
             $sortColumnName = $propertyConfig['field_db_name'];
 
             // If the field name have a dot
-            $fieldNameParts = explode('.', $fieldName);
-            if (count($fieldNameParts) > 1) {
+            $fieldNameParts = explode('.', (string) $fieldName);
+            if (\count($fieldNameParts) > 1) {
                 array_pop($fieldNameParts);
 
                 foreach ($fieldNameParts as $fieldPart) {
@@ -238,25 +209,26 @@ class Datagrid extends AbstractDatagrid
                 }
             }
 
-            $queryBuilder->addOrderBy($sortAlias . '.' . $sortColumnName, $order);
+            $queryBuilder->addOrderBy($sortAlias.'.'.$sortColumnName, $order);
         }
     }
 
-    /**
-     * @param QueryBuilder $queryBuilder
-     */
     private function applyFilter(QueryBuilder $queryBuilder): void
     {
-        $alias      = $this->getAlias();
+        $alias = $this->getAlias();
         $parameters = $this->clearParameters($this->parameters);
         foreach ($parameters as $key => $parameter) {
-            if (!$parameter || !is_scalar($parameter)) {
+            if (!$parameter) {
+                continue;
+            }
+
+            if (!\is_scalar($parameter)) {
                 continue;
             }
 
             $jsonDecoded = json_decode($parameter);
 
-            if (json_last_error() == JSON_ERROR_NONE) {
+            if (json_last_error() === \JSON_ERROR_NONE) {
                 $parameters[$key] = $jsonDecoded;
             }
         }
@@ -264,7 +236,7 @@ class Datagrid extends AbstractDatagrid
         foreach ($parameters as $name => $value) {
             $filter = $this->filterStack->getByParam($name);
 
-            if (!$filter) {
+            if (!$filter instanceof FilterInterface) {
                 continue;
             }
 

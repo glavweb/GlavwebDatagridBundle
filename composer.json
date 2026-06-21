@@ -5,7 +5,7 @@
         {
             "name": "nilov",
             "email": "nilov@glavweb.ru",
-            "homepage": "http://glavweb.ru"
+            "homepage": "https://glavweb.ru"
         },
         {
             "name": "GLAVWEB Community",
@@ -13,24 +13,31 @@
         }
     ],
     "require": {
-        "php": ">=7.2.5",
-        "symfony/config": "^4.0|^5.0|^6.0|^7.0",
-        "symfony/dependency-injection": "^4.0|^5.0|^6.0|^7.0",
-        "symfony/yaml": "^4.0|^5.0|^6.0|^7.0",
-        "doctrine/orm": "^2.3|^3.3",
-        "doctrine/doctrine-bundle": "^2.0",
-        "glavweb/data-schema-bundle": "^2.7.0",
+        "php": ">=8.4",
+        "symfony/config": "^8.0",
+        "symfony/dependency-injection": "^8.0",
+        "symfony/yaml": "^8.0",
+        "doctrine/orm": "^3.3",
+        "doctrine/doctrine-bundle": "^3.0",
+        "glavweb/data-schema-bundle": "^3.0",
         "ext-json": "*"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^3.3",
-        "phpunit/phpunit": "^6.4"
+        "symfony/phpunit-bridge": "^8.0",
+        "phpunit/phpunit": "^13.0"
     },
     "autoload": {
-        "exclude-from-classmap": ["ci", "build"],
-        "psr-4": { "Glavweb\\DatagridBundle\\": "" }
+        "exclude-from-classmap": [
+            "ci",
+            "build"
+        ],
+        "psr-4": {
+            "Glavweb\\DatagridBundle\\": ""
+        }
     },
     "autoload-dev": {
-        "psr-4": { "Glavweb\\DatagridBundle\\Tests\\": "" }
+        "psr-4": {
+            "Glavweb\\DatagridBundle\\Tests\\": ""
+        }
     }
 }

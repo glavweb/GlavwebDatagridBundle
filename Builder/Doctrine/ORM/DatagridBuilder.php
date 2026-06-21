@@ -22,33 +22,31 @@ use Glavweb\DatagridBundle\Exception\Exception;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 
 /**
- * Class Builder
+ * Class Builder.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class DatagridBuilder extends AbstractDatagridBuilder implements DatagridBuilderInterface
 {
     /**
-     * @param array $parameters
-     * @param \Closure $callback
      * @return Datagrid
+     *
      * @throws BuildException
      */
-    public function build(array $parameters = [], $callback = null)
+    public function build(array $parameters = [], ?\Closure $callback = null): EmptyDatagrid|Datagrid
     {
         if (!$this->dataSchema instanceof DataSchema) {
             throw new BuildException('The Data Schema is not defined.');
         }
 
-        $orderings   = $this->getOrderings();
+        $orderings = $this->getOrderings();
         $firstResult = $this->getFirstResult();
-        $maxResults  = $this->getMaxResults();
-        $alias       = $this->getAlias();
+        $maxResults = $this->getMaxResults();
+        $alias = $this->getAlias();
 
         try {
             /** @var EntityManager $em */
-            $em           = $this->doctrine->getManager();
+            $em = $this->doctrine->getManager();
             $queryBuilder = $this->createQueryBuilder($parameters);
 
             $datagridContext = new DatagridContext(
@@ -57,42 +55,35 @@ class DatagridBuilder extends AbstractDatagridBuilder implements DatagridBuilder
                 $queryBuilder,
                 $this->filterStack,
                 $this->dataSchema,
-                (array)$orderings,
-                (int)$firstResult,
+                $orderings,
+                (int) $firstResult,
                 $maxResults,
                 $alias,
                 $parameters
             );
 
-            if (is_callable($callback)) {
+            if (\is_callable($callback)) {
                 $callback($datagridContext);
             }
 
             $datagrid = new Datagrid($datagridContext);
-
-        } catch (Exception $e) {
+        } catch (Exception) {
             $datagrid = new EmptyDatagrid();
         }
 
         return $datagrid;
     }
 
-    /**
-     * @param array $parameters
-     * @return QueryBuilder
-     */
-    protected function createQueryBuilder(array $parameters)
+    protected function createQueryBuilder(array $parameters): QueryBuilder
     {
         $alias = $this->getAlias();
 
-        $queryBuilder = $this->queryBuilderFactory->create(
+        return $this->queryBuilderFactory->create(
             $parameters,
             $alias,
             $this->dataSchema,
             $this->filterStack,
             $this->getJoinMap()
         );
-
-        return $queryBuilder;
     }
 }

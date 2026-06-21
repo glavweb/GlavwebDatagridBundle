@@ -12,108 +12,75 @@
 namespace Glavweb\DatagridBundle\Filter\Doctrine;
 
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
+use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 
 /**
- * Class AbstractFilter
+ * Class AbstractFilter.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 abstract class AbstractFilter implements FilterInterface
 {
     /**
-     * Operator types
+     * Operator types.
      */
-    const EQ           = '=';
-    const NEQ          = '<>';
-    const LT           = '<';
-    const LTE          = '<=';
-    const GT           = '>';
-    const GTE          = '>=';
-    const IN           = 'IN';
-    const NIN          = 'NIN';
-    const CONTAINS     = 'CONTAINS';
-    const NOT_CONTAINS = '!';
+    public const string EQ = '=';
+
+    public const string NEQ = '<>';
+
+    public const string LT = '<';
+
+    public const string LTE = '<=';
+
+    public const string GT = '>';
+
+    public const string GTE = '>=';
+
+    public const string IN = 'IN';
+
+    public const string NIN = 'NIN';
+
+    public const string CONTAINS = 'CONTAINS';
+
+    public const string NOT_CONTAINS = '!';
+
+    protected static int $uniqueParameterId = 0;
 
     /**
-     * @var int
+     * @var array<string, null>
      */
-    protected static $uniqueParameterId = 0;
-
-    /**
-     * @var array
-     */
-    protected $options = [
+    protected array $options = [
         'field_type' => null,
-        'operator'   => null,
-        'param_name' => null
+        'operator' => null,
+        'param_name' => null,
     ];
 
-    /**
-     * @var string
-     */
-    protected $name;
+    abstract public function filter(mixed $queryBuilder, string $alias, string $value);
+
+    abstract protected function getAllowOperators(): array;
 
     /**
-     * @var string
+     * Default operator. Use if operator can't be defined.
      */
-    protected $fieldName;
+    abstract protected function getDefaultOperator(): ?string;
 
     /**
-     * @var ClassMetadata
+     * @return array<int, string>
      */
-    protected $classMetadata;
-
-    /**
-     * @var JoinBuilderInterface
-     */
-    protected $joinBuilder;
-
-    /**
-     * @var JoinMap|null
-     */
-    protected $joinMap;
-
-    /**
-     * @param mixed $queryBuilder
-     * @param string $alias
-     * @param string $value
-     */
-    public abstract function filter($queryBuilder, $alias, $value);
-
-    /**
-     * @return array
-     */
-    protected abstract function getAllowOperators();
-
-    /**
-     * Default operator. Use if operator can't defined.
-     *
-     * @return string
-     */
-    protected abstract function getDefaultOperator();
-
-    /**
-     * @param string $value
-     * @param array  $allowOperators
-     * @param string $defaultOperator
-     * @return array
-     */
-    public static function separateOperator($value, array $allowOperators = null, $defaultOperator = self::CONTAINS)
+    public static function separateOperator(string $value, ?array $allowOperators = null, string $defaultOperator = self::CONTAINS): array
     {
-        $operators = array(
+        $operators = [
             '<>' => self::NEQ,
             '<=' => self::LTE,
             '>=' => self::GTE,
-            '<'  => self::LT,
-            '>'  => self::GT,
-            '='  => self::EQ,
+            '<' => self::LT,
+            '>' => self::GT,
+            '=' => self::EQ,
             '!=' => self::NEQ,
-            '!'  => self::NOT_CONTAINS,
-        );
+            '!' => self::NOT_CONTAINS,
+        ];
 
         if ($allowOperators === null) {
             $allowOperators = array_keys($operators);
@@ -121,152 +88,112 @@ abstract class AbstractFilter implements FilterInterface
 
         $operator = null;
         if (preg_match('/^(?:\s*(<>|<=|>=|<|>|=|!=|!))?(.*)$/', $value, $matches)) {
-            $operator = isset($operators[$matches[1]]) ? $operators[$matches[1]] : null;
-            $value    = $matches[2];
+            $operator = $operators[$matches[1]] ?? null;
+            $value = $matches[2];
         }
 
-        if (!$operator || !in_array($operator, $allowOperators)) {
+        if (!$operator || !\in_array($operator, $allowOperators)) {
             $operator = $defaultOperator;
         }
 
-        return array($operator, $value);
+        return [$operator, $value];
     }
 
-    /**
-     * @param string $field
-     * @return string
-     */
-    public static function makeParamName($field)
+    public static function makeParamName(string $field): string
     {
-        self::$uniqueParameterId++;
+        ++self::$uniqueParameterId;
 
-        return str_replace('.', '_', $field) . '_' . self::$uniqueParameterId;
+        return str_replace('.', '_', $field).'_'.self::$uniqueParameterId;
     }
 
     /**
      * Filter constructor.
-     *
-     * @param string $name
-     * @param array $options
-     * @param string $fieldName
-     * @param ClassMetadata $classMetadata
-     * @param JoinBuilderInterface $joinBuilder
-     * @param JoinMap|null $joinMap
      */
     public function __construct(
-        string $name,
+        protected string $name,
         array $options,
-        string $fieldName,
-        ClassMetadata $classMetadata,
-        JoinBuilderInterface $joinBuilder,
-        JoinMap $joinMap = null
+        protected string $fieldName,
+        protected ClassMetadata $classMetadata,
+        protected JoinBuilderInterface $joinBuilder,
+        protected ?JoinMap $joinMap = null,
     ) {
-        $this->name    = $name;
         $this->options = array_merge($this->options, $options);
 
         if (!isset($this->options['param_name'])) {
-            $this->options['param_name'] = $name;
+            $this->options['param_name'] = $this->name;
         }
-
-        $this->fieldName = $fieldName;
-        $this->classMetadata = $classMetadata;
-        $this->joinBuilder = $joinBuilder;
-        $this->joinMap = $joinMap;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getName()
+    public function getName(): mixed
     {
         return $this->name;
     }
 
-    /**
-     * @param mixed $name
-     */
-    public function setName($name)
+    public function setName(mixed $name): void
     {
         $this->name = $name;
     }
 
     /**
-     * @return array
+     * @return array<string, null>
      */
-    public function getOptions()
+    public function getOptions(): array
     {
         return $this->options;
     }
 
-    /**
-     * @param array $options
-     */
-    public function setOptions($options)
+    public function setOptions(array $options): void
     {
         $this->options = $options;
     }
 
-    /**
-     * @param string $name
-     * @return mixed
-     */
-    public function getOption($name)
+    public function getOption(string $name): mixed
     {
-        if (!array_key_exists($name, $this->options)) {
-            throw new \RuntimeException(sprintf('Option "%s" not found.', $name));
+        if (!\array_key_exists($name, $this->options)) {
+            throw new \RuntimeException(\sprintf('Option "%s" not found.', $name));
         }
 
         return $this->options[$name];
     }
 
-    /**
-     * @return JoinMap|null
-     */
-    public function getJoinMap()
+    public function getJoinMap(): ?JoinMap
     {
         return $this->joinMap;
     }
 
-    /**
-     * @return bool
-     */
-    public function hasJoinMap()
+    public function hasJoinMap(): bool
     {
-        return (bool)$this->getJoinMap();
+        return (bool) $this->getJoinMap();
     }
 
-    /**
-     * @return mixed
-     */
-    public function getParamName()
+    public function getParamName(): string
     {
         return $this->getOption('param_name');
     }
 
     /**
-     * @param mixed  $value
-     * @param string $currentOperator
-     * @param array  $replaces
-     * @param array  $allowOperators
-     * @param string $defaultOperator
-     * @return array
+     * @return array<int, mixed>
      */
-    public static function guessOperator($value, $currentOperator = null, array $replaces = [], array $allowOperators = null, $defaultOperator = self::CONTAINS)
-    {
-        if (is_array($value)) {
+    public static function guessOperator(
+        mixed $value,
+        ?string $currentOperator = null,
+        array $replaces = [],
+        ?array $allowOperators = null,
+        string $defaultOperator = self::CONTAINS,
+    ): array {
+        if (\is_array($value)) {
             // Validate operator
-            if ($currentOperator && !in_array($currentOperator, [self::EQ, self::NEQ])) {
-                throw new \RuntimeException(sprintf('Operator "%s" is not valid.', $currentOperator));
+            if ($currentOperator && !\in_array($currentOperator, [self::EQ, self::NEQ], true)) {
+                throw new \RuntimeException(\sprintf('Operator "%s" is not valid.', $currentOperator));
             }
 
             $operator = $currentOperator == self::NEQ ? self::NIN : self::IN;
-
         } else {
-            $value = trim($value);
+            $value = trim((string) $value);
 
             $operator = $currentOperator;
             if (!$operator) {
-                list($operator, $value) = self::separateOperator($value, $allowOperators, $defaultOperator);
+                [$operator, $value] = self::separateOperator($value, $allowOperators, $defaultOperator);
             }
         }
 
@@ -280,15 +207,13 @@ abstract class AbstractFilter implements FilterInterface
     }
 
     /**
-     * @param mixed $value
-     * @param array $replaces
-     * @return array
+     * @return array<int, mixed>
      */
-    protected function getOperatorAndValue($value, array $replaces = [])
+    protected function getOperatorAndValue(mixed $value, array $replaces = []): array
     {
         $currentOperator = $this->getOption('operator');
 
-        list($operator, $value) = self::guessOperator(
+        [$operator, $value] = self::guessOperator(
             $value,
             $currentOperator,
             $replaces,
@@ -301,26 +226,19 @@ abstract class AbstractFilter implements FilterInterface
         return [$operator, $value];
     }
 
-    /**
-     * @param string $operator
-     */
-    protected function checkOperator($operator)
+    protected function checkOperator(string $operator): void
     {
         $allowOperators = $this->getAllowOperators();
 
-        if (!in_array($operator, $allowOperators)) {
-            throw new \RuntimeException(sprintf('Operator "%s" not allowed.', $operator));
+        if (!\in_array($operator, $allowOperators)) {
+            throw new \RuntimeException(\sprintf('Operator "%s" not allowed.', $operator));
         }
     }
 
-    /**
-     * @param array $values
-     * @return bool
-     */
-    protected function existsOperatorsInValues(array $values)
+    protected function existsOperatorsInValues(array $values): bool
     {
         foreach ($values as $value) {
-            list($operator) = self::separateOperator($value, null, null);
+            [$operator] = self::separateOperator($value, null, null);
 
             if ($operator) {
                 return true;
@@ -330,10 +248,6 @@ abstract class AbstractFilter implements FilterInterface
         return false;
     }
 
-    /**
-     * @param string $fieldName
-     * @return string
-     */
     protected function getColumnName(string $fieldName): string
     {
         return $this->classMetadata->getColumnName($fieldName);

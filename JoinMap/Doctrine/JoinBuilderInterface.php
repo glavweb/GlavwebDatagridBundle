@@ -11,22 +11,15 @@
 
 namespace Glavweb\DatagridBundle\JoinMap\Doctrine;
 
-use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinMap;
 use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
-use Doctrine\DBAL\Query\QueryBuilder as NativeQueryBuilder;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder as NativeQueryBuilder;
 
 /**
- * Interface JoinBuilderInterface
+ * Interface JoinBuilderInterface.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 interface JoinBuilderInterface
 {
-    /**
-     * @param NativeQueryBuilder|ORMQueryBuilder $queryBuilder
-     * @param JoinMap $joinMap
-     * @return string|null
-     */
-    public function apply($queryBuilder, JoinMap $joinMap): ?string;
+    public function apply(NativeQueryBuilder|ORMQueryBuilder $queryBuilder, JoinMap $joinMap): ?string;
 }

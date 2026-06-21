@@ -11,57 +11,50 @@
 
 namespace App\DataFixtures\ORM;
 
-use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
-use Doctrine\Persistence\ObjectManager;
 use App\Entity\Event;
 use App\Entity\EventDetail;
 use App\Entity\EventGroup;
 use App\Entity\Tag;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
+use Doctrine\Persistence\ObjectManager;
 
 /**
- * Class LoadEventData
+ * Class LoadEventData.
  *
  * @author Andrey Nilov <nilov@glavweb.ru>
- * @package Glavweb\DatagridBundle
  */
 class LoadEventData extends Fixture implements OrderedFixtureInterface
 {
-    /**
-     * @param ObjectManager $manager
-     */
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
-
         $data = [
             [
-                'name'        => 'Event 1',
+                'name' => 'Event 1',
                 'eventDetail' => 'event-detail-1',
-                'eventGroup'  => 'event-group-1',
-                'tags'        => ['tag-1', 'tag-2'],
-                'reference'   => 'event-1'
+                'eventGroup' => 'event-group-1',
+                'tags' => ['tag-1', 'tag-2'],
+                'reference' => 'event-1',
             ],
             [
-                'name'        => 'Event 2',
+                'name' => 'Event 2',
                 'eventDetail' => 'event-detail-2',
-                'eventGroup'  => 'event-group-1',
-                'tags'        => ['tag-3'],
-                'reference'   => 'event-2'
+                'eventGroup' => 'event-group-1',
+                'tags' => ['tag-3'],
+                'reference' => 'event-2',
             ],
             [
-                'name'        => 'Event 3',
+                'name' => 'Event 3',
                 'eventDetail' => 'event-detail-3',
-                'eventGroup'  => 'event-group-2',
-                'tags'        => ['tag-4', 'tag-5'],
-                'reference'   => 'event-3'
+                'eventGroup' => 'event-group-2',
+                'tags' => ['tag-4', 'tag-5'],
+                'reference' => 'event-3',
             ],
         ];
 
         foreach ($data as $item) {
-            /** @var EventDetail $eventDetail */
-            /** @var EventGroup $eventGroup */
-            $eventDetail = $this->getReference($item['eventDetail']);
-            $eventGroup  = $this->getReference($item['eventGroup']);
+            $eventDetail = $this->getReference($item['eventDetail'], EventDetail::class);
+            $eventGroup = $this->getReference($item['eventGroup'], EventGroup::class);
 
             $event = new Event();
             $event->setName($item['name']);
@@ -69,8 +62,7 @@ class LoadEventData extends Fixture implements OrderedFixtureInterface
             $event->setEventGroup($eventGroup);
 
             foreach ($item['tags'] as $tag) {
-                /** @var Tag $tag */
-                $tag = $this->getReference($tag);
+                $tag = $this->getReference($tag, Tag::class);
                 $event->addTag($tag);
             }
 
@@ -84,10 +76,8 @@ class LoadEventData extends Fixture implements OrderedFixtureInterface
 
     /**
      * Set loading order.
-     *
-     * @return int
      */
-    public function getOrder()
+    public function getOrder(): int
     {
         return 2;
     }

@@ -11,34 +11,32 @@
 
 namespace Glavweb\DatagridBundle\Builder\Doctrine\Native;
 
-use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Mapping\ClassMetadata;
 use Glavweb\DatagridBundle\Builder\DatagridBuilderInterface;
 use Glavweb\DatagridBundle\Builder\Doctrine\AbstractDatagridBuilder;
 use Glavweb\DatagridBundle\Datagrid\Doctrine\Native\Datagrid;
 use Glavweb\DatagridBundle\Datagrid\EmptyDatagrid;
+use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 use Glavweb\DatagridBundle\Exception\BuildException;
 use Glavweb\DatagridBundle\Exception\Exception;
 use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
 
 /**
- * Class Builder
+ * Class Builder.
  *
- * @package Glavweb\DatagridBundle
  * @author Andrey Nilov <nilov@glavweb.ru>
  */
 class DatagridBuilder extends AbstractDatagridBuilder implements DatagridBuilderInterface
 {
     /**
-     * @param array $parameters
-     * @param \Closure $callback
      * @return Datagrid
+     *
      * @throws BuildException
      */
-    public function build(array $parameters = [], $callback = null)
+    public function build(array $parameters = [], ?\Closure $callback = null): EmptyDatagrid|Datagrid
     {
-        if ($this->doctrine->getConnection()->getDatabasePlatform()->getName() != 'postgresql') {
+        if (!$this->doctrine->getConnection()->getDatabasePlatform() instanceof PostgreSQLPlatform) {
             throw new BuildException('The Native Datagrid support only PostgreSQL database.');
         }
 
@@ -46,14 +44,14 @@ class DatagridBuilder extends AbstractDatagridBuilder implements DatagridBuilder
             throw new BuildException('The Data Schema is not defined.');
         }
 
-        $orderings   = $this->getOrderings();
+        $orderings = $this->getOrderings();
         $firstResult = $this->getFirstResult();
-        $maxResults  = $this->getMaxResults();
-        $alias       = $this->getAlias();
+        $maxResults = $this->getMaxResults();
+        $alias = $this->getAlias();
 
         try {
             /** @var EntityManager $em */
-            $em           = $this->doctrine->getManager();
+            $em = $this->doctrine->getManager();
             $queryBuilder = $this->createQueryBuilder($parameters);
 
             $datagridContext = new DatagridContext(
@@ -62,42 +60,35 @@ class DatagridBuilder extends AbstractDatagridBuilder implements DatagridBuilder
                 $queryBuilder,
                 $this->filterStack,
                 $this->dataSchema,
-                (array)$orderings,
-                (int)$firstResult,
+                $orderings,
+                (int) $firstResult,
                 $maxResults,
                 $alias,
                 $parameters
             );
 
-            if (is_callable($callback)) {
+            if (\is_callable($callback)) {
                 $callback($datagridContext);
             }
 
             $datagrid = new Datagrid($datagridContext);
-
-        } catch (Exception $e) {
+        } catch (Exception) {
             $datagrid = new EmptyDatagrid();
         }
 
         return $datagrid;
     }
 
-    /**
-     * @param array $parameters
-     * @return QueryBuilder
-     */
-    protected function createQueryBuilder(array $parameters)
+    protected function createQueryBuilder(array $parameters): QueryBuilder
     {
         $alias = $this->getAlias();
 
-        $queryBuilder = $this->queryBuilderFactory->create(
+        return $this->queryBuilderFactory->create(
             $parameters,
             $alias,
             $this->dataSchema,
             $this->filterStack,
             $this->getJoinMap()
         );
-
-        return $queryBuilder;
     }
 }
