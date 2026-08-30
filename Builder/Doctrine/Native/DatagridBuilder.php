@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManager;
 use Glavweb\DatagridBundle\Builder\DatagridBuilderInterface;
 use Glavweb\DatagridBundle\Builder\Doctrine\AbstractDatagridBuilder;
 use Glavweb\DatagridBundle\Datagrid\Doctrine\Native\Datagrid;
+use Glavweb\DatagridBundle\Factory\NativeDatagridFactory;
 use Glavweb\DatagridBundle\Datagrid\EmptyDatagrid;
 use Glavweb\DatagridBundle\Doctrine\DBAL\Query\QueryBuilder;
 use Glavweb\DatagridBundle\Exception\BuildException;
@@ -29,6 +30,11 @@ use Glavweb\DataSchemaBundle\DataSchema\DataSchema;
  */
 class DatagridBuilder extends AbstractDatagridBuilder implements DatagridBuilderInterface
 {
+    public function getQueryLanguage(): string
+    {
+        return NativeDatagridFactory::QUERY_LANGUAGE;
+    }
+
     /**
      * @return Datagrid
      *

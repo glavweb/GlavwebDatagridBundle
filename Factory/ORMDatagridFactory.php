@@ -25,6 +25,8 @@ use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
  */
 class ORMDatagridFactory implements DatagridFactoryInterface
 {
+    public const QUERY_LANGUAGE = 'DQL';
+
     /**
      * DatagridFactory constructor.
      */

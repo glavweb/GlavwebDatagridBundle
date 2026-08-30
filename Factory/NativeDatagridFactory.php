@@ -25,6 +25,8 @@ use Glavweb\DataSchemaBundle\DataSchema\DataSchemaFactory;
  */
 class NativeDatagridFactory implements DatagridFactoryInterface
 {
+    public const QUERY_LANGUAGE = 'SQL';
+
     /**
      * DatagridFactory constructor.
      */

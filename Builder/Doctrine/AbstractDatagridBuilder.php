@@ -239,6 +239,8 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
         return $this->filterStack->all();
     }
 
+    abstract public function getQueryLanguage(): string;
+
     /**
      * @return $this
      *
@@ -247,7 +249,11 @@ abstract class AbstractDatagridBuilder implements DatagridBuilderInterface
      */
     public function setDataSchema(string $dataSchemaFile, ?string $scopeFile = null, ?string $propertyPath = null): static
     {
-        $dataSchema = $this->dataSchemaFactory->createDataSchema($dataSchemaFile, $scopeFile);
+        $dataSchema = $this->dataSchemaFactory->createDataSchema(
+            $dataSchemaFile,
+            $scopeFile,
+            $this->getQueryLanguage()
+        );
 
         if ($propertyPath) {
             $config = $dataSchema->getPropertyConfiguration($propertyPath);
