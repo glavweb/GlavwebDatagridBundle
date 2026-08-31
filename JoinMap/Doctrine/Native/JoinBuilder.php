@@ -213,6 +213,6 @@ class JoinBuilder implements JoinBuilderInterface
 
     private function executedAliases(QueryBuilder $queryBuilder): array
     {
-        return array_unique([$queryBuilder->getFromAliases(), $queryBuilder->getJoinAliases()]);
+        return array_unique([...$queryBuilder->getFromAliases(), ...$queryBuilder->getJoinAliases()]);
     }
 }
