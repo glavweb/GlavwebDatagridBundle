@@ -57,7 +57,7 @@ abstract class AbstractFilter implements FilterInterface
         'param_name' => null,
     ];
 
-    abstract public function filter(mixed $queryBuilder, string $alias, string $value);
+    abstract public function filter(mixed $queryBuilder, string $alias, mixed $value);
 
     abstract protected function getAllowOperators(): array;
 
