@@ -28,5 +28,5 @@ interface FilterInterface
 
     public function getOption(string $name): mixed;
 
-    public function filter(mixed $queryBuilder, string $alias, string $value);
+    public function filter(mixed $queryBuilder, string $alias, mixed $value);
 }

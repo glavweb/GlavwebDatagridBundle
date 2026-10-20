@@ -26,7 +26,7 @@ abstract class AbstractFilter extends BaseFilter implements FilterInterface
 {
     abstract protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value);
 
-    public function filter(mixed $queryBuilder, string $alias, string $value): void
+    public function filter(mixed $queryBuilder, string $alias, mixed $value): void
     {
         if ($this->joinMap instanceof JoinMap) {
             $alias = $this->joinBuilder->apply($queryBuilder, $this->joinMap);

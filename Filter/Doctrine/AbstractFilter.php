@@ -57,7 +57,7 @@ abstract class AbstractFilter implements FilterInterface
         'param_name' => null,
     ];
 
-    abstract public function filter(mixed $queryBuilder, string $alias, string $value);
+    abstract public function filter(mixed $queryBuilder, string $alias, mixed $value);
 
     abstract protected function getAllowOperators(): array;
 
@@ -67,9 +67,9 @@ abstract class AbstractFilter implements FilterInterface
     abstract protected function getDefaultOperator(): ?string;
 
     /**
-     * @return array<int, string>
+     * @return array<int, string|null>
      */
-    public static function separateOperator(string $value, ?array $allowOperators = null, string $defaultOperator = self::CONTAINS): array
+    public static function separateOperator(string $value, ?array $allowOperators = null, ?string $defaultOperator = self::CONTAINS): array
     {
         $operators = [
             '<>' => self::NEQ,
@@ -179,7 +179,7 @@ abstract class AbstractFilter implements FilterInterface
         ?string $currentOperator = null,
         array $replaces = [],
         ?array $allowOperators = null,
-        string $defaultOperator = self::CONTAINS,
+        ?string $defaultOperator = self::CONTAINS,
     ): array {
         if (\is_array($value)) {
             // Validate operator
@@ -226,8 +226,12 @@ abstract class AbstractFilter implements FilterInterface
         return [$operator, $value];
     }
 
-    protected function checkOperator(string $operator): void
+    protected function checkOperator(?string $operator): void
     {
+        if ($operator === null) {
+            throw new \RuntimeException('Operator is not defined.');
+        }
+
         $allowOperators = $this->getAllowOperators();
 
         if (!\in_array($operator, $allowOperators)) {
