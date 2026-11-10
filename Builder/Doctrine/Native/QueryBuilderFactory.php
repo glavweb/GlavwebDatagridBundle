@@ -157,6 +157,11 @@ class QueryBuilderFactory extends AbstractQueryBuilderFactory
 
         // Order by
         foreach ($inOrderBy as $sort => $order) {
+            // ORM 3.7+ returns associative orderBy as SortDirection, while DBAL expects a string
+            if ($order instanceof \SortDirection) {
+                $order = $order === \SortDirection::Ascending ? 'ASC' : 'DESC';
+            }
+
             $queryBuilder->addOrderBy($alias.'.'.$sort, $order);
         }
 
