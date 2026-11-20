@@ -22,11 +22,16 @@ class EnumFilter extends AbstractFilter
 {
     protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value): void
     {
+        $field = $alias.'.'.$this->getColumnName($fieldName);
+        if (\is_array($value) && $this->runNamedOperators($value, function (string $operator, mixed $item) use ($queryBuilder, $field): void {
+            $this->executeCondition($queryBuilder, $operator, $field, $item);
+        }, [self::NOT_CONTAINS => self::NEQ])) {
+            return;
+        }
+
         [$operator, $value] = $this->getOperatorAndValue($value, [
             self::NOT_CONTAINS => self::NEQ,
         ]);
-
-        $field = $alias.'.'.$this->getColumnName($fieldName);
         $this->executeCondition($queryBuilder, $operator, $field, $value);
     }
 

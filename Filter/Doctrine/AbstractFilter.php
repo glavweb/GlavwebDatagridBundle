@@ -11,6 +11,7 @@
 
 namespace Glavweb\DatagridBundle\Filter\Doctrine;
 
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Glavweb\DatagridBundle\Filter\FilterInterface;
 use Glavweb\DatagridBundle\JoinMap\Doctrine\JoinBuilderInterface;
@@ -45,6 +46,24 @@ abstract class AbstractFilter implements FilterInterface
     public const string CONTAINS = 'CONTAINS';
 
     public const string NOT_CONTAINS = '!';
+
+    /**
+     * Имена операторов в query `filter[field][op]`. Значение без оператора — eq.
+     *
+     * @var array<string, string>
+     */
+    public const array NAMED_OPERATORS = [
+        'eq' => self::EQ,
+        'neq' => self::NEQ,
+        'gt' => self::GT,
+        'gte' => self::GTE,
+        'lt' => self::LT,
+        'lte' => self::LTE,
+        'contains' => self::CONTAINS,
+        'not_contains' => self::NOT_CONTAINS,
+        'in' => self::IN,
+        'nin' => self::NIN,
+    ];
 
     protected static int $uniqueParameterId = 0;
 
@@ -97,6 +116,61 @@ abstract class AbstractFilter implements FilterInterface
         }
 
         return [$operator, $value];
+    }
+
+    /**
+     * Карта `['gte' => '10', 'lt' => '100']` или `['in' => ['a', 'b']]`.
+     * Список префиксов в значениях (`['>=10']`) сюда не входит.
+     *
+     * @param array<mixed> $value
+     */
+    public static function isNamedOperatorMap(array $value): bool
+    {
+        if ($value === []) {
+            return false;
+        }
+
+        foreach ($value as $key => $item) {
+            unset($item);
+            if (!\is_string($key) || !\array_key_exists($key, self::NAMED_OPERATORS)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array<string, mixed> $value
+     * @param array<string, string> $replaces
+     */
+    protected function runNamedOperators(array $value, callable $apply, array $replaces = []): bool
+    {
+        if (!self::isNamedOperatorMap($value)) {
+            return false;
+        }
+
+        foreach ($value as $name => $item) {
+            $operator = self::NAMED_OPERATORS[$name];
+            $this->checkOperator($operator);
+            if (isset($replaces[$operator])) {
+                $operator = $replaces[$operator];
+            }
+            $apply($operator, $item);
+        }
+
+        return true;
+    }
+
+    protected function bindParameter(object $queryBuilder, string $name, mixed $value): void
+    {
+        if (\is_array($value)) {
+            $queryBuilder->setParameter($name, array_values($value), ArrayParameterType::STRING);
+
+            return;
+        }
+
+        $queryBuilder->setParameter($name, $value);
     }
 
     public static function makeParamName(string $field): string

@@ -290,6 +290,67 @@ class DatagridNativeTest extends KernelTestCase
     }
 
     /**
+     * Именованные операторы filter[field][op] и сортировка name DESC / publish ASC, name ASC.
+     */
+    public function testNamedOperatorsAndSort(): void
+    {
+        $builder = $this->getDatagridFactory()->createBuilder(
+            'article/simple_data.schema.yml',
+            'article/short.yml'
+        );
+        $builder
+            ->addFilter('body')
+            ->addFilter('countEvents')
+            ->addFilter('publish')
+            ->addFilter('publishAt')
+            ->setOrderings(['name' => 'ASC']);
+
+        $contains = $builder->build(['body' => ['contains' => 'katy']])->getList();
+        $this->assertSame([['name' => 'Article 1']], $contains);
+
+        $eq = $builder->build(['body' => ['eq' => 'Article about Mary']])->getList();
+        $this->assertSame([['name' => 'Article 2']], $eq);
+
+        $in = $builder->build(['body' => ['in' => ['Article about Mary', 'Article about Niki']]])->getList();
+        $this->assertSame([['name' => 'Article 2'], ['name' => 'Article 3']], $in);
+
+        $range = $builder->build(['countEvents' => ['gte' => '1', 'lt' => '2']])->getList();
+        $this->assertSame([['name' => 'Article 2']], $range);
+
+        $unpublished = $builder->build(['publish' => ['eq' => '0']])->getList();
+        $this->assertSame([['name' => 'Article 2'], ['name' => 'Article 3']], $unpublished);
+
+        $from = $builder->build(['publishAt' => ['gte' => '2016-05-10 11:00']])->getList();
+        $this->assertSame([['name' => 'Article 2'], ['name' => 'Article 3']], $from);
+
+        $builder->setOrderings(['name' => 'DESC']);
+        $byName = $builder->build()->getList();
+        $this->assertSame(
+            ['Article 3', 'Article 2', 'Article 1'],
+            array_column($byName, 'name'),
+        );
+
+        $builder->setOrderings(['publish' => 'ASC', 'name' => 'ASC']);
+        $byPublish = $builder->build()->getList();
+        $this->assertSame(
+            ['Article 2', 'Article 3', 'Article 1'],
+            array_column($byPublish, 'name'),
+        );
+    }
+
+    public function testNamedOperatorRejected(): void
+    {
+        $builder = $this->getDatagridFactory()->createBuilder(
+            'article/simple_data.schema.yml',
+            'article/short.yml'
+        );
+        $builder->addFilter('body');
+
+        $this->expectException(\RuntimeException::class);
+        $builder->build(['body' => ['gt' => 'Article']])->getList();
+    }
+
+    /**
      * Test datagrid model filters.
      *
      * @param array<int, array<string, array<int|string, array<string, string>|class-string<\Event>|string>|int>> $cases

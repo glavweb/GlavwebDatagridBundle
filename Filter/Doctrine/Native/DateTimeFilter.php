@@ -30,6 +30,12 @@ class DateTimeFilter extends AbstractFilter
 
         $field = $alias.'.'.$this->getColumnName($fieldName);
 
+        if (\is_array($value) && $this->runNamedOperators($value, function (string $operator, mixed $item) use ($queryBuilder, $field): void {
+            $this->executeCondition($queryBuilder, $operator, $field, $item);
+        }, $this->replaceOperators())) {
+            return;
+        }
+
         if (\is_array($value) && $this->existsOperatorsInValues($value)) {
             foreach ($value as $item) {
                 $executeCondition($field, $item);

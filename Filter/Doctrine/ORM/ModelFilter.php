@@ -22,11 +22,18 @@ class ModelFilter extends AbstractFilter
 {
     protected function doFilter(QueryBuilder $queryBuilder, string $alias, string $fieldName, mixed $value): void
     {
+        $field = $alias.'.'.$fieldName;
+        if (\is_array($value) && $this->runNamedOperators($value, function (string $operator, mixed $item) use ($queryBuilder, $field): void {
+            $this->executeCondition($queryBuilder, $operator, $field, $item);
+        }, [self::NOT_CONTAINS => self::NEQ])) {
+            return;
+        }
+
         [$operator, $value] = $this->getOperatorAndValue($value, [
             self::NOT_CONTAINS => self::NEQ,
         ]);
 
-        $this->executeCondition($queryBuilder, $operator, $alias.'.'.$fieldName, $value);
+        $this->executeCondition($queryBuilder, $operator, $field, $value);
     }
 
     /**
@@ -49,7 +56,7 @@ class ModelFilter extends AbstractFilter
             $queryBuilder->andWhere($expr->neq($field, ':'.$parameterName));
         }
 
-        $queryBuilder->setParameter($parameterName, $value);
+        $this->bindParameter($queryBuilder, $parameterName, $value);
     }
 
     protected function getAssociationType(string $fieldName): mixed

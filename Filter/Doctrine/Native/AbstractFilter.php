@@ -65,10 +65,10 @@ abstract class AbstractFilter extends BaseFilter implements FilterInterface
             $queryBuilder->setParameter($parameterName, "%{$value}%");
         } elseif ($operator == self::IN) {
             $queryBuilder->andWhere($expr->in($field, ':'.$parameterName));
-            $queryBuilder->setParameter($parameterName, $value);
+            $this->bindParameter($queryBuilder, $parameterName, $value);
         } elseif ($operator == self::NIN) {
             $queryBuilder->andWhere($expr->notIn($field, ':'.$parameterName));
-            $queryBuilder->setParameter($parameterName, $value);
+            $this->bindParameter($queryBuilder, $parameterName, $value);
         } else {
             $queryBuilder->andWhere($expr->comparison($field, $operator, ':'.$parameterName));
             $queryBuilder->setParameter($parameterName, $value);

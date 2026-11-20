@@ -74,6 +74,19 @@ $datagridBuilder
 ;
 
 $datagrid = $this->datagridBuilder->build(['name' => 'Article 1']);
+
+Именованные операторы в значении фильтра (несколько условий одного поля — И):
+
+```
+$datagridBuilder->build([
+    'price' => ['gte' => '10', 'lt' => '100'],
+    'title' => ['contains' => 'Hello'],
+    'status' => ['in' => ['draft', 'published']],
+]);
+```
+
+Имена: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `contains`, `not_contains`, `in`, `nin`.
+Скаляр по-прежнему разбирается префиксом (`>=10`, `!=5`); оператор строки по умолчанию — `CONTAINS`.
 $list = $datagrid->getList();
 
 ```
